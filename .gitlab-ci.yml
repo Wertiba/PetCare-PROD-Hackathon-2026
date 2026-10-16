@@ -4,23 +4,26 @@ include:
     file:
       - /jobs/spirit.yaml
       - /jobs/build.yaml
-      - /jobs/teleport.yaml
-      - /jobs/configure-docker.yaml
       - /jobs/rules.yaml
-      - /jobs/ansible.yaml
 
-# workflow:
-#   rules:
-#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-#     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
 stages:
   - lint
   - test
   - build
+  - deploy
+
+.production-job:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
 .backend-job:
   rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - changes:
         - backend/**/*
         - .gitlab-ci.yml
@@ -50,7 +53,7 @@ build-backend:
   variables:
     DOCKERFILE_PATH: "$CI_PROJECT_DIR/backend/Dockerfile"
     CONTEXT: "$CI_PROJECT_DIR/backend"
-    IMAGE_NAME: "$SPIRIT_REGISTRY/$TENANT/backend:$CI_COMMIT_SHORT_SHA"
+    IMAGE_NAME: "$SPIRIT_REGISTRY/$TENANT/backend:$CI_COMMIT_SHA"
 
 build-frontend:
   stage: build
@@ -58,10 +61,59 @@ build-frontend:
   variables:
     DOCKERFILE_PATH: "$CI_PROJECT_DIR/frontend/Dockerfile"
     CONTEXT: "$CI_PROJECT_DIR/frontend"
-    IMAGE_NAME: "$SPIRIT_REGISTRY/$TENANT/frontend:$CI_COMMIT_SHORT_SHA"
+    IMAGE_NAME: "$SPIRIT_REGISTRY/$TENANT/frontend:$CI_COMMIT_SHA"
   rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - exists:
         - frontend/Dockerfile
       changes:
         - frontend/**/*
         - .gitlab-ci.yml
+
+deploy-production:
+  stage: deploy
+  image: alpine:3
+  extends: .production-job
+  needs:
+    - build-backend
+    - build-frontend
+  resource_group: production
+  environment:
+    name: production
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - cp "$DEPLOY_SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+  script:
+    - |
+      target="$DEPLOY_SSH_USER@$DEPLOY_VM"
+      printf '%s\n' \
+        "FRONTEND_IMAGE=$SPIRIT_REGISTRY/$TENANT/frontend:$CI_COMMIT_SHA" \
+        "BACKEND_IMAGE=$SPIRIT_REGISTRY/$TENANT/backend:$CI_COMMIT_SHA" \
+        "DOMAIN=$DOMAIN" > .env.deploy
+    - ssh -o StrictHostKeyChecking=no "$target" "mkdir -p petcare/deploy"
+    - scp -o StrictHostKeyChecking=no docker-compose.yaml "$target:petcare/docker-compose.yaml"
+    - scp -o StrictHostKeyChecking=no deploy/Caddyfile "$target:petcare/deploy/Caddyfile"
+    - scp -o StrictHostKeyChecking=no .env.deploy "$target:petcare/.env"
+    - |
+      ssh -o StrictHostKeyChecking=no "$target" '
+        set -eu
+        umask 077
+        key_file=$(mktemp)
+        trap "rm -f \"$key_file\" \"$key_file.dp\"" EXIT
+        cat > "$key_file"
+        if [ ! -x /usr/local/bin/dp ]; then
+          if ! command -v curl >/dev/null 2>&1; then
+            sudo -n apt-get update
+            sudo -n apt-get install -y curl
+          fi
+          curl -fL "https://spirit.t-education.com/cli/tedu/14.1.3/linux/dp" -o "$key_file.dp"
+          sudo -n install -m 0755 "$key_file.dp" /usr/local/bin/dp
+        fi
+        sudo -n /usr/local/bin/dp auth service-acc --key-file "$key_file"
+        sudo -n /usr/local/bin/dp auth configure-docker
+        cd petcare
+        sudo -n docker compose pull
+        sudo -n docker compose up -d
+      ' < "$SPIRIT_DOCKER_SA_KEY"

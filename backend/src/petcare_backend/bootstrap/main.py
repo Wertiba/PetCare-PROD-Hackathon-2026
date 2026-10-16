@@ -7,8 +7,12 @@ from petcare_backend.presentation.http.v1 import router
 
 
 def create_app() -> FastAPI:
-    app = FastAPI()
-    app.include_router(router)
+    app = FastAPI(
+        docs_url="/api/docs",
+        redoc_url="/api/redoc",
+        openapi_url="/api/openapi.json",
+    )
+    app.include_router(router, prefix="/api")
     return app
 
 
