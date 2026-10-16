@@ -1,0 +1,23 @@
+'use client';
+
+import { useUserStore } from '@src/entities/user';
+import { setAccessToken } from '@src/shared/lib';
+import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+
+import { register } from '../api/register';
+import type { RegisterDto } from '../api/register.dto';
+
+export function useRegisterMutation() {
+  const router = useRouter();
+  const setUser = useUserStore((state) => state.setUser);
+
+  return useMutation({
+    mutationFn: (data: RegisterDto) => register(data),
+    onSuccess: (result) => {
+      setAccessToken(result.accessToken);
+      setUser(result.user);
+      router.push('/');
+    },
+  });
+}
