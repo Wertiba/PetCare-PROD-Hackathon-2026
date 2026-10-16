@@ -1,0 +1,36 @@
+app:
+  name: PetCare
+
+run:
+  host: 0.0.0.0
+  port: 8080
+
+logging:
+  console:
+    level: INFO
+    enqueue: true
+    backtrace: true
+    diagnose: true
+    format: "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <magenta>{extra[trace_id]}</magenta> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>"
+  file:
+    path: logs/petcare.log
+    rotation: 10 MB
+    retention: 10 days
+    compression: zip
+    level: INFO
+    enqueue: true
+    backtrace: true
+    diagnose: false
+
+token:
+  default_type: bearer
+  schema: argon2
+  access_token:
+    algorithm: HS256
+
+db:
+  driver: postgresql+asyncpg
+  echo: false
+  echo_pool: false
+  pool_size: 50
+  max_overflow: 10

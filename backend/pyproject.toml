@@ -1,107 +1,77 @@
 [project]
-name = "petcare-backend"
+name = "petcare"
 version = "0.1.0"
-description = "petcare backend"
+description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "sazsu", email = "149969207+sazsu@users.noreply.github.com" }
-]
 requires-python = ">=3.13"
 dependencies = [
-    "alembic>=1.20.0",
-    "click>=8.5.0",
-    "dishka>=1.10.1",
-    "fastapi>=0.143.3",
-    "pytest>=9.1.1",
-    "pytest-asyncio>=1.4.0",
-    "sqlalchemy[asyncio]>=2.1.4",
-    "uvicorn>=0.54.0",
+    "aiosqlite==0.22.1",
+    "alembic==1.18.1",
+    "annotated-doc==0.0.4",
+    "annotated-types==0.7.0",
+    "anyio==4.12.1",
+    "argon2-cffi==25.1.0",
+    "argon2-cffi-bindings==25.1.0",
+    "async-timeout==5.0.1",
+    "asyncpg==0.31.0",
+    "certifi==2026.1.4",
+    "cffi==2.0.0",
+    "click==8.3.1",
+    "colorama==0.4.6",
+    "dnspython==2.8.0",
+    "dynaconf==3.2.12",
+    "email-validator==2.3.0",
+    "fastapi==0.128.0",
+    "fastapi-cli==0.0.20",
+    "fastapi-cloud-cli==0.11.0",
+    "greenlet==3.3.0",
+    "h11==0.16.0",
+    "httpcore==1.0.9",
+    "httptools==0.7.1",
+    "httpx==0.28.1",
+    "idna==3.11",
+    "iniconfig==2.3.0",
+    "jinja2==3.1.6",
+    "lark==1.3.1",
+    "loguru==0.7.3",
+    "mako==1.3.10",
+    "markdown-it-py==4.0.0",
+    "markupsafe==3.0.3",
+    "mdurl==0.1.2",
+    "packaging==26.0",
+    "passlib==1.7.4",
+    "pluggy==1.6.0",
+    "prometheus-client==0.26.0",
+    "pycparser==2.23",
+    "pydantic==2.12.5",
+    "pydantic-core==2.41.5",
+    "pydantic-extra-types==2.11.0",
+    "pydantic-settings==2.12.0",
+    "pygments==2.19.2",
+    "pyjwt==2.10.1",
+    "pytest==9.0.2",
+    "pytest-asyncio==1.3.0",
+    "pytest-cov==7.1.0",
+    "python-dateutil==2.9.0.post0",
+    "python-dotenv==1.2.1",
+    "python-multipart==0.0.21",
+    "pytz==2025.2",
+    "pyyaml==6.0.3",
+    "rich==14.2.0",
+    "rich-toolkit==0.17.1",
+    "rignore==0.7.6",
+    "ruff==0.14.13",
+    "shellingham==1.5.4",
+    "six==1.17.0",
+    "sqlalchemy==2.0.45",
+    "starlette==0.50.0",
+    "typer==0.21.1",
+    "typing-extensions==4.15.0",
+    "typing-inspection==0.4.2",
+    "tzdata==2025.3",
+    "urllib3==2.6.3",
+    "uvicorn==0.40.0",
+    "watchfiles==1.1.1",
+    "websockets==16.0",
+    "win32-setctime==1.2.0",
 ]
-
-[dependency-groups]
-dev = [
-    "httpx>=0.28,<1",
-    "pytest>=8,<10",
-    "ruff>=0.14,<1",
-]
-
-[project.scripts]
-petcare-backend = "petcare_backend.bootstrap.cli:main"
-
-[build-system]
-requires = ["uv_build>=0.13.0,<0.14.0"]
-build-backend = "uv_build"
-
-[tool.ruff]
-target-version = "py313"
-line-length = 95
-
-[tool.ruff.lint]
-select = ["ALL"]
-exclude = [
-    ".git",
-    "__pycache__",
-    ".venv",
-    "env",
-    "dist",
-    "build",
-    "docs",
-    "benchmarks",
-    "tests",
-    "alembic",
-]
-
-ignore = [
-    "A003", # Python builtin is shadowed by class attribute {name} from {row}
-    "B008", # Do not perform function call {name} in argument defaults
-    "D100", # Missing docstring in public module
-    "D101", # Missing docstring in public class
-    "D102", # Missing docstring in public method
-    "D103", # Missing docstring in public function
-    "D104", # Missing docstring in public package
-    "D105", # Missing docstring in magic method
-    "D107", # Missing docstring in `__init__`
-    "B024", # `Recognizer` is an abstract base class, but it has no abstract methods
-    "B027", # `PushNotifier.send` is an empty method in an abstract base class, but has no abstract decorator
-    "S101", # Use of `assert` detected
-    "PTH123", # `open("foo")` should be replaced by `Path("foo").open()`
-    "RET504", # Unnecessary variable assignment before `return` statement
-    "TRY003", # Avoid specifying long messages outside the exception class
-    "EM102", # Exception must not use an f-string literal, assign to variable first
-    "N999", # Invalid module name
-    "PGH003", # Use specific rule codes when ignoring type issues
-    "PGH004", # Use specific rule codes when using `noqa`
-    "SIM108", # Use ternary operator `address_id = body["address_id"] if lesson.category == CategoryEnum.B else slot.instructor.address_id` instead of if-else-block
-    "ARG005", # Unused lambda argument: `x`
-    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed in `f`
-    "FBT001", # Boolean positional arg in function definition
-    "FBT002", # Boolean default value in function definition
-    "TD002", # Missing author in TODO; try: `# TODO(<author_name>): ...` or `# TODO @<author_name>: ...`
-    "TD003", # Missing issue link on the line following this TODO
-    "FIX002", # Line contains TODO, consider resolving the issue
-    "EM101", # Exception must not use a string literal, assign to variable first
-    "ARG001", # Unused function argument: `code`
-    "ARG002", # Unused method argument: `now`
-    "ISC001", # Implicitly concatenated string literals on one line
-    "COM812", # Explicitly concatenated string should be implicitly concatenated
-    "PLR0913", # Too many arguments in function definition,
-    "A002", # Function argument `id` is shadowing a Python builtin
-    "PT003", # `scope='function'` is implied in `@pytest.fixture()`
-    "S105", # Possible hardcoded password assigned to: "token_type"
-    "S106", # Possible hardcoded password assigned to argument: "token_type"
-    "PLR0912", # Too many branches (13 > 12)
-    "C901", # `handle` is too complex (14 > 12)
-]
-
-[tool.ruff.lint.isort]
-known-first-party = ["petcare_backend"]
-combine-as-imports = true
-
-[tool.ruff.lint.mccabe]
-max-complexity = 12
-
-[tool.ruff.lint.pydocstyle]
-convention = "pep257"
-
-[tool.ruff.lint.per-file-ignores]
-"**/__init__.py" = ["F401"]

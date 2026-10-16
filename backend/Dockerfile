@@ -10,11 +10,7 @@ ENV UV_COMPILE_BYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --locked --no-dev --no-install-project --no-editable
-
-COPY src ./src
-
-RUN uv sync --locked --no-dev --no-editable
+RUN uv sync --locked --no-dev --no-install-project
 
 FROM base AS runtime
 
@@ -26,11 +22,12 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /app
-RUN chown 10001:10001 /app
+WORKDIR /app/src
 COPY --from=builder --chown=10001:10001 /app/.venv /app/.venv
+COPY --chown=10001:10001 src ./
+RUN mkdir -p logs media && chown -R 10001:10001 logs media
 
 USER 10001:10001
 EXPOSE 8000
 
-CMD ["petcare-backend", "start-uvicorn-server", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log"]

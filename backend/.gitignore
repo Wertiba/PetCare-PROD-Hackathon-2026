@@ -7,3 +7,8 @@ __pycache__/
 *.db-shm
 *.db-wal
 .env
+logs/
+media/
+.coverage
+coverage.xml
+htmlcov/

@@ -10,9 +10,13 @@
 htmlcov/
 dist/
 build/
-tests/
+**/tests/
+**/logs/
+**/media/
 .env
 .env.*
+**/.env
+**/.env.*
 *.db
 *.db-shm
 *.db-wal

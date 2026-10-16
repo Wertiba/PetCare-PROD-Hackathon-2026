@@ -33,14 +33,20 @@ lint-backend:
   stage: lint
   image: ghcr.io/astral-sh/uv:0.13.0-debian-slim
   script:
-    - echo "hello world"
+    - cd backend
+    - uv sync --locked
+    - cd src
+    - uv run ruff check .
 
 test-backend:
   extends: .backend-job
   stage: test
   image: ghcr.io/astral-sh/uv:0.13.0-debian-slim
   script:
-    - echo "hello world"
+    - cd backend
+    - uv sync --locked
+    - cd src
+    - uv run python -m pytest
 
 build-backend:
   stage: build
@@ -91,7 +97,9 @@ deploy-production:
       printf '%s\n' \
         "FRONTEND_IMAGE=$SPIRIT_REGISTRY/$TENANT/frontend:$CI_COMMIT_SHA" \
         "BACKEND_IMAGE=$SPIRIT_REGISTRY/$TENANT/backend:$CI_COMMIT_SHA" \
-        "DOMAIN=$DOMAIN" > .env.deploy
+        "DOMAIN=$DOMAIN" \
+        "DB_PASSWORD=$DB_PASSWORD" \
+        "APP_SECURITY_JWT_SECRET=$APP_SECURITY_JWT_SECRET" > .env.deploy
     - ssh -o StrictHostKeyChecking=no "$target" "mkdir -p petcare/deploy"
     - scp -o StrictHostKeyChecking=no docker-compose.yaml "$target:petcare/docker-compose.yaml"
     - scp -o StrictHostKeyChecking=no deploy/Caddyfile "$target:petcare/deploy/Caddyfile"
