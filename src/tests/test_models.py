@@ -10,7 +10,16 @@ def test_tables_have_expected_columns():
     Base.metadata.create_all(engine)
     inspector = inspect(engine)
 
-    assert set(inspector.get_table_names()) == {"users", "refresh_tokens", "breeds", "pets"}
+    assert set(inspector.get_table_names()) == {
+        "users",
+        "refresh_tokens",
+        "breeds",
+        "pets",
+        "categories",
+        "states",
+        "events",
+        "notifications",
+    }
 
     user_columns = {c["name"] for c in inspector.get_columns("users")}
     assert user_columns == {
@@ -35,6 +44,21 @@ def test_tables_have_expected_columns():
         "photo_url",
         "created_at",
         "updated_at",
+    }
+
+
+    assert {c["name"] for c in inspector.get_columns("categories")} == {
+        "id", "name", "kind", "type", "unit", "created_by", "created_at",
+    }
+    assert {c["name"] for c in inspector.get_columns("states")} == {
+        "id", "pet_id", "cat_id", "value", "note", "time", "created_at",
+    }
+    assert {c["name"] for c in inspector.get_columns("events")} == {
+        "id", "pet_id", "name", "type", "status", "schedule", "period",
+        "description", "done_at", "created_at", "updated_at",
+    }
+    assert {c["name"] for c in inspector.get_columns("notifications")} == {
+        "id", "event_id", "type", "status", "time", "created_at",
     }
 
 

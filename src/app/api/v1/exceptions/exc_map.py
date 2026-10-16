@@ -1,18 +1,37 @@
 from app.api.v1.exceptions.api_exs import (
     BreedNotFound,
     BreedTypeMismatch,
+    CategoryNotFoundRef,
     EmailAlreadyExists,
+    EventNotFoundRef,
+    EventNotPlanned,
     Forbidden,
     Inactive,
+    InvalidStateValue,
     NotFound,
     PayloadTooLarge,
+    PetNotFoundRef,
+    SystemCategoryReadOnly,
     Unauthorized,
     UnsupportedMedia,
     ValidationFailed,
 )
 from app.core.exceptions.base import UnprocessableEntityError
 from app.core.exceptions.breed_exs import BreedNotFoundError, BreedTypeMismatchError
-from app.core.exceptions.pet_exs import FileTooLargeError, PetNotFoundError, UnsupportedFileTypeError
+from app.core.exceptions.category_exs import (
+    CategoryNotFoundError,
+    RelatedCategoryNotFoundError,
+    SystemCategoryReadOnlyError,
+)
+from app.core.exceptions.event_exs import EventNotFoundError, EventNotPlannedError, RelatedEventNotFoundError
+from app.core.exceptions.notification_exs import NotificationNotFoundError
+from app.core.exceptions.pet_exs import (
+    FileTooLargeError,
+    PetNotFoundError,
+    RelatedPetNotFoundError,
+    UnsupportedFileTypeError,
+)
+from app.core.exceptions.state_exs import InvalidStateValueError, StateNotFoundError
 from app.core.exceptions.user_exs import (
     ForbiddenError,
     InvalidCredentialsError,
@@ -63,5 +82,44 @@ DOMAIN_TO_API: dict[type, callable] = {
     ),
     UnsupportedFileTypeError: lambda path, exc=None: UnsupportedMedia(
         path=path,
+    ),
+    RelatedPetNotFoundError: lambda path, exc=None: PetNotFoundRef(
+        path=path,
+        details={"field": "petId"},
+    ),
+    CategoryNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="Category not found",
+    ),
+    RelatedCategoryNotFoundError: lambda path, exc=None: CategoryNotFoundRef(
+        path=path,
+        details={"field": "catId"},
+    ),
+    SystemCategoryReadOnlyError: lambda path, exc=None: SystemCategoryReadOnly(
+        path=path,
+    ),
+    StateNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="State not found",
+    ),
+    InvalidStateValueError: lambda path, exc: InvalidStateValue(
+        path=path,
+        message=exc.reason,
+        details={"field": "value", "value": exc.value},
+    ),
+    EventNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="Event not found",
+    ),
+    RelatedEventNotFoundError: lambda path, exc=None: EventNotFoundRef(
+        path=path,
+        details={"field": "eventId"},
+    ),
+    EventNotPlannedError: lambda path, exc=None: EventNotPlanned(
+        path=path,
+    ),
+    NotificationNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="Notification not found",
     ),
 }

@@ -47,6 +47,7 @@ class PetUpdateBody(_PetNameBirthValidation):
 
 class PetReadResponse(DatetimeResponse):
     id: UUID
+    userId: UUID
     name: str
     type: PetType
     breed: PetBreedReadResponse | None

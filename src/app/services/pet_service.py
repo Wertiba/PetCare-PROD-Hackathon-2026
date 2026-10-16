@@ -10,10 +10,14 @@ from app.core.config import get_media_dir
 from app.core.enums import PetType
 from app.core.exceptions.breed_exs import BreedNotFoundError, BreedTypeMismatchError
 from app.core.exceptions.pet_exs import FileTooLargeError, PetNotFoundError, UnsupportedFileTypeError
+from app.core.logger import Logger
+from app.core.metrics import track
 from app.core.schemas.pet import PetBreedReadResponse, PetCreateBody, PetReadResponse, PetUpdateBody
 from app.core.utils.paginated import Page, PaginationParams
 from app.infrastructure.models import Pet
 from app.infrastructure.unit_of_work import UnitOfWork
+
+logger = Logger.get_logger()
 
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
 _PHOTO_CHUNK_BYTES = 64 * 1024
@@ -108,6 +112,7 @@ class PetService:
             breed = PetBreedReadResponse(id=pet.breed.id, name=pet.breed.name)
         return PetReadResponse(
             id=pet.id,
+            userId=pet.user_id,
             name=pet.name,
             type=pet.type,
             breed=breed,
@@ -156,6 +161,8 @@ class PetService:
             created = await self.uow.pet_repo.get_for_user(pet.id, user_id)
             if created is None:
                 raise PetNotFoundError
+            logger.info("Pet {} created by user {}", pet.id, user_id)
+            track("pet", "created")
             return self._to_read_response(created)
 
     async def update_pet(self, user_id: UUID, pet_id: UUID, data: PetUpdateBody) -> PetReadResponse:
@@ -201,6 +208,8 @@ class PetService:
             photo_url = pet.photo_url
             await self.uow.pet_repo.delete(pet)
         await _delete_photo_file(photo_url)
+        logger.info("Pet {} deleted by user {}", pet_id, user_id)
+        track("pet", "deleted")
 
     async def set_photo(self, user_id: UUID, pet_id: UUID, upload: UploadFile) -> PetReadResponse:
         content, extension = await _read_upload(upload)
@@ -222,4 +231,5 @@ class PetService:
             raise
         if old_url and old_url != new_url:
             await _delete_photo_file(old_url)
+        track("pet", "photo_uploaded")
         return response

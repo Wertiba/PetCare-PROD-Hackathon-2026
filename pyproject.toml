@@ -41,6 +41,7 @@ dependencies = [
     "packaging==26.0",
     "passlib==1.7.4",
     "pluggy==1.6.0",
+    "prometheus-client==0.26.0",
     "pycparser==2.23",
     "pydantic==2.12.5",
     "pydantic-core==2.41.5",

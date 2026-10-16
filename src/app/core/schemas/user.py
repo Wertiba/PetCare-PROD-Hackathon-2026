@@ -18,6 +18,10 @@ class UserRegisterBody(PyModel):
     fullName: Annotated[str, Field(pattern=r"^[а-яА-Яa-zA-Z0-9 _-]{2,200}$")]
 
 
+class UserUpdateBody(PyModel):
+    fullName: Annotated[str, Field(pattern=r"^[а-яА-Яa-zA-Z0-9 _-]{2,200}$")]
+
+
 class UserLoginBody(PyModel):
     email: str
     password: str

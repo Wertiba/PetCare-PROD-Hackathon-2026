@@ -1,20 +1,13 @@
 import uuid
 
-from sqlalchemy import Enum as SAEnum
 from sqlalchemy import String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.enums import PetType
-from app.infrastructure.models.base import Base
+from app.infrastructure.models.base import Base, str_enum
 
-PET_TYPE_ENUM = SAEnum(
-    PetType,
-    name="pet_type",
-    native_enum=False,
-    length=20,
-    values_callable=lambda enum_cls: [member.value for member in enum_cls],
-)
+PET_TYPE_ENUM = str_enum(PetType, "pet_type")
 
 
 class Breed(Base):

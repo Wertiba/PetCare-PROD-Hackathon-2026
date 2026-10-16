@@ -34,7 +34,7 @@ class EmailAlreadyExists(APIException):
 
 
 class ValidationFailed(APIException):
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "VALIDATION_FAILED"
     message = "Some fields are not correct."
 
@@ -67,3 +67,45 @@ class BreedTypeMismatch(APIException):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "BREED_TYPE_MISMATCH"
     message = "Breed type does not match pet type"
+
+
+class Conflict(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    code = "CONFLICT"
+    message = "Resource already exists"
+
+
+class PetNotFoundRef(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "PET_NOT_FOUND"
+    message = "Pet not found"
+
+
+class CategoryNotFoundRef(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "CATEGORY_NOT_FOUND"
+    message = "Category not found"
+
+
+class EventNotFoundRef(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "EVENT_NOT_FOUND"
+    message = "Event not found"
+
+
+class InvalidStateValue(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "INVALID_VALUE"
+    message = "Value does not fit the category type"
+
+
+class SystemCategoryReadOnly(APIException):
+    status_code = status.HTTP_403_FORBIDDEN
+    code = "SYSTEM_CATEGORY_READ_ONLY"
+    message = "Built-in categories cannot be changed or deleted"
+
+
+class EventNotPlanned(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    code = "EVENT_NOT_PLANNED"
+    message = "Only a planned event can be completed"

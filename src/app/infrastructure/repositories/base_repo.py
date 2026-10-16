@@ -45,6 +45,13 @@ class BaseRepository(Generic[T]):
         except SQLAlchemyError as e:
             raise RepositoryError("Database error") from e
 
+    async def delete(self, obj: T) -> None:
+        try:
+            await self.session.delete(obj)
+            await self.session.flush()
+        except SQLAlchemyError as e:
+            raise RepositoryError("Database error") from e
+
     async def get_by_id(self, id_: UUID) -> T | None:
         try:
             stmt = select(self.model).where(self.model.id == id_)

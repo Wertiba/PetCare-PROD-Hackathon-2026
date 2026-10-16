@@ -8,6 +8,7 @@ from app.api import ops_router, v1_router
 from app.api.v1.exceptions.handlers import register_exception_handlers
 from app.core.config import get_media_dir, settings
 from app.core.logger import Logger
+from app.core.middleware.observability import ObservabilityMiddleware
 from app.core.middleware.trace_id import TraceIdMiddleware
 
 logger = Logger()
@@ -16,10 +17,12 @@ logger = Logger()
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: RUF029
     get_media_dir().mkdir(parents=True, exist_ok=True)
+    logger.get_logger().info("PetCare API started")
     yield
+    logger.get_logger().info("PetCare API stopped")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title=settings.app.name, version="1.0.0", lifespan=lifespan)
 register_exception_handlers(app)
 
 _DEFAULT_CORS_ORIGINS = "http://localhost,http://localhost:8080"
@@ -37,6 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Last added runs first: the trace id is set before the access log and metrics see the request.
+app.add_middleware(ObservabilityMiddleware)
 app.add_middleware(TraceIdMiddleware)
 
 app.include_router(ops_router)

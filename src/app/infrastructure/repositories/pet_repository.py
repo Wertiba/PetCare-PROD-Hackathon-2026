@@ -58,10 +58,3 @@ class PetRepository(BaseRepository[Pet]):
         if updated is None:
             return None
         return await self.get_for_user(pet_id, updated.user_id)
-
-    async def delete(self, pet: Pet) -> None:
-        try:
-            await self.session.delete(pet)
-            await self.session.flush()
-        except SQLAlchemyError as e:
-            raise RepositoryError("Database error") from e

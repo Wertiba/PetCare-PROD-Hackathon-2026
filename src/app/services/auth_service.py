@@ -8,6 +8,8 @@ from app.core.exceptions.user_exs import (
     UserAlreadyExistsError,
     UserNotActiveError,
 )
+from app.core.logger import Logger
+from app.core.metrics import track
 from app.core.schemas.token import AccessTokenResponse
 from app.core.schemas.user import (
     UserAndAccessTokenResponse,
@@ -26,6 +28,8 @@ from app.services.jwt_service import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE, JWTS
 # path (avoids a timing oracle that would let a caller distinguish "no such
 # user" from "wrong password" by response latency).
 _DUMMY_PASSWORD_HASH: str | None = None
+
+logger = Logger.get_logger()
 
 
 def _expiry(seconds: int) -> datetime:
@@ -108,11 +112,18 @@ class AuthService:
             except DuplicateError:
                 raise UserAlreadyExistsError(email=user_data.email) from None
             user = await self.uow.user_repo.update(user.id, {"created_by": user.id})
+            logger.info("User {} registered", user.id)
+            track("user", "registered")
             return await self._issue_token_pair(user)
 
     async def login_user(self, login_body: UserLoginBody) -> tuple[UserAndAccessTokenResponse, str, int]:
         async with self.uow:
-            user = await self._authenticate_user(login_body.email, login_body.password)
+            try:
+                user = await self._authenticate_user(login_body.email, login_body.password)
+            except InvalidCredentialsError:
+                track("user", "login_failed")
+                raise
+            track("user", "logged_in")
             return await self._issue_token_pair(user)
 
     async def refresh_tokens(self, raw_refresh_token: str) -> tuple[AccessTokenResponse, str, int]:

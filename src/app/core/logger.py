@@ -35,6 +35,8 @@ class Logger(Singleton):
 
         logging.basicConfig(handlers=[InterceptHandler()], level=logging.INFO)
         logger.remove()
+        # Requests bind trace_id via TraceIdMiddleware; everything else logs "-".
+        logger.configure(extra={"trace_id": "-"})
 
         logger.add(
             sys.stdout,
