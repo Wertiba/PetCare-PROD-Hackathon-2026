@@ -1,0 +1,6 @@
+.env
+/logs/
+media/
+.coverage
+/coverage.xml
+/htmlcov/
