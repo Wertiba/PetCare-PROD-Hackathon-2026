@@ -1,0 +1,48 @@
+stages:
+  - lint
+  - test
+  - build
+
+.backend-job:
+  rules:
+    - changes:
+        - backend/**/*
+        - .gitlab-ci.yml
+
+lint-backend:
+  extends: .backend-job
+  stage: lint
+  image: ghcr.io/astral-sh/uv:0.13.0-debian-slim
+  script:
+    - echo "hello world"
+
+test-backend:
+  extends: .backend-job
+  stage: test
+  image: ghcr.io/astral-sh/uv:0.13.0-debian-slim
+  script:
+    - echo "hello world"
+
+build-backend:
+  stage: build
+  image: docker:29.8.1-cli
+  services:
+    - name: docker:29.8.1-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  rules:
+    - exists:
+        - backend/Dockerfile
+      changes:
+        - backend/**/*
+        - .gitlab-ci.yml
+  needs:
+    - lint-backend
+    - test-backend
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - docker build --pull -f backend/Dockerfile -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA" backend
+    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA"
