@@ -1,7 +1,18 @@
-workflow:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMINT_BRANCH == $CI_DEFAULT_BRANCH'
+include:
+  - project: pipelines/pipelines
+    ref: master
+    file:
+      - /jobs/spirit.yaml
+      - /jobs/build.yaml
+      - /jobs/teleport.yaml
+      - /jobs/configure-docker.yaml
+      - /jobs/rules.yaml
+      - /jobs/ansible.yaml
+
+# workflow:
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
 stages:
   - lint
@@ -30,24 +41,27 @@ test-backend:
 
 build-backend:
   stage: build
-  image: docker:29.8.1-cli
-  services:
-    - name: docker:29.8.1-dind
-      alias: docker
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  rules:
-    - exists:
-        - backend/Dockerfile
-      changes:
-        - backend/**/*
-        - .gitlab-ci.yml
+  extends:
+    - .build
+    - .backend-job
   needs:
     - lint-backend
     - test-backend
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
-  script:
-    - docker build --pull -f backend/Dockerfile -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA" backend
-    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA"
+  variables:
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/backend/Dockerfile"
+    CONTEXT: "$CI_PROJECT_DIR/backend"
+    IMAGE_NAME: "$SPIRIT_REGISTRY/$TENANT/backend:$CI_COMMIT_SHORT_SHA"
+
+build-frontend:
+  stage: build
+  extends: .build
+  variables:
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/frontend/Dockerfile"
+    CONTEXT: "$CI_PROJECT_DIR/frontend"
+    IMAGE_NAME: "$SPIRIT_REGISTRY/$TENANT/frontend:$CI_COMMIT_SHORT_SHA"
+  rules:
+    - exists:
+        - frontend/Dockerfile
+      changes:
+        - frontend/**/*
+        - .gitlab-ci.yml
