@@ -172,6 +172,5 @@ deploy-production:
         sudo -n /usr/local/bin/dp auth configure-docker
         cd petcare
         sudo -n docker compose pull
-        sudo -n docker compose up -d
-        sudo -n docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+        sudo -n docker compose up -d --force-recreate --wait --wait-timeout 300
       ' < "$SPIRIT_DOCKER_SA_KEY"

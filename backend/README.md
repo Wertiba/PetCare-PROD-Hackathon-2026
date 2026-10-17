@@ -290,7 +290,10 @@ Caddy направляет `/media/*` в RustFS, сохраняя Host, путь
 Для запуска используйте обычный `docker compose up -d`. После изменения Caddyfile
 на работающем сервере выполните
 `docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile`.
-Pipeline выполняет перезагрузку автоматически.
+Pipeline выполняет `docker compose pull`, затем
+`docker compose up -d --force-recreate --wait --wait-timeout 300`.
+Контейнеры пересоздаются с сохранением именованных volumes; Caddy читает конфигурацию
+при старте. Pipeline ожидает готовности сервисов, отдельная перезагрузка Caddy не нужна.
 Необязательные настройки приложения, БД, логов и S3 также можно задать в GitLab CI:
 pipeline передаёт их Compose, а Compose — в окружение контейнеров. Файл `.env`
 на сервере используется только Docker Compose для подстановки переменных;
