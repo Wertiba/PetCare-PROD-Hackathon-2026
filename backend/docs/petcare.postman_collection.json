@@ -1287,6 +1287,40 @@
           }
         },
         {
+          "name": "Export Events Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/calendar.ics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "calendar.ics"
+              ],
+              "query": [
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "Only this pet's events",
+                  "disabled": true
+                },
+                {
+                  "key": "alarmMinutes",
+                  "value": "",
+                  "description": "Reminder this many minutes before the event; 0 omits it",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Download planned events as one iCalendar file for the phone calendar."
+          }
+        },
+        {
           "name": "Get Event",
           "request": {
             "method": "GET",

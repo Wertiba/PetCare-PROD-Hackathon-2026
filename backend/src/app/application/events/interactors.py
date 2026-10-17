@@ -3,7 +3,14 @@ from time import time
 from typing import Any
 
 from app.application.changes import apply_changes
-from app.application.events.dto import EventCompleteResult, EventCreateData, EventResult, EventUpdateData
+from app.application.events.dto import (
+    EventCalendarExport,
+    EventCalendarItem,
+    EventCompleteResult,
+    EventCreateData,
+    EventResult,
+    EventUpdateData,
+)
 from app.application.pagination import Page, Pagination
 from app.application.ports.event_gateway import EventGateway
 from app.application.ports.pet_gateway import PetGateway
@@ -13,9 +20,11 @@ from app.domain.events.enums import EventStatus, EventType
 from app.domain.events.errors import EventNotFoundError, EventNotPlannedError
 from app.domain.events.ids import EventId
 from app.domain.events.rules import next_schedule_for
-from app.domain.pets.errors import RelatedPetNotFoundError
+from app.domain.pets.errors import PetNotFoundError, RelatedPetNotFoundError
 from app.domain.pets.ids import PetId
 from app.domain.users.ids import UserId
+
+CALENDAR_EVENT_LIMIT = 1000
 
 _FIELD_TO_COLUMN = {
     "name": "name",
@@ -121,6 +130,38 @@ class ListUpcomingEvents(_EventContext):
         total = await self.event_gateway.count_upcoming(user_id, until, pet_id)
         items = [self._to_read_response(event, now) for event in events]
         return Page.build(items=items, total=total, pagination=pagination)
+
+
+class ExportEventsCalendar(_EventContext):
+    async def __call__(self, user_id: UserId, pet_id: PetId | None = None) -> EventCalendarExport:
+        if pet_id is not None and await self.pet_gateway.get_by_id(pet_id, user_id=user_id) is None:
+            raise PetNotFoundError
+        events = await self.event_gateway.get_by_user_id(
+            user_id,
+            offset=0,
+            limit=CALENDAR_EVENT_LIMIT,
+            pet_id=pet_id,
+            status=EventStatus.PLANNED,
+        )
+        events.sort(key=lambda event: event.schedule)
+        pet_ids = list({event.pet_id for event in events})
+        pets = await self.pet_gateway.get_by_ids(user_id, pet_ids) if pet_ids else []
+        names = {pet.id: pet.name for pet in pets}
+        return EventCalendarExport(
+            items=[
+                EventCalendarItem(
+                    id=event.id,
+                    petId=event.pet_id,
+                    petName=names[event.pet_id],
+                    name=event.name,
+                    type=event.type,
+                    schedule=event.schedule,
+                    period=event.period,
+                    description=event.description,
+                )
+                for event in events
+            ]
+        )
 
 
 class GetEvent(_EventContext):

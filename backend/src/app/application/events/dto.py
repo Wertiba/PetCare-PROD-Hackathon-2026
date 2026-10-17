@@ -48,3 +48,20 @@ class EventResult:
 class EventCompleteResult:
     event: EventResult
     nextEvent: EventResult | None
+
+
+@dataclass(kw_only=True)
+class EventCalendarItem:
+    id: EventId
+    petId: PetId
+    petName: str
+    name: str
+    type: EventType
+    schedule: float
+    period: EventPeriod
+    description: str | None
+
+
+@dataclass(kw_only=True)
+class EventCalendarExport:
+    items: list[EventCalendarItem]

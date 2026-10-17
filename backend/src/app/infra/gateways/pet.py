@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +23,16 @@ class SqlAlchemyPetGateway(PetGateway):
         try:
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+
+    async def get_by_ids(self, user_id: UserId, ids: Sequence[PetId]) -> list[Pet]:
+        if not ids:
+            return []
+        stmt = select(Pet).where(Pet.user_id == user_id, Pet.id.in_(ids)).options(selectinload(Pet.breed))
+        try:
+            result = await self.session.execute(stmt)
+            return list(result.scalars().all())
         except SQLAlchemyError as exc:
             raise ApplicationError("Database error") from exc
 

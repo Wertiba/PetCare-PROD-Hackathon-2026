@@ -100,6 +100,7 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET / PATCH / DELETE | `/api/v1/states/{id}` | Замер |
 | GET / POST | `/api/v1/events?petId=&status=&type=&from=&to=` | События: прививки, обработки, визиты к ветеринару, лекарства |
 | GET | `/api/v1/events/upcoming?days=30&petId=` | Ближайшие запланированные, включая просроченные (`isOverdue`) |
+| GET | `/api/v1/events/calendar.ics?petId=&alarmMinutes=1440` | Файл `.ics` для календаря телефона: запланированные события |
 | GET / PATCH / DELETE | `/api/v1/events/{id}` | Событие |
 | POST | `/api/v1/events/{id}/complete` | Отметить выполненным, тело `{doneAt?}`. Для повторяющегося создаёт следующее |
 | GET / POST | `/api/v1/notifications?eventId=&petId=&status=&due=` | Уведомления. `due=true` — pending, время которых наступило |
@@ -119,6 +120,10 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 - **Значение замера** проверяется по типу категории: `check` — 0 или 1, `scale` — от 1 до 5, `number` — не меньше 0. Иначе `422 INVALID_VALUE`.
 - **Повторяющиеся события** (`period`: daily, weekly, monthly, quarterly, half_year, yearly). В ответе есть `nextSchedule`. Когда запланированное событие отмечают выполненным (через `/complete` или `PATCH status=done`), сервис создаёт следующее. Дата считается от более поздней из двух: плановой или фактической (`doneAt`). Прививку, сделанную на два месяца позже плана, в следующий раз нужно делать через год от фактической даты.
 - **Тип события** (`type`): vaccination, parasite_treatment, vet_visit, medication, grooming, other. По нему строится карта здоровья: `GET /events?petId=...&type=vaccination`.
+
+## Календарь
+
+`GET /api/v1/events/calendar.ics` отдаёт файл `.ics` с запланированными событиями. Контракт, поля файла и пример скачивания — в [docs/calendar.md](docs/calendar.md).
 
 ## Фото и аватар
 

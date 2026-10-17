@@ -4,6 +4,7 @@ from app.application.events.interactors import (
     CompleteEvent,
     CreateEvent,
     DeleteEvent,
+    ExportEventsCalendar,
     GetEvent,
     ListEvents,
     ListUpcomingEvents,
@@ -14,5 +15,12 @@ from app.application.events.interactors import (
 class EventProvider(Provider):
     scope = Scope.REQUEST
     interactors = provide_all(
-        ListEvents, ListUpcomingEvents, GetEvent, CreateEvent, UpdateEvent, CompleteEvent, DeleteEvent
+        ListEvents,
+        ListUpcomingEvents,
+        ExportEventsCalendar,
+        GetEvent,
+        CreateEvent,
+        UpdateEvent,
+        CompleteEvent,
+        DeleteEvent,
     )

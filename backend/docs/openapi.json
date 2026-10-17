@@ -2368,6 +2368,78 @@
         }
       }
     },
+    "/api/v1/events/calendar.ics": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Export Events Calendar",
+        "description": "Download planned events as one iCalendar file for the phone calendar.",
+        "operationId": "export_events_calendar_api_v1_events_calendar_ics_get",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PetId"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this pet's events",
+              "title": "Petid"
+            },
+            "description": "Only this pet's events"
+          },
+          {
+            "name": "alarmMinutes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10080,
+              "minimum": 0,
+              "description": "Reminder this many minutes before the event; 0 omits it",
+              "default": 1440,
+              "title": "Alarmminutes"
+            },
+            "description": "Reminder this many minutes before the event; 0 omits it"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "iCalendar file of planned events",
+            "content": {
+              "text/calendar": {}
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/events/{event_id}": {
       "get": {
         "tags": [

@@ -1,3 +1,5 @@
+from time import time
+
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
 
@@ -6,6 +8,7 @@ from app.application.events.interactors import (
     CompleteEvent,
     CreateEvent,
     DeleteEvent,
+    ExportEventsCalendar,
     GetEvent,
     ListEvents,
     ListUpcomingEvents,
@@ -17,6 +20,7 @@ from app.domain.events.ids import EventId
 from app.domain.pets.ids import PetId
 from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
+from app.presentation.http.calendar import render_calendar
 from app.presentation.http.paginated import Page
 from app.presentation.http.schemas.event import (
     EventCompleteBody,
@@ -72,6 +76,40 @@ async def list_upcoming_events(
     return Page[EventReadResponse].model_validate(
         await interactor(user.id, Pagination(page=pagination.page, size=pagination.size), days, petId),
         from_attributes=True,
+    )
+
+
+@router.get(
+    "/calendar.ics",
+    response_class=Response,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "content": {"text/calendar": {}},
+            "description": "iCalendar file of planned events",
+        },
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Pet not found"},
+    },
+)
+async def export_events_calendar(
+    user: CurrentUserDep,
+    interactor: FromDishka[ExportEventsCalendar],
+    petId: PetId | None = Query(None, description="Only this pet's events"),
+    alarmMinutes: int = Query(
+        1440,
+        ge=0,
+        le=10080,
+        description="Reminder this many minutes before the event; 0 omits it",
+    ),
+) -> Response:
+    """Download planned events as one iCalendar file for the phone calendar."""
+    exported = await interactor(user.id, petId)
+    filename = f"petcare-{petId}.ics" if petId is not None else "petcare.ics"
+    track("event", "calendar_exported")
+    return Response(
+        content=render_calendar(exported.items, alarm_minutes=alarmMinutes, now=time()),
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
