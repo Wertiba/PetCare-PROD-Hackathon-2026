@@ -20,7 +20,11 @@ export function useLoginMutation() {
       setAccessToken(data.accessToken);
       setUser(data.user);
       setSessionRestored();
-      router.replace('/dashboard');
+      router.replace(
+        data.user.role === 'ADMIN'
+          ? '/admin'
+          : '/dashboard',
+      );
     },
   });
 }

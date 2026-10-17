@@ -451,6 +451,31 @@ export function Dashboard() {
                 </span>
                 <span aria-hidden="true">→</span>
               </Link>
+              {user?.role === 'ADMIN' ? (
+                <Link
+                  href="/admin"
+                  role="menuitem"
+                  onClick={() => setProfileOpen(false)}
+                  className="mt-2 flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      aria-hidden="true"
+                      className="size-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                    >
+                      <path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z" />
+                    </svg>
+                    Администрирование
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
               <button
                 type="button"
                 role="menuitem"

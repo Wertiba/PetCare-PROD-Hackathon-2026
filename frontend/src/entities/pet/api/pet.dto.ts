@@ -55,3 +55,21 @@ export interface UpdatePetReqDto {
   breedId?: Uid;
   birthDate?: Timestamp;
 }
+
+export interface CreateAnimalReqDto {
+  name: string;
+}
+
+export interface UpdateAnimalReqDto {
+  name?: string;
+}
+
+export interface CreateBreedReqDto {
+  animalId: Uid;
+  name: string;
+}
+
+export interface UpdateBreedReqDto {
+  animalId?: Uid;
+  name?: string;
+}

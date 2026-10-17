@@ -1,7 +1,18 @@
 import { deleteCategory } from '@src/entities/category/api';
-import { useMutation } from '@tanstack/react-query';
+import { queryKeys } from '@src/shared/api/query-keys';
+import {
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 
-export const useDeleteCategoryMutation = () =>
-  useMutation({
+export const useDeleteCategoryMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: deleteCategory,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.categories.all,
+      }),
   });
+};

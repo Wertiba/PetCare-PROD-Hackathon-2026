@@ -1,8 +1,10 @@
 import api from '@src/shared/api/client';
 import { Uid } from '@src/shared/api/global.types';
 
-import type { Pet } from '../model';
+import type { Animal, Breed, Pet } from '../model';
 import {
+  CreateAnimalReqDto,
+  CreateBreedReqDto,
   CreatePetReqDto,
   FetchAnimalsReqDto,
   FetchAnimalsResDto,
@@ -10,6 +12,8 @@ import {
   FetchBreedsResDto,
   FetchPetsReqDto,
   FetchPetsResDto,
+  UpdateAnimalReqDto,
+  UpdateBreedReqDto,
   UpdatePetReqDto,
 } from './pet.dto';
 
@@ -51,3 +55,31 @@ export const fetchAnimals = async (
       params: query,
     })
   ).data;
+
+export const createAnimal = async (
+  animal: CreateAnimalReqDto,
+) => (await api.post<Animal>('/animals', animal)).data;
+
+export const updateAnimal = async (
+  animalId: Uid,
+  animal: UpdateAnimalReqDto,
+) =>
+  (await api.patch<Animal>(`/animals/${animalId}`, animal))
+    .data;
+
+export const deleteAnimal = async (animalId: Uid) =>
+  (await api.delete<void>(`/animals/${animalId}`)).data;
+
+export const createBreed = async (
+  breed: CreateBreedReqDto,
+) => (await api.post<Breed>('/breeds', breed)).data;
+
+export const updateBreed = async (
+  breedId: Uid,
+  breed: UpdateBreedReqDto,
+) =>
+  (await api.patch<Breed>(`/breeds/${breedId}`, breed))
+    .data;
+
+export const deleteBreed = async (breedId: Uid) =>
+  (await api.delete<void>(`/breeds/${breedId}`)).data;
