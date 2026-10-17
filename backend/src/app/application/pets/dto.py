@@ -3,6 +3,7 @@ from typing import Any
 
 from app.domain.animals.ids import AnimalId
 from app.domain.breeds.ids import BreedId
+from app.domain.pets.enums import AvatarSource
 from app.domain.pets.ids import PetId
 from app.domain.users.ids import UserId
 
@@ -41,5 +42,8 @@ class PetResult:
     birthDate: float | None
     ageMonths: int | None
     photoUrl: str | None
+    generatedAvatarUrl: str | None
+    avatarSource: AvatarSource
+    avatarUrl: str | None
     createdAt: float
     updatedAt: float

@@ -25,7 +25,7 @@
     "indexes": []
   },
   "pets": {
-    "table": "\nCREATE TABLE pets (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\tbreed_id UUID, \n\tname VARCHAR(100) NOT NULL, \n\tbirth_date DOUBLE PRECISION, \n\tphoto_url VARCHAR(255), \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, \n\tFOREIGN KEY(breed_id) REFERENCES breeds (id) ON DELETE SET NULL\n)\n\n",
+    "table": "\nCREATE TABLE pets (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\tbreed_id UUID, \n\tname VARCHAR(100) NOT NULL, \n\tbirth_date DOUBLE PRECISION, \n\tphoto_key VARCHAR(255), \n\tgenerated_avatar_key VARCHAR(255), \n\tavatar_source VARCHAR(20) NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, \n\tFOREIGN KEY(breed_id) REFERENCES breeds (id) ON DELETE SET NULL\n)\n\n",
     "indexes": [
       "CREATE INDEX idx_pets_user_id ON pets (user_id)"
     ]

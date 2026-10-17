@@ -15,3 +15,19 @@ class FileTooLargeError(EntityError):
 
 class UnsupportedFileTypeError(EntityError):
     pass
+
+
+class PetPhotoRequiredError(EntityError):
+    pass
+
+
+class GeneratedAvatarMissingError(EntityError):
+    pass
+
+
+class AvatarGenerationFailedError(EntityError):
+    pass
+
+
+class AvatarGenerationUnavailableError(EntityError):
+    pass

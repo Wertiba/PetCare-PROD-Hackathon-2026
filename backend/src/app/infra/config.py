@@ -32,6 +32,13 @@ def build_postgres_url() -> str:
 settings.set("POSTGRES_URL", build_postgres_url())
 
 
+def setting_text(name: str, default: str = "") -> str:
+    value = settings.get(name, default)
+    if value is None:
+        return default
+    return str(value).strip()
+
+
 def get_media_dir() -> Path:
     raw = settings.get("APP_MEDIA_DIR", "")
     text = str(raw).strip() if raw else ""

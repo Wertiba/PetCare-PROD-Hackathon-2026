@@ -1226,6 +1226,140 @@
         }
       }
     },
+    "/api/v1/pets/{pet_id}/avatar/generate": {
+      "post": {
+        "tags": [
+          "Pets"
+        ],
+        "summary": "Generate Avatar",
+        "description": "Build a stylized avatar from the pet's photo. Does not change avatarSource.",
+        "operationId": "generate_avatar_api_v1_pets__pet_id__avatar_generate_post",
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PetId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "PET_PHOTO_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "AVATAR_GENERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AVATAR_GENERATION_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pets/{pet_id}/avatar": {
+      "put": {
+        "tags": [
+          "Pets"
+        ],
+        "summary": "Select Avatar",
+        "description": "Choose which image to show: the original photo or the generated avatar.",
+        "operationId": "select_avatar_api_v1_pets__pet_id__avatar_put",
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PetId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetAvatarBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "PET_PHOTO_REQUIRED or GENERATED_AVATAR_MISSING",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "tags": [
@@ -3510,6 +3644,14 @@
         "type": "object",
         "title": "AnimalUpdateBody"
       },
+      "AvatarSource": {
+        "type": "string",
+        "enum": [
+          "photo",
+          "generated"
+        ],
+        "title": "AvatarSource"
+      },
       "Body_upload_photo_api_v1_pets__pet_id__photo_put": {
         "properties": {
           "file": {
@@ -4940,6 +5082,18 @@
         ],
         "title": "PetAnimalReadResponse"
       },
+      "PetAvatarBody": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/AvatarSource"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "PetAvatarBody"
+      },
       "PetBreedReadResponse": {
         "properties": {
           "id": {
@@ -5059,7 +5213,36 @@
                 "type": "null"
               }
             ],
-            "title": "Photourl"
+            "title": "Photourl",
+            "description": "URL of the original photo."
+          },
+          "generatedAvatarUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generatedavatarurl",
+            "description": "URL of the generated avatar."
+          },
+          "avatarSource": {
+            "$ref": "#/components/schemas/AvatarSource",
+            "description": "Which image to show: photo or generated."
+          },
+          "avatarUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarurl",
+            "description": "Image to display: the generated avatar when avatarSource is generated, otherwise the photo."
           },
           "createdAt": {
             "type": "number",
@@ -5082,6 +5265,9 @@
           "birthDate",
           "ageMonths",
           "photoUrl",
+          "generatedAvatarUrl",
+          "avatarSource",
+          "avatarUrl",
           "createdAt",
           "updatedAt"
         ],

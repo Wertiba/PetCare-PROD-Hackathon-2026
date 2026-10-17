@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from app.domain.breeds.entity import Breed
 from app.domain.breeds.ids import BreedId
+from app.domain.pets.enums import AvatarSource
 from app.domain.pets.ids import PetId
 from app.domain.users.ids import UserId
 
@@ -17,7 +18,9 @@ class Pet:
     breed_id: BreedId | None = None
     name: str
     birth_date: float | None = None
-    photo_url: str | None = None
+    photo_key: str | None = None
+    generated_avatar_key: str | None = None
+    avatar_source: AvatarSource = AvatarSource.PHOTO
     created_at: float = field(default_factory=time)
     updated_at: float = field(default_factory=time)
     breed: Breed | None = None

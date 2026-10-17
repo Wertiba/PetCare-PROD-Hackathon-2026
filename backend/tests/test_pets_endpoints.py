@@ -34,6 +34,9 @@ def test_create_minimal_pet(client):
     assert body["birthDate"] is None
     assert body["ageMonths"] is None
     assert body["photoUrl"] is None
+    assert body["generatedAvatarUrl"] is None
+    assert body["avatarUrl"] is None
+    assert body["avatarSource"] == "photo"
     assert response.headers["location"] == f"/api/v1/pets/{body['id']}"
 
 
@@ -148,54 +151,160 @@ def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
     assert body["animal"] is None
 
 
-def test_photo_upload_wrong_type_and_too_large(client, tmp_path, monkeypatch):
-    monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
+def _object_key(url: str) -> str:
+    assert url.startswith("/media/")
+    return url.removeprefix("/media/")
+
+
+def _upload_photo(client, pet_id, token, content=PNG_BYTES):
+    return client.put(
+        f"/api/v1/pets/{pet_id}/photo",
+        files={"file": ("pet.png", content, "image/png")},
+        headers=_auth(token),
+    )
+
+
+def test_photo_upload_wrong_type_and_too_large(client, storage, monkeypatch):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
     headers = _auth(token)
-    ok = client.put(
-        f"/api/v1/pets/{pet_id}/photo", files={"file": ("pet.png", PNG_BYTES, "image/png")}, headers=headers
-    )
+    ok = _upload_photo(client, pet_id, token)
     assert ok.status_code == 200
-    photo_url = ok.json()["photoUrl"]
-    assert photo_url.startswith("/media/pets/")
-    assert photo_url.endswith(".png")
-    stored = tmp_path / "pets" / photo_url.rsplit("/", 1)[-1]
-    assert stored.is_file()
-    assert stored.read_bytes() == PNG_BYTES
-    replaced = client.put(
-        f"/api/v1/pets/{pet_id}/photo", files={"file": ("pet2.png", PNG_BYTES, "image/png")}, headers=headers
-    )
+    body = ok.json()
+    assert body["photoUrl"].startswith(f"/media/pets/{pet_id}/photo/")
+    assert body["photoUrl"].endswith(".png")
+    assert body["avatarUrl"] == body["photoUrl"]
+    assert body["avatarSource"] == "photo"
+    assert body["generatedAvatarUrl"] is None
+    key = _object_key(body["photoUrl"])
+    assert storage.objects[key] == (PNG_BYTES, "image/png")
+    replaced = _upload_photo(client, pet_id, token, content=b"second")
     assert replaced.status_code == 200
-    assert not stored.exists()
-    new_path = tmp_path / "pets" / replaced.json()["photoUrl"].rsplit("/", 1)[-1]
-    assert new_path.is_file()
+    assert key not in storage.objects
+    new_key = _object_key(replaced.json()["photoUrl"])
+    assert storage.objects[new_key][0] == b"second"
     wrong = client.put(
         f"/api/v1/pets/{pet_id}/photo", files={"file": ("notes.txt", b"hello", "text/plain")}, headers=headers
     )
     assert wrong.status_code == 415
     assert wrong.json()["code"] == "UNSUPPORTED_FILE_TYPE"
-    assert new_path.is_file()
+    assert new_key in storage.objects
     monkeypatch.setattr("app.presentation.http.uploads.MAX_PHOTO_BYTES", 8)
     too_big = client.put(
         f"/api/v1/pets/{pet_id}/photo", files={"file": ("big.png", b"x" * 32, "image/png")}, headers=headers
     )
     assert too_big.status_code == 413
     assert too_big.json()["code"] == "FILE_TOO_LARGE"
-    assert new_path.is_file()
+    assert new_key in storage.objects
 
 
-def test_delete_pet_removes_photo_file(client, tmp_path, monkeypatch):
-    monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
+def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, storage, generator):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
     headers = _auth(token)
-    uploaded = client.put(
-        f"/api/v1/pets/{pet_id}/photo", files={"file": ("pet.png", PNG_BYTES, "image/png")}, headers=headers
-    )
-    photo_path = tmp_path / "pets" / uploaded.json()["photoUrl"].rsplit("/", 1)[-1]
-    assert photo_path.is_file()
+    missing = client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
+    assert missing.status_code == 422
+    assert missing.json()["code"] == "PET_PHOTO_REQUIRED"
+    uploaded = _upload_photo(client, pet_id, token)
+    generated = client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
+    assert generated.status_code == 200
+    body = generated.json()
+    assert body["avatarSource"] == "photo"
+    assert body["photoUrl"] == uploaded.json()["photoUrl"]
+    assert body["avatarUrl"] == body["photoUrl"]
+    assert body["generatedAvatarUrl"].startswith(f"/media/pets/{pet_id}/avatar/")
+    assert body["generatedAvatarUrl"].endswith(".png")
+    assert generator.calls == [(PNG_BYTES, "image/png")]
+    assert storage.objects[_object_key(body["generatedAvatarUrl"])][0] == b"generated-avatar"
+    fetched = client.get(f"/api/v1/pets/{pet_id}", headers=headers)
+    assert fetched.json()["generatedAvatarUrl"] == body["generatedAvatarUrl"]
+    assert fetched.json()["avatarSource"] == "photo"
+
+
+def test_select_generated_avatar_and_reject_missing_one(client):
+    _, token = _register(client)
+    pet_id = _create_pet(client, token).json()["id"]
+    headers = _auth(token)
+    photo_only = client.put(f"/api/v1/pets/{pet_id}/avatar", json={"source": "photo"}, headers=headers)
+    assert photo_only.status_code == 422
+    assert photo_only.json()["code"] == "PET_PHOTO_REQUIRED"
+    _upload_photo(client, pet_id, token)
+    too_early = client.put(f"/api/v1/pets/{pet_id}/avatar", json={"source": "generated"}, headers=headers)
+    assert too_early.status_code == 422
+    assert too_early.json()["code"] == "GENERATED_AVATAR_MISSING"
+    client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
+    selected = client.put(f"/api/v1/pets/{pet_id}/avatar", json={"source": "generated"}, headers=headers)
+    assert selected.status_code == 200
+    body = selected.json()
+    assert body["avatarSource"] == "generated"
+    assert body["avatarUrl"] == body["generatedAvatarUrl"]
+    assert body["avatarUrl"] != body["photoUrl"]
+    back = client.put(f"/api/v1/pets/{pet_id}/avatar", json={"source": "photo"}, headers=headers)
+    assert back.status_code == 200
+    assert back.json()["avatarSource"] == "photo"
+    assert back.json()["avatarUrl"] == back.json()["photoUrl"]
+    assert back.json()["generatedAvatarUrl"] == body["generatedAvatarUrl"]
+
+
+def test_reupload_resets_generated_avatar_and_deletes_old_objects(client, storage):
+    _, token = _register(client)
+    pet_id = _create_pet(client, token).json()["id"]
+    headers = _auth(token)
+    uploaded = _upload_photo(client, pet_id, token)
+    generated = client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers).json()
+    client.put(f"/api/v1/pets/{pet_id}/avatar", json={"source": "generated"}, headers=headers)
+    old_photo = _object_key(uploaded.json()["photoUrl"])
+    old_avatar = _object_key(generated["generatedAvatarUrl"])
+    replaced = _upload_photo(client, pet_id, token, content=b"new-photo")
+    assert replaced.status_code == 200
+    body = replaced.json()
+    assert body["avatarSource"] == "photo"
+    assert body["generatedAvatarUrl"] is None
+    assert body["avatarUrl"] == body["photoUrl"]
+    assert old_photo not in storage.objects
+    assert old_avatar not in storage.objects
+    assert storage.objects[_object_key(body["photoUrl"])][0] == b"new-photo"
+
+
+def test_delete_pet_removes_photo_and_avatar(client, storage):
+    _, token = _register(client)
+    pet_id = _create_pet(client, token).json()["id"]
+    headers = _auth(token)
+    _upload_photo(client, pet_id, token)
+    client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
+    assert storage.objects
     deleted = client.delete(f"/api/v1/pets/{pet_id}", headers=headers)
     assert deleted.status_code == 204
-    assert not photo_path.exists()
+    assert storage.objects == {}
     assert client.get(f"/api/v1/pets/{pet_id}", headers=headers).status_code == 404
+
+
+def test_other_users_pet_avatar_endpoints_are_not_found(client):
+    _, owner = _register(client, login="owner")
+    _, stranger = _register(client, login="stranger")
+    pet_id = _create_pet(client, owner).json()["id"]
+    _upload_photo(client, pet_id, owner)
+    client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=_auth(owner))
+    generate = client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=_auth(stranger))
+    select = client.put(f"/api/v1/pets/{pet_id}/avatar", json={"source": "generated"}, headers=_auth(stranger))
+    assert generate.status_code == 404
+    assert generate.json()["code"] == "NOT_FOUND"
+    assert select.status_code == 404
+    assert select.json()["code"] == "NOT_FOUND"
+
+
+def test_avatar_generation_failure_and_unavailable(client, generator):
+    from app.domain.pets.errors import AvatarGenerationFailedError, AvatarGenerationUnavailableError
+
+    _, token = _register(client)
+    pet_id = _create_pet(client, token).json()["id"]
+    headers = _auth(token)
+    _upload_photo(client, pet_id, token)
+    generator.error = AvatarGenerationFailedError()
+    failed = client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
+    assert failed.status_code == 502
+    assert failed.json()["code"] == "AVATAR_GENERATION_FAILED"
+    generator.error = AvatarGenerationUnavailableError()
+    unavailable = client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
+    assert unavailable.status_code == 503
+    assert unavailable.json()["code"] == "AVATAR_GENERATION_UNAVAILABLE"

@@ -44,7 +44,9 @@ def test_tables_have_expected_columns():
         "breed_id",
         "name",
         "birth_date",
-        "photo_url",
+        "photo_key",
+        "generated_avatar_key",
+        "avatar_source",
         "created_at",
         "updated_at",
     }
@@ -110,6 +112,41 @@ def test_tables_have_expected_columns():
 
 def test_user_role_enum_values():
     assert {member.value for member in UserRole} == {"USER", "ADMIN"}
+
+
+def test_avatar_source_enum_values():
+    from app.domain.pets.enums import AvatarSource
+
+    assert {member.value for member in AvatarSource} == {"photo", "generated"}
+
+
+def test_pet_avatar_migration_converts_legacy_photo_url_and_reverts():
+    import io
+    from pathlib import Path
+
+    from alembic import command
+    from alembic.config import Config
+
+    output = io.StringIO()
+    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    command.upgrade(config, "0007_jury_users:0008_pet_avatars", sql=True)
+    sql = output.getvalue()
+    assert "RENAME photo_url TO photo_key" in sql
+    assert "regexp_replace(photo_key, '^/media/', '')" in sql
+    assert "photo_key LIKE '/media/pets/%'" in sql
+    assert "generated_avatar_key" in sql
+    assert "avatar_source" in sql
+    assert "ck_pets_avatar_source" in sql
+    assert "avatar_source IN ('photo', 'generated')" in sql
+    output = io.StringIO()
+    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    command.downgrade(config, "0008_pet_avatars:0007_jury_users", sql=True)
+    sql = output.getvalue()
+    assert "DROP CONSTRAINT ck_pets_avatar_source" in sql
+    assert "DROP COLUMN generated_avatar_key" in sql
+    assert "DROP COLUMN avatar_source" in sql
+    assert "photo_key LIKE 'pets/%' AND photo_key NOT LIKE 'pets/%/%'" in sql
+    assert "RENAME photo_key TO photo_url" in sql
 
 
 def test_schemas_user_role_is_the_canonical_enum():

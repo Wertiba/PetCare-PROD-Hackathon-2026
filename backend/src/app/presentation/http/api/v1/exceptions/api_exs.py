@@ -121,3 +121,27 @@ class CategoryInUse(APIException):
     status_code = status.HTTP_409_CONFLICT
     code = "CATEGORY_IN_USE"
     message = "Other users record states in this category"
+
+
+class PetPhotoRequired(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "PET_PHOTO_REQUIRED"
+    message = "Pet photo is required"
+
+
+class GeneratedAvatarMissing(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "GENERATED_AVATAR_MISSING"
+    message = "Generated avatar is missing"
+
+
+class AvatarGenerationFailed(APIException):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    code = "AVATAR_GENERATION_FAILED"
+    message = "Avatar generation failed"
+
+
+class AvatarGenerationUnavailable(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "AVATAR_GENERATION_UNAVAILABLE"
+    message = "Avatar generation is unavailable"

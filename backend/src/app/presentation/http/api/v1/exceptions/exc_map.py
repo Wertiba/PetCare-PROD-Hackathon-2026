@@ -12,8 +12,12 @@ from app.domain.foods.errors import FoodNotFoundError
 from app.domain.notes.errors import NoteNotFoundError
 from app.domain.notifications.errors import NotificationNotFoundError
 from app.domain.pets.errors import (
+    AvatarGenerationFailedError,
+    AvatarGenerationUnavailableError,
     FileTooLargeError,
+    GeneratedAvatarMissingError,
     PetNotFoundError,
+    PetPhotoRequiredError,
     RelatedPetNotFoundError,
     UnsupportedFileTypeError,
 )
@@ -29,18 +33,22 @@ from app.domain.users.errors import (
 )
 from app.presentation.http.api.v1.exceptions.api_exs import (
     AnimalNotFoundRef,
+    AvatarGenerationFailed,
+    AvatarGenerationUnavailable,
     BreedNotFound,
     CategoryInUse,
     CategoryNotFoundRef,
     EventNotFoundRef,
     EventNotPlanned,
     Forbidden,
+    GeneratedAvatarMissing,
     Inactive,
     InvalidStateValue,
     LoginAlreadyExists,
     NotFound,
     PayloadTooLarge,
     PetNotFoundRef,
+    PetPhotoRequired,
     SystemCategoryReadOnly,
     Unauthorized,
     UnsupportedMedia,
@@ -100,6 +108,18 @@ DOMAIN_TO_API: dict[type, callable] = {
         path=path,
     ),
     UnsupportedFileTypeError: lambda path, exc=None: UnsupportedMedia(
+        path=path,
+    ),
+    PetPhotoRequiredError: lambda path, exc=None: PetPhotoRequired(
+        path=path,
+    ),
+    GeneratedAvatarMissingError: lambda path, exc=None: GeneratedAvatarMissing(
+        path=path,
+    ),
+    AvatarGenerationFailedError: lambda path, exc=None: AvatarGenerationFailed(
+        path=path,
+    ),
+    AvatarGenerationUnavailableError: lambda path, exc=None: AvatarGenerationUnavailable(
         path=path,
     ),
     RelatedPetNotFoundError: lambda path, exc=None: PetNotFoundRef(

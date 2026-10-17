@@ -1,4 +1,4 @@
-from dishka import AsyncContainer, make_async_container
+from dishka import AsyncContainer, Provider, make_async_container
 
 from app.application.animals.di import AnimalProvider
 from app.application.auth.di import AuthProvider
@@ -11,18 +11,20 @@ from app.application.notifications.di import NotificationProvider
 from app.application.pets.di import PetProvider
 from app.application.states.di import StateProvider
 from app.application.users.di import UserProvider
+from app.infra.avatars.di import AvatarProvider
 from app.infra.database.di import DatabaseProvider
 from app.infra.gateways.di import GatewayProvider
 from app.infra.photos.di import PhotoProvider
 from app.infra.security.di import SecurityProvider
 
 
-def build_container() -> AsyncContainer:
+def build_container(*overrides: Provider) -> AsyncContainer:
     return make_async_container(
         DatabaseProvider(),
         GatewayProvider(),
         SecurityProvider(),
         PhotoProvider(),
+        AvatarProvider(),
         AuthProvider(),
         UserProvider(),
         PetProvider(),
@@ -34,4 +36,5 @@ def build_container() -> AsyncContainer:
         NotificationProvider(),
         NoteProvider(),
         FoodProvider(),
+        *overrides,
     )

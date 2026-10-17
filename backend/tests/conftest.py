@@ -18,9 +18,73 @@ from sqlalchemy import event
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
+from dishka import Provider, Scope, provide
+from app.application.ports.avatar_generator import AvatarGenerator, GeneratedImage
+from app.application.ports.photos import PhotoStorage
+from app.bootstrap import build_container
 from app.infra.database.db_helper import db_helper
 from app.infra.database.mappings import metadata
 from app.main import app
+
+
+class InMemoryPhotoStorage:
+    def __init__(self) -> None:
+        self.objects: dict[str, tuple[bytes, str]] = {}
+
+    def clear(self) -> None:
+        self.objects.clear()
+
+    async def save(self, key: str, content: bytes, content_type: str) -> None:
+        self.objects[key] = (content, content_type)
+
+    async def load(self, key: str) -> bytes:
+        return self.objects[key][0]
+
+    async def delete(self, key: str | None) -> None:
+        if key is None:
+            return
+        self.objects.pop(key, None)
+
+    def url(self, key: str | None) -> str | None:
+        if key is None:
+            return None
+        return f"/media/{key}"
+
+
+class FakeAvatarGenerator:
+    def __init__(self) -> None:
+        self.calls: list[tuple[bytes, str]] = []
+        self.error: Exception | None = None
+        self.image = GeneratedImage(content=b"generated-avatar", content_type="image/png", extension=".png")
+
+    def reset(self) -> None:
+        self.calls.clear()
+        self.error = None
+        self.image = GeneratedImage(content=b"generated-avatar", content_type="image/png", extension=".png")
+
+    async def generate(self, image: bytes, content_type: str) -> GeneratedImage:
+        self.calls.append((image, content_type))
+        if self.error is not None:
+            raise self.error
+        return self.image
+
+
+memory_storage = InMemoryPhotoStorage()
+fake_generator = FakeAvatarGenerator()
+
+
+class _TestOverrides(Provider):
+    @provide(scope=Scope.APP, override=True)
+    def photos(self) -> PhotoStorage:
+        return memory_storage
+
+    @provide(scope=Scope.APP, override=True)
+    def avatars(self) -> AvatarGenerator:
+        return fake_generator
+
+
+# API tests must not touch the network, S3, or the Spirit proxy.
+app.state.dishka_container = build_container(_TestOverrides())
 
 
 @pytest.fixture
@@ -76,6 +140,22 @@ async def catalog(db_session_factory):
             ]
         )
         await session.commit()
+
+
+@pytest.fixture(autouse=True)
+def _reset_external_fakes():
+    memory_storage.clear()
+    fake_generator.reset()
+
+
+@pytest.fixture
+def storage():
+    return memory_storage
+
+
+@pytest.fixture
+def generator():
+    return fake_generator
 
 
 @pytest.fixture

@@ -35,7 +35,7 @@ Unit of Work — тонкий прокси с асинхронными `add(enti
 
 Dishka предоставляет одну SQLAlchemy-сессию на запрос: авторизация, шлюзы и UoW используют её совместно. Провайдер сессии откатывает незавершённую транзакцию и закрывает сессию; lifespan приложения закрывает контейнер и освобождает движок БД. Настройка зависимостей собрана в `app/bootstrap.py`.
 
-Регистрация с выдачей токенов, ротация refresh-токена и завершение повторяющегося события записываются одной транзакцией. HTTP-обработчики публикуют метрики успешных действий после завершения интерактора и коммита; при сбое загрузки фото новый файл удаляется, а старый сохраняется.
+Регистрация с выдачей токенов, ротация refresh-токена и завершение повторяющегося события записываются одной транзакцией. HTTP-обработчики публикуют метрики успешных действий после завершения интерактора и коммита; при сбое загрузки фото или аватара новый объект удаляется, а старые сохраняются.
 
 ## Запуск
 
@@ -90,7 +90,9 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET / PATCH / DELETE | `/api/v1/breeds/{id}` | Порода. Удаление оставляет питомцев без породы |
 | GET / POST | `/api/v1/pets` | Свои питомцы / создать (`name`, `breedId`, `birthDate?`). Вид берётся из породы |
 | GET / PATCH / DELETE | `/api/v1/pets/{petId}` | Карточка с `animal` и `breed`. Удаление каскадно удаляет события, замеры, уведомления, заметки, корма |
-| PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ |
+| PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ. Новое фото сбрасывает сгенерированный аватар |
+| POST | `/api/v1/pets/{petId}/avatar/generate` | Стилизованный аватар по уже загруженному фото. `avatarSource` не меняется |
+| PUT | `/api/v1/pets/{petId}/avatar` | Какую картинку показывать: `{"source": "photo"}` или `{"source": "generated"}` |
 | GET / POST | `/api/v1/categories?type=&q=` | Общие для всех категории: встроенные, затем созданные пользователями / создать |
 | GET / PATCH / DELETE | `/api/v1/categories/{id}` | Менять может автор или админ (иначе `403`, для встроенных `SYSTEM_CATEGORY_READ_ONLY`). Пока категорией пользуются другие, нельзя удалить её или сменить `kind`/`type`: `409 CATEGORY_IN_USE` |
 | GET / POST | `/api/v1/states?petId=&catId=&from=&to=` | Замеры (вес, корм, реакции...) |
@@ -117,6 +119,18 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 - **Значение замера** проверяется по типу категории: `check` — 0 или 1, `scale` — от 1 до 5, `number` — не меньше 0. Иначе `422 INVALID_VALUE`.
 - **Повторяющиеся события** (`period`: daily, weekly, monthly, quarterly, half_year, yearly). В ответе есть `nextSchedule`. Когда запланированное событие отмечают выполненным (через `/complete` или `PATCH status=done`), сервис создаёт следующее. Дата считается от более поздней из двух: плановой или фактической (`doneAt`). Прививку, сделанную на два месяца позже плана, в следующий раз нужно делать через год от фактической даты.
 - **Тип события** (`type`): vaccination, parasite_treatment, vet_visit, medication, grooming, other. По нему строится карта здоровья: `GET /events?petId=...&type=vaccination`.
+
+## Фото и аватар
+
+Загрузка фото, генерация аватара по этому фото и выбор, что показывать. Подробности для фронта и деплоя — в [docs/avatar.md](docs/avatar.md).
+
+| Метод | Путь | |
+|---|---|---|
+| PUT | `/api/v1/pets/{petId}/photo` | Фото, поле `file`. jpeg/png/webp, до 5 МБ |
+| POST | `/api/v1/pets/{petId}/avatar/generate` | Аватар по загруженному фото. Выбор не меняет |
+| PUT | `/api/v1/pets/{petId}/avatar` | `{"source": "photo"}` или `{"source": "generated"}` |
+
+Показывать `avatarUrl`. Хранилище: `APP_STORAGE_BACKEND=local` или `s3`. Генерация — Spirit LLM Proxy, ключ `LLM_PROXY_API_KEY`. S3 Spirit не выдаёт, бакет поднимаем сами.
 
 ## Наблюдаемость
 
@@ -145,4 +159,4 @@ uv run ruff check .
 В корневом `.env` задайте `DOMAIN`, `FRONTEND_IMAGE`, `BACKEND_IMAGE`, `DB_PASSWORD`
 и `APP_SECURITY_JWT_SECRET` (см. `.env.example`), затем выполните `docker compose up -d`.
 Для CI/CD добавьте `DB_PASSWORD` и `APP_SECURITY_JWT_SECRET` в защищённые переменные GitLab.
-Данные PostgreSQL и фотографии питомцев хранятся в отдельных Docker volumes.
+Данные PostgreSQL и локальные фотографии питомцев хранятся в отдельных Docker volumes. При `APP_STORAGE_BACKEND=s3` снимки лежат во внешнем S3, его в compose нет.

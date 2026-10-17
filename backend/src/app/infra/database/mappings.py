@@ -19,6 +19,7 @@ from app.domain.notes.entity import Note
 from app.domain.notifications.entity import Notification
 from app.domain.notifications.enums import NotificationStatus, NotificationType
 from app.domain.pets.entity import Pet
+from app.domain.pets.enums import AvatarSource
 from app.domain.refresh_tokens.entity import RefreshToken
 from app.domain.states.entity import State
 from app.domain.users.entity import User
@@ -89,7 +90,9 @@ pets = Table(
     Column("breed_id", PGUUID(as_uuid=True), ForeignKey("breeds.id", ondelete="SET NULL"), nullable=True),
     Column("name", String(100), nullable=False),
     Column("birth_date", Double, nullable=True),
-    Column("photo_url", String(255), nullable=True),
+    Column("photo_key", String(255), nullable=True),
+    Column("generated_avatar_key", String(255), nullable=True),
+    Column("avatar_source", str_enum(AvatarSource, "avatar_source"), nullable=False, default=AvatarSource.PHOTO),
     Column("created_at", Double(), nullable=False, default=lambda: time()),
     Column("updated_at", Double(), nullable=False, default=lambda: time()),
     Index("idx_pets_user_id", "user_id"),

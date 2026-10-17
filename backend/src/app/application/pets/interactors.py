@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import Any
+from uuid import uuid4
 
 from app.application.changes import apply_changes
 from app.application.pagination import Page, Pagination
 from app.application.pets.dto import PetAnimalResult, PetBreedResult, PetCreateData, PetResult, PetUpdateData
+from app.application.ports.avatar_generator import AvatarGenerator
 from app.application.ports.breed_gateway import BreedGateway
 from app.application.ports.pet_gateway import PetGateway
 from app.application.ports.photos import MAX_PHOTO_BYTES, PhotoStorage, PhotoUpload
@@ -12,10 +14,39 @@ from app.domain.breeds.entity import Breed
 from app.domain.breeds.errors import RelatedBreedNotFoundError
 from app.domain.breeds.ids import BreedId
 from app.domain.pets.entity import Pet
-from app.domain.pets.errors import FileTooLargeError, PetNotFoundError, UnsupportedFileTypeError
+from app.domain.pets.enums import AvatarSource
+from app.domain.pets.errors import (
+    FileTooLargeError,
+    GeneratedAvatarMissingError,
+    PetNotFoundError,
+    PetPhotoRequiredError,
+    UnsupportedFileTypeError,
+)
 from app.domain.pets.ids import PetId
 from app.domain.pets.rules import age_months
 from app.domain.users.ids import UserId
+
+_PHOTO_EXTENSIONS = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+_EXTENSION_TYPES = {extension: media_type for media_type, extension in _PHOTO_EXTENSIONS.items()}
+_EXTENSION_TYPES[".jpeg"] = "image/jpeg"
+
+
+def photo_media_type(content_type: str | None) -> str:
+    media_type = content_type.split(";", 1)[0].strip().lower() if content_type else ""
+    if media_type not in _PHOTO_EXTENSIONS:
+        raise UnsupportedFileTypeError
+    return media_type
+
+
+def photo_extension(content_type: str | None) -> str:
+    return _PHOTO_EXTENSIONS[photo_media_type(content_type)]
+
+
+def content_type_for_key(key: str) -> str:
+    dot = key.rfind(".")
+    if dot < 0:
+        return "application/octet-stream"
+    return _EXTENSION_TYPES.get(key[dot:].lower(), "application/octet-stream")
 
 
 @dataclass
@@ -23,15 +54,19 @@ class _PetContext:
     uow: UnitOfWork
     pet_gateway: PetGateway
     breed_gateway: BreedGateway
+    photos: PhotoStorage
 
-    @staticmethod
-    def _to_read_response(pet: Pet) -> PetResult:
+    def _to_read_response(self, pet: Pet) -> PetResult:
         birth_date = pet.birth_date
         breed = animal = None
         if pet.breed is not None:
             breed = PetBreedResult(id=pet.breed.id, name=pet.breed.name)
             if pet.breed.animal is not None:
                 animal = PetAnimalResult(id=pet.breed.animal.id, name=pet.breed.animal.name)
+        source = pet.avatar_source if isinstance(pet.avatar_source, AvatarSource) else AvatarSource(pet.avatar_source)
+        photo_url = self.photos.url(pet.photo_key)
+        generated_url = self.photos.url(pet.generated_avatar_key)
+        avatar_url = generated_url if source == AvatarSource.GENERATED else photo_url
         return PetResult(
             id=pet.id,
             userId=pet.user_id,
@@ -40,7 +75,10 @@ class _PetContext:
             breed=breed,
             birthDate=birth_date,
             ageMonths=age_months(birth_date),
-            photoUrl=pet.photo_url,
+            photoUrl=photo_url,
+            generatedAvatarUrl=generated_url,
+            avatarSource=source,
+            avatarUrl=avatar_url,
             createdAt=pet.created_at,
             updatedAt=pet.updated_at,
         )
@@ -50,6 +88,12 @@ class _PetContext:
         if breed is None:
             raise RelatedBreedNotFoundError
         return breed
+
+    async def _require_pet(self, user_id: UserId, pet_id: PetId) -> Pet:
+        pet = await self.pet_gateway.get_by_id(pet_id, user_id=user_id)
+        if pet is None:
+            raise PetNotFoundError
+        return pet
 
 
 class ListPets(_PetContext):
@@ -62,10 +106,7 @@ class ListPets(_PetContext):
 
 class GetPet(_PetContext):
     async def __call__(self, user_id: UserId, pet_id: PetId) -> PetResult:
-        pet = await self.pet_gateway.get_by_id(pet_id, user_id=user_id)
-        if pet is None:
-            raise PetNotFoundError
-        return self._to_read_response(pet)
+        return self._to_read_response(await self._require_pet(user_id, pet_id))
 
 
 class CreatePet(_PetContext):
@@ -80,9 +121,7 @@ class CreatePet(_PetContext):
 
 class UpdatePet(_PetContext):
     async def __call__(self, user_id: UserId, pet_id: PetId, data: PetUpdateData) -> PetResult:
-        pet = await self.pet_gateway.get_by_id(pet_id, user_id=user_id)
-        if pet is None:
-            raise PetNotFoundError
+        pet = await self._require_pet(user_id, pet_id)
         provided = data.changes
         values: dict[str, Any] = {}
         if "name" in provided:
@@ -100,47 +139,80 @@ class UpdatePet(_PetContext):
         return result
 
 
-@dataclass
-class _PetPhotoContext(_PetContext):
-    photos: PhotoStorage
-
-
-class DeletePet(_PetPhotoContext):
+class DeletePet(_PetContext):
     async def __call__(self, user_id: UserId, pet_id: PetId) -> None:
-        pet = await self.pet_gateway.get_by_id(pet_id, user_id=user_id)
-        if pet is None:
-            raise PetNotFoundError
-        photo_url = pet.photo_url
+        pet = await self._require_pet(user_id, pet_id)
+        photo_key = pet.photo_key
+        avatar_key = pet.generated_avatar_key
         await self.uow.delete(pet)
         await self.uow.commit()
-        await self.photos.delete(photo_url)
+        await self.photos.delete(photo_key)
+        await self.photos.delete(avatar_key)
 
 
-def photo_extension(content_type: str | None) -> str:
-    allowed = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
-    media_type = content_type.split(";", 1)[0].strip().lower() if content_type else ""
-    if media_type not in allowed:
-        raise UnsupportedFileTypeError
-    return allowed[media_type]
-
-
-class SetPetPhoto(_PetPhotoContext):
+class SetPetPhoto(_PetContext):
     async def __call__(self, user_id: UserId, pet_id: PetId, upload: PhotoUpload) -> PetResult:
-        extension = photo_extension(upload.content_type)
+        media_type = photo_media_type(upload.content_type)
+        extension = _PHOTO_EXTENSIONS[media_type]
         if len(upload.content) > MAX_PHOTO_BYTES:
             raise FileTooLargeError
-        pet = await self.pet_gateway.get_by_id(pet_id, user_id=user_id)
-        if pet is None:
-            raise PetNotFoundError
-        old_url = pet.photo_url
-        new_url = await self.photos.save(upload.content, extension)
+        pet = await self._require_pet(user_id, pet_id)
+        old_photo = pet.photo_key
+        old_avatar = pet.generated_avatar_key
+        new_key = f"pets/{pet.id}/photo/{uuid4()}{extension}"
+        await self.photos.save(new_key, upload.content, media_type)
         try:
-            apply_changes(pet, {"photo_url": new_url})
+            apply_changes(
+                pet,
+                {"photo_key": new_key, "generated_avatar_key": None, "avatar_source": AvatarSource.PHOTO},
+            )
             result = self._to_read_response(pet)
             await self.uow.commit()
         except Exception:
-            await self.photos.delete(new_url)
+            await self.photos.delete(new_key)
             raise
-        if old_url and old_url != new_url:
-            await self.photos.delete(old_url)
+        if old_photo and old_photo != new_key:
+            await self.photos.delete(old_photo)
+        if old_avatar:
+            await self.photos.delete(old_avatar)
+        return result
+
+
+@dataclass
+class GeneratePetAvatar(_PetContext):
+    avatars: AvatarGenerator
+
+    async def __call__(self, user_id: UserId, pet_id: PetId) -> PetResult:
+        pet = await self._require_pet(user_id, pet_id)
+        if not pet.photo_key:
+            raise PetPhotoRequiredError
+        original = await self.photos.load(pet.photo_key)
+        generated = await self.avatars.generate(original, content_type_for_key(pet.photo_key))
+        extension = generated.extension if generated.extension.startswith(".") else f".{generated.extension}"
+        new_key = f"pets/{pet.id}/avatar/{uuid4()}{extension}"
+        await self.photos.save(new_key, generated.content, generated.content_type)
+        old_avatar = pet.generated_avatar_key
+        try:
+            apply_changes(pet, {"generated_avatar_key": new_key})
+            result = self._to_read_response(pet)
+            await self.uow.commit()
+        except Exception:
+            await self.photos.delete(new_key)
+            raise
+        if old_avatar and old_avatar != new_key:
+            await self.photos.delete(old_avatar)
+        return result
+
+
+class SelectPetAvatar(_PetContext):
+    async def __call__(self, user_id: UserId, pet_id: PetId, source: AvatarSource) -> PetResult:
+        pet = await self._require_pet(user_id, pet_id)
+        if source == AvatarSource.GENERATED:
+            if not pet.generated_avatar_key:
+                raise GeneratedAvatarMissingError
+        elif not pet.photo_key:
+            raise PetPhotoRequiredError
+        apply_changes(pet, {"avatar_source": source})
+        result = self._to_read_response(pet)
+        await self.uow.commit()
         return result

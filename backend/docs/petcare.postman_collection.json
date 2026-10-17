@@ -717,6 +717,60 @@
               ]
             }
           }
+        },
+        {
+          "name": "Generate Avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/avatar/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "avatar",
+                "generate"
+              ],
+              "query": []
+            },
+            "description": "Build a stylized avatar from the pet's photo. Does not change avatarSource."
+          }
+        },
+        {
+          "name": "Select Avatar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "avatar"
+              ],
+              "query": []
+            },
+            "description": "Choose which image to show: the original photo or the generated avatar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"photo\"\n}"
+            }
+          }
         }
       ]
     },

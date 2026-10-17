@@ -81,18 +81,18 @@ async def test_failed_completion_rolls_back_both_events(client, auth, pet_id, db
 
 
 async def test_failed_photo_update_keeps_old_file_and_removes_new_file(
-    client, auth, pet_id, db_session_factory, tmp_path, monkeypatch
+    client, auth, pet_id, db_session_factory, storage, monkeypatch
 ):
-    monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
     url = f"/api/v1/pets/{pet_id}/photo"
     first = client.put(url, headers=auth, files={"file": ("pet.png", b"old photo", "image/png")})
-    old_url = first.json()["photoUrl"]
-    original = list((tmp_path / "pets").iterdir())
+    assert first.status_code == 200
+    old_key = first.json()["photoUrl"].removeprefix("/media/")
+    original = dict(storage.objects)
     monkeypatch.setattr(AsyncSession, "commit", fail_after_flush)
     assert client.put(url, headers=auth, files={"file": ("pet.png", b"new photo", "image/png")}).status_code == 500
-    assert list((tmp_path / "pets").iterdir()) == original
+    assert storage.objects == original
     async with db_session_factory() as session:
-        assert (await session.get(Pet, UUID(pet_id))).photo_url == old_url
+        assert (await session.get(Pet, UUID(pet_id))).photo_key == old_key
 
 
 def test_authentication_gateway_and_uow_share_one_session(client, auth, pet_id, monkeypatch):

@@ -5,12 +5,21 @@ from fastapi import APIRouter, File, Response, UploadFile, status
 
 from app.application.pagination import Pagination
 from app.application.pets.dto import PetCreateData, PetUpdateData
-from app.application.pets.interactors import CreatePet, DeletePet, GetPet, ListPets, SetPetPhoto, UpdatePet
+from app.application.pets.interactors import (
+    CreatePet,
+    DeletePet,
+    GeneratePetAvatar,
+    GetPet,
+    ListPets,
+    SelectPetAvatar,
+    SetPetPhoto,
+    UpdatePet,
+)
 from app.domain.pets.ids import PetId
 from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
 from app.presentation.http.paginated import Page
-from app.presentation.http.schemas.pet import PetCreateBody, PetReadResponse, PetUpdateBody
+from app.presentation.http.schemas.pet import PetAvatarBody, PetCreateBody, PetReadResponse, PetUpdateBody
 from app.presentation.http.schemas.responses import ErrorResponse
 from app.presentation.http.uploads import read_photo
 
@@ -79,4 +88,48 @@ async def upload_photo(
 ) -> PetReadResponse:
     result = await interactor(user.id, pet_id, await read_photo(file))
     track("pet", "photo_uploaded")
+    return PetReadResponse.model_validate(result, from_attributes=True)
+
+
+@router.post(
+    "/{pet_id}/avatar/generate",
+    response_model=PetReadResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        **_NOT_FOUND,
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "PET_PHOTO_REQUIRED"},
+        status.HTTP_502_BAD_GATEWAY: {"model": ErrorResponse, "description": "AVATAR_GENERATION_FAILED"},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "model": ErrorResponse,
+            "description": "AVATAR_GENERATION_UNAVAILABLE",
+        },
+    },
+)
+async def generate_avatar(
+    user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[GeneratePetAvatar]
+) -> PetReadResponse:
+    """Build a stylized avatar from the pet's photo. Does not change avatarSource."""
+    result = await interactor(user.id, pet_id)
+    track("pet", "avatar_generated")
+    return PetReadResponse.model_validate(result, from_attributes=True)
+
+
+@router.put(
+    "/{pet_id}/avatar",
+    response_model=PetReadResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        **_NOT_FOUND,
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "model": ErrorResponse,
+            "description": "PET_PHOTO_REQUIRED or GENERATED_AVATAR_MISSING",
+        },
+    },
+)
+async def select_avatar(
+    user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[SelectPetAvatar], body: PetAvatarBody
+) -> PetReadResponse:
+    """Choose which image to show: the original photo or the generated avatar."""
+    result = await interactor(user.id, pet_id, body.source)
+    track("pet", "avatar_selected")
     return PetReadResponse.model_validate(result, from_attributes=True)

@@ -5,6 +5,7 @@ from pydantic import Field, field_validator
 
 from app.domain.animals.ids import AnimalId
 from app.domain.breeds.ids import BreedId
+from app.domain.pets.enums import AvatarSource
 from app.domain.pets.ids import PetId
 from app.domain.users.ids import UserId
 from app.presentation.http.schemas.base import PyModel
@@ -63,6 +64,10 @@ class PetUpdateBody(_PetNameBirthValidation):
     birthDate: float | None = Field(None, description="Birth date as Unix seconds at UTC midnight.")
 
 
+class PetAvatarBody(PyModel):
+    source: AvatarSource
+
+
 class PetReadResponse(PyModel):
     id: PetId
     userId: UserId
@@ -71,6 +76,11 @@ class PetReadResponse(PyModel):
     breed: PetBreedReadResponse | None = Field(description="null only if an admin deleted the pet's breed")
     birthDate: float | None = Field(description="Birth date as Unix seconds at UTC midnight.")
     ageMonths: int | None
-    photoUrl: str | None
+    photoUrl: str | None = Field(description="URL of the original photo.")
+    generatedAvatarUrl: str | None = Field(description="URL of the generated avatar.")
+    avatarSource: AvatarSource = Field(description="Which image to show: photo or generated.")
+    avatarUrl: str | None = Field(
+        description="Image to display: the generated avatar when avatarSource is generated, otherwise the photo."
+    )
     createdAt: float = Field(description="Unix seconds in UTC; fractional seconds are supported.")
     updatedAt: float = Field(description="Unix seconds in UTC; fractional seconds are supported.")
