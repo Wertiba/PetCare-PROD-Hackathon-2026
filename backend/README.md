@@ -78,7 +78,7 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 
 ## Методы
 
-Все списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`. Все моменты времени — числовые Unix seconds в UTC, например `1770000000.125`: в теле запроса, query-параметрах и ответах. Это относится к `createdAt`, `updatedAt`, `schedule`, `doneAt`, `nextSchedule`, `time`, `from`, `to`, `birthDate` и `timestamp` в ошибках. `birthDate` нормализуется к полуночи UTC. ISO-строки дат больше не принимаются. Продолжительности (`expiresIn`, `days`, `ageMonths`) сохраняют свои единицы. Используются обычные `float` и стандартные модули Python `time`, `datetime`, `calendar`. Чужие и несуществующие объекты отвечают `404`. Ссылка в теле запроса на чужой/несуществующий объект (`petId`, `catId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
+Все списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`. Все моменты времени — числовые Unix seconds в UTC, например `1770000000.125`: в теле запроса, query-параметрах и ответах. Это относится к `createdAt`, `updatedAt`, `schedule`, `doneAt`, `nextSchedule`, `time`, `from`, `to`, `birthDate` и `timestamp` в ошибках. `birthDate` нормализуется к полуночи UTC. ISO-строки дат больше не принимаются. Продолжительности (`expiresIn`, `days`, `ageMonths`) сохраняют свои единицы. Используются обычные `float` и стандартные модули Python `time`, `datetime`, `calendar`. Чужие и несуществующие объекты отвечают `404`. Ссылка в теле запроса на чужой/несуществующий объект (`petId`, `categoryId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
 
 | Метод | Путь | Что делает |
 |---|---|---|
@@ -95,8 +95,8 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ |
 | GET / POST | `/api/v1/categories?type=&q=` | Общие для всех категории: встроенные, затем созданные пользователями / создать |
 | GET / PATCH / DELETE | `/api/v1/categories/{id}` | Менять может автор или админ (иначе `403`, для встроенных `SYSTEM_CATEGORY_READ_ONLY`). Пока категорией пользуются другие, нельзя удалить её или сменить `kind`/`type`: `409 CATEGORY_IN_USE` |
-| GET / POST | `/api/v1/states?petId=&catId=&from=&to=` | Замеры (вес, корм, реакции...) |
-| GET | `/api/v1/states/summary?petId=&catId=&from=&to=` | Агрегат за период по `kind` категории: sum, avg, last, count, min, max |
+| GET / POST | `/api/v1/states?petId=&categoryId=&from=&to=` | Замеры (вес, корм, реакции...) |
+| GET | `/api/v1/states/summary?petId=&categoryId=&from=&to=` | Агрегат за период по `kind` категории: sum, avg, last, count, min, max |
 | GET / PATCH / DELETE | `/api/v1/states/{id}` | Замер |
 | GET / POST | `/api/v1/events?petId=&status=&type=&from=&to=` | События: прививки, обработки, визиты к ветеринару, лекарства |
 | GET | `/api/v1/events/upcoming?days=30&petId=` | Ближайшие запланированные, включая просроченные (`isOverdue`) |

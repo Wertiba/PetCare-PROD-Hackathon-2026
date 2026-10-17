@@ -112,7 +112,7 @@ DOMAIN_TO_API: dict[type, callable] = {
     ),
     RelatedCategoryNotFoundError: lambda path, exc=None: CategoryNotFoundRef(
         path=path,
-        details={"field": "catId"},
+        details={"field": "categoryId"},
     ),
     SystemCategoryReadOnlyError: lambda path, exc=None: SystemCategoryReadOnly(
         path=path,

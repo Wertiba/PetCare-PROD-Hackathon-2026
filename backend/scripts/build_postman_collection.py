@@ -25,7 +25,7 @@ ID_VARS = {
     "breed_id": "breedId",
     "breedId": "breedId",
     "category_id": "categoryId",
-    "catId": "categoryId",
+    "categoryId": "categoryId",
     "state_id": "stateId",
     "event_id": "eventId",
     "eventId": "eventId",
@@ -71,7 +71,7 @@ BODIES = {  # whole-body overrides where field-by-field examples would not make 
         "schedule": 1798761600,
         "period": "yearly",
     },
-    ("/api/v1/states", "post"): {"petId": "{{petId}}", "catId": "{{categoryId}}", "value": 1},
+    ("/api/v1/states", "post"): {"petId": "{{petId}}", "categoryId": "{{categoryId}}", "value": 1},
     ("/api/v1/foods", "post"): {
         "petId": "{{petId}}",
         "name": "Royal Canin Sterilised",

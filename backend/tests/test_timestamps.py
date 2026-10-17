@@ -38,7 +38,7 @@ def test_fractional_timestamp_roundtrip_and_epoch_zero(client, auth, pet_id, sys
     state = client.post(
         "/api/v1/states",
         headers=auth,
-        json={"petId": pet_id, "catId": system_categories["weight"], "value": 1, "time": 0},
+        json={"petId": pet_id, "categoryId": system_categories["weight"], "value": 1, "time": 0},
     )
     assert state.status_code == 201
     assert state.json()["time"] == 0.0
@@ -47,7 +47,7 @@ def test_fractional_timestamp_roundtrip_and_epoch_zero(client, auth, pet_id, sys
     summary = client.get(
         "/api/v1/states/summary",
         headers=auth,
-        params={"petId": pet_id, "catId": system_categories["weight"], "from": 0, "to": 0},
+        params={"petId": pet_id, "categoryId": system_categories["weight"], "from": 0, "to": 0},
     )
     assert summary.json()["from"] == 0.0
     assert summary.json()["to"] == 0.0

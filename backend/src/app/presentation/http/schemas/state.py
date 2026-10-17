@@ -18,7 +18,7 @@ class _StateNoteValidation(PyModel):
 
 class StateCreateBody(_StateNoteValidation):
     petId: PetId
-    catId: CategoryId
+    categoryId: CategoryId
     value: int
     time: float | None = Field(
         None, description="Defaults to now. Unix seconds in UTC; fractional seconds are supported."
@@ -42,7 +42,7 @@ class StateUpdateBody(_StateNoteValidation):
 class StateReadResponse(PyModel):
     id: StateId
     petId: PetId
-    catId: CategoryId
+    categoryId: CategoryId
     value: int
     note: str | None
     time: float = Field(description="Unix seconds in UTC; fractional seconds are supported.")
@@ -51,7 +51,7 @@ class StateReadResponse(PyModel):
 
 class StateSummaryResponse(PyModel):
     petId: PetId
-    catId: CategoryId
+    categoryId: CategoryId
     kind: CategoryKind
     unit: CategoryUnit
     value: float | None = Field(description="Aggregated by the category kind; null when there are no states")

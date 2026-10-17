@@ -355,7 +355,7 @@ erDiagram
     states {
         uuid id PK
         uuid pet_id FK
-        uuid cat_id FK
+        uuid category_id FK
         int value
         string note
         float time
@@ -403,6 +403,7 @@ erDiagram
 | `0005_user_login` | `email` → `login` |
 | `0006_animals_notes_food` | Справочник видов, заметки, журнал питания, общие категории |
 | `0007_jury_users` | Демо-аккаунты `жюри1`…`жюри10` (пароль `qwerty12345`) |
+| `0008_states_category_id` | `states.cat_id` → `category_id` вместе с внешним ключом и индексом, данные сохраняются |
 
 ---
 
@@ -414,7 +415,7 @@ erDiagram
 
 - Авторизация: `Authorization: Bearer <accessToken>` (🔒 в таблицах ниже). Refresh-токен передаётся только в HttpOnly-cookie `refreshToken`.
 - Списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`.
-- Чужой или несуществующий объект в пути — `404`. Ссылка в теле на чужой объект (`petId`, `catId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
+- Чужой или несуществующий объект в пути — `404`. Ссылка в теле на чужой объект (`petId`, `categoryId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
 - Ошибка: `{code, message, traceId, timestamp, path, fieldErrors?, details?}`. Коды: `VALIDATION_FAILED`, `UNAUTHORIZED`, `WRONG_LOGIN_OR_PASSWORD`, `USER_INACTIVE`, `FORBIDDEN`, `NOT_FOUND`, `*_NOT_FOUND`, `LOGIN_ALREADY_EXISTS`, `CONFLICT`, `EVENT_NOT_PLANNED`, `CATEGORY_IN_USE`, `SYSTEM_CATEGORY_READ_ONLY`, `INVALID_VALUE`, `FILE_TOO_LARGE`, `UNSUPPORTED_FILE_TYPE`, `INTERNAL_ERROR`.
 
 ### Служебные
@@ -469,8 +470,8 @@ erDiagram
 |---|---|---|---|
 | GET / POST 🔒 | `/categories?type=&q=` | Встроенные и пользовательские категории параметров | 5.2.5 |
 | GET / PATCH / DELETE 🔒 | `/categories/{id}` | Менять может автор или админ; используемую другими — нельзя (`409`) | 5.2.5 |
-| GET / POST 🔒 | `/states?petId=&catId=&from=&to=` | Замеры: вес, аппетит, реакции... | 5.2.5, 5.3.4 |
-| GET 🔒 | `/states/summary?petId=&catId=&from=&to=` | Агрегат за период по `kind` категории | 5.2.5 |
+| GET / POST 🔒 | `/states?petId=&categoryId=&from=&to=` | Замеры: вес, аппетит, реакции... | 5.2.5, 5.3.4 |
+| GET 🔒 | `/states/summary?petId=&categoryId=&from=&to=` | Агрегат за период по `kind` категории | 5.2.5 |
 | GET / PATCH / DELETE 🔒 | `/states/{id}` | Замер | 5.2.5 |
 | GET / POST 🔒 | `/foods?petId=&isApproach=&isTolerability=` | Журнал кормлений и оценки | 5.3.1–5.3.5 |
 | GET / PATCH / DELETE 🔒 | `/foods/{id}` | Кормление | 5.3 |
@@ -493,7 +494,7 @@ petcare/
     ├── pyproject.toml, uv.lock  # зависимости (зафиксированы)
     ├── ruff.toml, pytest.ini, .coveragerc
     ├── configs/config.yaml      # порт, логирование, JWT, пул БД
-    ├── alembic/versions/        # миграции 0001–0007
+    ├── alembic/versions/        # миграции 0001–0008
     ├── scripts/
     │   ├── build_postman_collection.py   # Postman из openapi.json
     │   └── coverage_report.sh            # обновить отчёты покрытия в docs/

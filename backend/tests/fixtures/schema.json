@@ -50,9 +50,9 @@
     ]
   },
   "states": {
-    "table": "\nCREATE TABLE states (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tcat_id UUID NOT NULL, \n\tvalue INTEGER NOT NULL, \n\tnote VARCHAR(1000), \n\ttime DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE, \n\tFOREIGN KEY(cat_id) REFERENCES categories (id) ON DELETE CASCADE\n)\n\n",
+    "table": "\nCREATE TABLE states (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tcategory_id UUID NOT NULL, \n\tvalue INTEGER NOT NULL, \n\tnote VARCHAR(1000), \n\ttime DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE, \n\tFOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE CASCADE\n)\n\n",
     "indexes": [
-      "CREATE INDEX idx_states_pet_id_cat_id_time ON states (pet_id, cat_id, time)"
+      "CREATE INDEX idx_states_pet_id_category_id_time ON states (pet_id, category_id, time)"
     ]
   },
   "notifications": {

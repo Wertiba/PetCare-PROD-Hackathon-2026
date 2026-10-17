@@ -70,7 +70,7 @@ def test_category_used_by_others_keeps_its_meaning(client):
     _, other = register_user(client, login="other")
     category_id = _create(client, owner).json()["id"]
     pet = client.post("/api/v1/pets", json={"name": "Рекс", "breedId": DOG_BREED_ID}, headers=other).json()["id"]
-    state = client.post("/api/v1/states", json={"petId": pet, "catId": category_id, "value": 1}, headers=other)
+    state = client.post("/api/v1/states", json={"petId": pet, "categoryId": category_id, "value": 1}, headers=other)
     assert state.status_code == 201, state.text
     deleted = client.delete(f"/api/v1/categories/{category_id}", headers=owner)
     assert deleted.status_code == 409

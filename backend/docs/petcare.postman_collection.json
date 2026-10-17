@@ -903,7 +903,7 @@
                   "disabled": true
                 },
                 {
-                  "key": "catId",
+                  "key": "categoryId",
                   "value": "",
                   "description": "",
                   "disabled": true
@@ -962,7 +962,7 @@
             "description": "Create State",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"catId\": \"{{categoryId}}\",\n  \"value\": 1\n}"
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"value\": 1\n}"
             }
           },
           "event": [
@@ -1003,7 +1003,7 @@
                   "disabled": false
                 },
                 {
-                  "key": "catId",
+                  "key": "categoryId",
                   "value": "{{categoryId}}",
                   "description": "",
                   "disabled": false
