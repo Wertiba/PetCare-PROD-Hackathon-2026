@@ -21,7 +21,7 @@ export function UserMenu() {
   return (
     <div className="ml-auto flex items-center gap-3 text-sm whitespace-nowrap">
       <span className="hidden text-neutral-600 sm:inline">
-        {user.name}
+        {user.fullName}
       </span>
       <button
         type="button"

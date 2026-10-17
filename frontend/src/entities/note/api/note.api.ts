@@ -1,5 +1,8 @@
 import api from '@src/shared/api/client';
-import { Timestamp, Uid } from '@src/shared/api/global.types';
+import {
+  Timestamp,
+  Uid,
+} from '@src/shared/api/global.types';
 
 export interface Note {
   content: string;

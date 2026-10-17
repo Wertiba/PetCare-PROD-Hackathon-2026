@@ -5,7 +5,7 @@ import { useGetFoodsQuery } from '@src/entities/food';
 import { useGetNotificationsQuery } from '@src/entities/notification';
 import {
   type Pet,
-  useGetPetsQuery,
+  useGetPetQuery,
 } from '@src/entities/pet';
 import { useGetStatesQuery } from '@src/entities/state';
 import {
@@ -227,7 +227,7 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
 
 export function Dashboard() {
   const user = useUserStore(selectUser);
-  const petsQuery = useGetPetsQuery({ page: 0, size: 100 });
+  const petsQuery = useGetPetQuery({ page: 0, size: 100 });
   const logout = useLogoutMutation();
   const deletion = useDeletePetMutation();
   const [tool, setTool] = useState<Tool>('home');
@@ -430,10 +430,11 @@ export function Dashboard() {
             className="flex h-10 items-center gap-2 rounded-md border border-[var(--forest)]/55 bg-white px-2 text-sm font-bold text-[var(--forest)] transition-colors hover:bg-[var(--cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
           >
             <span className="grid size-7 place-items-center rounded-full bg-[var(--forest)] text-xs text-white">
-              {user?.name?.slice(0, 1).toUpperCase() ?? 'P'}
+              {user?.fullName?.slice(0, 1).toUpperCase() ??
+                'P'}
             </span>
             <span className="hidden max-w-28 truncate md:inline">
-              {user?.name ?? 'Профиль'}
+              {user?.fullName ?? 'Профиль'}
             </span>
             <span aria-hidden="true">⌄</span>
           </button>
@@ -445,12 +446,36 @@ export function Dashboard() {
             >
               <div className="border-b border-[var(--forest)]/15 px-3 py-3">
                 <p className="text-sm font-bold text-[var(--forest)]">
-                  {user?.name ?? 'Профиль'}
+                  {user?.fullName ?? 'Профиль'}
                 </p>
                 <p className="mt-0.5 truncate text-sm text-[var(--ink)]/60">
                   @{user?.login ?? 'user'}
                 </p>
               </div>
+              <Link
+                href="/account"
+                role="menuitem"
+                onClick={() => setProfileOpen(false)}
+                className="mt-2 flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    aria-hidden="true"
+                    className="size-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.8"
+                  >
+                    <circle cx="12" cy="8" r="3" />
+                    <path d="M5 20a7 7 0 0 1 14 0" />
+                  </svg>
+                  Личный кабинет
+                </span>
+                <span aria-hidden="true">→</span>
+              </Link>
               <button
                 type="button"
                 role="menuitem"

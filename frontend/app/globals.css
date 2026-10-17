@@ -10,6 +10,42 @@
   --ink: #242924;
 }
 
+[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #101913;
+  --foreground: #e8f0e4;
+  --forest: #b8dc90;
+  --forest-surface: #29573e;
+  --lime: #bce77d;
+  --cream: #18271f;
+  --white: #26382f;
+  --ink: #e8f0e4;
+}
+
+[data-theme='dark'] .bg-white {
+  background-color: var(--white);
+}
+
+[data-theme='dark'] .bg-\[var\(--forest\)\] {
+  background-color: var(--forest-surface);
+}
+
+[data-theme='dark'] .bg-\[var\(--lime\)\],
+[data-theme='dark']
+  .bg-\[var\(--lime\)\]
+  .text-\[var\(--forest\)\] {
+  color: #173e32;
+}
+
+[data-theme='dark']
+  .hover\:bg-\[var\(--forest\)\]\/90:hover {
+  background-color: color-mix(
+    in oklab,
+    var(--forest-surface) 90%,
+    transparent
+  );
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

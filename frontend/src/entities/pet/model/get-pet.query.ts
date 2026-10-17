@@ -12,7 +12,7 @@ import {
   fetchPets,
 } from '../api';
 
-export const useGetPetsQuery = (query: FetchPetsReqDto) =>
+export const useGetPetQuery = (query: FetchPetsReqDto) =>
   useQuery({
     queryKey: [...queryKeys.pets.all, query],
     queryFn: () => fetchPets(query),

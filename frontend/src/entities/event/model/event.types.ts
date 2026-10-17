@@ -29,4 +29,10 @@ export interface Event {
   status: EventStatus;
   schedule: Timestamp;
   period: EventPeriod;
+  description: string | null;
+  doneAt: Timestamp | null;
+  isOverdue: boolean;
+  nextSchedule: Timestamp | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }

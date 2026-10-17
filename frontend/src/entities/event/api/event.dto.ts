@@ -34,6 +34,7 @@ export interface CreateEventReqDto {
   status: EventStatus;
   schedule: Timestamp;
   period: EventPeriod;
+  description?: string | null;
 }
 
 export interface UpdateEventReqDto {
