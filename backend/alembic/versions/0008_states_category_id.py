@@ -1,7 +1,7 @@
 """Rename states.cat_id to category_id, with its foreign key and index, keeping existing measurements.
 
 Revision ID: 0008_states_category_id
-Revises: 0007_jury_users
+Revises: 0008_pet_avatars
 """
 
 import sqlalchemy as sa
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "0008_states_category_id"
-down_revision = "0007_jury_users"
+down_revision = "0008_pet_avatars"
 branch_labels = None
 depends_on = None
 

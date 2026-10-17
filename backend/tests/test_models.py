@@ -171,11 +171,11 @@ def _migration_sql(revisions: str, *, downgrade: bool = False) -> str:
 
 
 def test_category_id_migration_renames_column_constraint_and_index_in_place():
-    sql = _migration_sql("0007_jury_users:0008_states_category_id")
+    sql = _migration_sql("0008_pet_avatars:0008_states_category_id")
     assert "ALTER TABLE states RENAME cat_id TO category_id" in sql
     assert "RENAME CONSTRAINT fk_states_cat_id_categories TO fk_states_category_id_categories" in sql
     assert "ALTER INDEX idx_states_pet_id_cat_id_time RENAME TO idx_states_pet_id_category_id_time" in sql
     assert "DROP COLUMN" not in sql
-    back = _migration_sql("0008_states_category_id:0007_jury_users", downgrade=True)
+    back = _migration_sql("0008_states_category_id:0008_pet_avatars", downgrade=True)
     assert "ALTER TABLE states RENAME category_id TO cat_id" in back
     assert "RENAME TO idx_states_pet_id_cat_id_time" in back

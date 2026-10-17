@@ -1,4 +1,5 @@
 from typing import Annotated
+from urllib.parse import quote
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, File, Response, UploadFile, status
@@ -15,6 +16,7 @@ from app.application.pets.interactors import (
     SetPetPhoto,
     UpdatePet,
 )
+from app.application.reports.interactors import ExportPetReport
 from app.domain.pets.ids import PetId
 from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
@@ -133,3 +135,24 @@ async def select_avatar(
     result = await interactor(user.id, pet_id, body.source)
     track("pet", "avatar_selected")
     return PetReadResponse.model_validate(result, from_attributes=True)
+
+
+@router.get(
+    "/{pet_id}/report",
+    response_class=Response,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "content": {"application/pdf": {"schema": {"type": "string", "format": "binary"}}},
+            "description": "Pet health and care report: upcoming procedures, vaccination and treatment summary, "
+            "monthly care activity, weight chart, food tolerance and vet conclusions",
+        },
+        **_NOT_FOUND,
+    },
+)
+async def export_report(user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[ExportPetReport]) -> Response:
+    report = await interactor(user.id, pet_id)
+    track("pet", "report_exported")
+    # RFC 6266: an ASCII fallback plus the real (Cyrillic) name for browsers that read filename*.
+    disposition = f"attachment; filename=\"petcare-report.pdf\"; filename*=UTF-8''{quote(report.filename)}"
+    return Response(report.content, media_type="application/pdf", headers={"Content-Disposition": disposition})

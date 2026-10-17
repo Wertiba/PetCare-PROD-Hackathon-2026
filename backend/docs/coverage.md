@@ -1,9 +1,13 @@
-# Покрытие требований тестами
+# Покрытие тестами
 
-Покрыто требований: **30 из 33**. Отчёт генерирует `pytest --req-report=PATH` по маркерам `@pytest.mark.req`.
+Обновить: `sh scripts/coverage_report.sh` из `backend/`. Тот же отчёт строит CI-задача `test-backend`.
+
+## Требования
+
+Покрыто требований: **32 из 35**. Отчёт генерирует `pytest --req-report=PATH` по маркерам `@pytest.mark.req`.
 
 
-## Сценарии
+### Сценарии
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
@@ -12,66 +16,73 @@
 | S3 | Сценарий 3. Учёт питания | 1 | ✅ покрыто |
 | S4 | Сценарий 4. Контроль предстоящих процедур | 1 | ✅ покрыто |
 
-## 5.1 Карточки питомцев
+### 5.1 Карточки питомцев
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
 | 5.1.1 | Создание карточки питомца | 14 | ✅ покрыто |
 | 5.1.2 | Имя, вид, порода и дата рождения | 7 | ✅ покрыто |
 | 5.1.3 | Добавление фотографии | 4 | ✅ покрыто |
-| 5.1.4 | Список питомцев пользователя | 2 | ✅ покрыто |
+| 5.1.4 | Список питомцев пользователя | 3 | ✅ покрыто |
 
-## 5.2 Карта здоровья
+### 5.2 Карта здоровья
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
-| 5.2.1 | История вакцинаций с датами | 5 | ✅ покрыто |
+| 5.2.1 | История вакцинаций с датами | 6 | ✅ покрыто |
 | 5.2.2 | История обработок от паразитов | 2 | ✅ покрыто |
 | 5.2.3 | Записи о посещениях ветеринара | 3 | ✅ покрыто |
 | 5.2.4 | Хранение заключений ветеринаров | 6 | ✅ покрыто |
-| 5.2.5 | Учёт веса и других параметров | 19 | ✅ покрыто |
+| 5.2.5 | Учёт веса и других параметров | 21 | ✅ покрыто |
 
-## 5.3 Учёт питания
+### 5.3 Учёт питания
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
 | 5.3.1 | Записи о кормах | 8 | ✅ покрыто |
-| 5.3.2 | Оценка «понравилось / не понравилось» | 3 | ✅ покрыто |
-| 5.3.3 | Оценка «подошло / не подошло» | 5 | ✅ покрыто |
-| 5.3.4 | Нежелательные реакции: ЖКТ, аллергия | 4 | ✅ покрыто |
-| 5.3.5 | История питания и личная база предпочтений | 7 | ✅ покрыто |
+| 5.3.2 | Оценка «понравилось / не понравилось» | 4 | ✅ покрыто |
+| 5.3.3 | Оценка «подошло / не подошло» | 6 | ✅ покрыто |
+| 5.3.4 | Нежелательные реакции: ЖКТ, аллергия | 5 | ✅ покрыто |
+| 5.3.5 | История питания и личная база предпочтений | 8 | ✅ покрыто |
 
-## 5.4 Напоминания и назначения
+### 5.4 Напоминания и назначения
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
-| 5.4.1 | Расчёт даты следующей вакцинации | 13 | ✅ покрыто |
+| 5.4.1 | Расчёт даты следующей вакцинации | 14 | ✅ покрыто |
 | 5.4.2 | Расчёт даты следующей обработки от паразитов | 8 | ✅ покрыто |
 | 5.4.3 | Назначения препаратов из ветеринарных заключений | 0 | ⚪ нет тестов |
 | 5.4.4 | Длительность и регулярность приёма препаратов | 0 | ⚪ нет тестов |
 | 5.4.5 | Формирование напоминаний | 8 | ✅ покрыто |
-| 5.4.6 | Список ближайших событий | 4 | ✅ покрыто |
+| 5.4.6 | Список ближайших событий | 6 | ✅ покрыто |
 | 5.4.7 | Уведомления через push или виджет | 0 | ⚪ нет тестов |
 
-## 7–8 UX и ограничения
+### 7–8 UX и ограничения
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
 | 7.1 | Понятные ошибки форм с указанием проблемного поля | 22 | ✅ покрыто |
 
-## Платформа
+### Дополнительные функции
+
+| Id | Требование | Тестов | Статус |
+|---|---|---|---|
+| P.REPORT | Экспорт истории питомца в PDF с графиками | 9 | ✅ покрыто |
+
+### Платформа
 
 | Id | Требование | Тестов | Статус |
 |---|---|---|---|
 | P.AUTH | Регистрация, вход, обновление токена, выход | 48 | ✅ покрыто |
-| P.ACCESS | Изоляция данных пользователей и права ролей | 30 | ✅ покрыто |
+| P.ACCESS | Изоляция данных пользователей и права ролей | 31 | ✅ покрыто |
 | P.CATALOG | Справочник видов, пород и категорий | 16 | ✅ покрыто |
 | P.TX | Транзакции: Unit of Work и откаты | 10 | ✅ покрыто |
 | P.TIME | Единый формат времени (Unix seconds, UTC) | 25 | ✅ покрыто |
 | P.OBS | Наблюдаемость: trace id, логи, метрики, health | 31 | ✅ покрыто |
-| P.ARCH | Контракт API, схема БД, границы слоёв | 7 | ✅ покрыто |
+| P.ARCH | Контракт API, схема БД, границы слоёв | 8 | ✅ покрыто |
+| P.CHECK | Демо-данные жюри: разные питомцы и история | 3 | ✅ покрыто |
 
-## Тесты по требованиям
+### Тесты по требованиям
 
 <details><summary>S1 — Сценарий 1. Добавление питомца (2)</summary>
 
@@ -138,19 +149,21 @@
 
 </details>
 
-<details><summary>5.1.4 — Список питомцев пользователя (2)</summary>
+<details><summary>5.1.4 — Список питомцев пользователя (3)</summary>
 
+- `tests/test_pet_report.py::test_demo_history_reads_like_real_use` — passed
 - `tests/test_pets_endpoints.py::test_list_returns_only_current_users_pets` — passed
 - `tests/test_user_scenarios.py::test_scenario_1_owner_adds_a_pet_with_photo` — passed
 
 </details>
 
-<details><summary>5.2.1 — История вакцинаций с датами (5)</summary>
+<details><summary>5.2.1 — История вакцинаций с датами (6)</summary>
 
 - `tests/test_events_endpoints.py::test_create_with_defaults_and_frontend_shape` — passed
 - `tests/test_events_endpoints.py::test_deleting_pet_cascades_to_events` — passed
 - `tests/test_events_endpoints.py::test_list_filters` — passed
 - `tests/test_events_endpoints.py::test_update_validation_and_delete` — passed
+- `tests/test_pet_report.py::test_report_is_a_downloadable_pdf` — passed
 - `tests/test_user_scenarios.py::test_scenario_2_owner_keeps_the_health_history` — passed
 
 </details>
@@ -181,9 +194,11 @@
 
 </details>
 
-<details><summary>5.2.5 — Учёт веса и других параметров (19)</summary>
+<details><summary>5.2.5 — Учёт веса и других параметров (21)</summary>
 
 - `tests/test_categories_endpoints.py::test_list_shows_system_first_then_own` — passed
+- `tests/test_pet_report.py::test_measurements_and_food_become_series_and_verdicts` — passed
+- `tests/test_pet_report.py::test_report_is_a_downloadable_pdf` — passed
 - `tests/test_resilience_and_edge_cases.py::test_state_patch_changes_only_the_given_fields` — passed
 - `tests/test_states_endpoints.py::test_create_and_read_state` — passed
 - `tests/test_states_endpoints.py::test_deleting_pet_cascades_to_states` — passed
@@ -218,34 +233,37 @@
 
 </details>
 
-<details><summary>5.3.2 — Оценка «понравилось / не понравилось» (3)</summary>
+<details><summary>5.3.2 — Оценка «понравилось / не понравилось» (4)</summary>
 
 - `tests/test_foods_endpoints.py::test_crud` — passed
 - `tests/test_foods_endpoints.py::test_list_filters` — passed
+- `tests/test_pet_report.py::test_measurements_and_food_become_series_and_verdicts` — passed
 - `tests/test_user_scenarios.py::test_scenario_3_owner_learns_which_food_suits_the_pet` — passed
 
 </details>
 
-<details><summary>5.3.3 — Оценка «подошло / не подошло» (5)</summary>
+<details><summary>5.3.3 — Оценка «подошло / не подошло» (6)</summary>
 
 - `tests/test_food_rules.py::test_everything_is_suspect_without_tolerated_history` — passed
 - `tests/test_food_rules.py::test_suspects_ignore_case_and_spacing_and_keep_order` — passed
 - `tests/test_foods_endpoints.py::test_crud` — passed
 - `tests/test_foods_endpoints.py::test_list_filters` — passed
+- `tests/test_pet_report.py::test_measurements_and_food_become_series_and_verdicts` — passed
 - `tests/test_user_scenarios.py::test_scenario_3_owner_learns_which_food_suits_the_pet` — passed
 
 </details>
 
-<details><summary>5.3.4 — Нежелательные реакции: ЖКТ, аллергия (4)</summary>
+<details><summary>5.3.4 — Нежелательные реакции: ЖКТ, аллергия (5)</summary>
 
 - `tests/test_categories_endpoints.py::test_list_shows_system_first_then_own` — passed
 - `tests/test_foods_endpoints.py::test_crud` — passed
 - `tests/test_foods_endpoints.py::test_suspects_are_ingredients_never_seen_in_earlier_tolerated_food` — passed
+- `tests/test_pet_report.py::test_measurements_and_food_become_series_and_verdicts` — passed
 - `tests/test_user_scenarios.py::test_scenario_3_owner_learns_which_food_suits_the_pet` — passed
 
 </details>
 
-<details><summary>5.3.5 — История питания и личная база предпочтений (7)</summary>
+<details><summary>5.3.5 — История питания и личная база предпочтений (8)</summary>
 
 - `tests/test_food_rules.py::test_everything_is_suspect_without_tolerated_history` — passed
 - `tests/test_food_rules.py::test_normalize_trims_and_drops_blanks_and_case_insensitive_duplicates` — passed
@@ -253,16 +271,18 @@
 - `tests/test_foods_endpoints.py::test_everything_is_suspect_without_tolerated_history` — passed
 - `tests/test_foods_endpoints.py::test_list_filters` — passed
 - `tests/test_foods_endpoints.py::test_suspects_are_ingredients_never_seen_in_earlier_tolerated_food` — passed
+- `tests/test_pet_report.py::test_report_is_a_downloadable_pdf` — passed
 - `tests/test_user_scenarios.py::test_scenario_3_owner_learns_which_food_suits_the_pet` — passed
 
 </details>
 
-<details><summary>5.4.1 — Расчёт даты следующей вакцинации (13)</summary>
+<details><summary>5.4.1 — Расчёт даты следующей вакцинации (14)</summary>
 
 - `tests/test_events_endpoints.py::test_complete_plans_next_occurrence` — passed
 - `tests/test_events_endpoints.py::test_late_completion_counts_from_done_date` — passed
 - `tests/test_events_endpoints.py::test_next_schedule_is_calculated` — passed
 - `tests/test_events_endpoints.py::test_patch_status_done_also_plans_next` — passed
+- `tests/test_pet_report.py::test_history_folds_into_procedures_and_monthly_activity` — passed
 - `tests/test_transactions.py::test_failed_completion_rolls_back_both_events` — passed
 - `tests/test_user_scenarios.py::test_scenario_4_owner_follows_upcoming_procedures` — passed
 - `tests/test_users_and_observability.py::test_next_occurrence[daily-expected1]` — passed
@@ -301,10 +321,12 @@
 
 </details>
 
-<details><summary>5.4.6 — Список ближайших событий (4)</summary>
+<details><summary>5.4.6 — Список ближайших событий (6)</summary>
 
 - `tests/test_events_endpoints.py::test_upcoming_includes_overdue_and_excludes_far_and_done` — passed
 - `tests/test_notifications_endpoints.py::test_due_filter_and_mark_read` — passed
+- `tests/test_pet_report.py::test_demo_history_reads_like_real_use` — passed
+- `tests/test_pet_report.py::test_history_folds_into_procedures_and_monthly_activity` — passed
 - `tests/test_resilience_and_edge_cases.py::test_upcoming_can_be_narrowed_to_one_pet` — passed
 - `tests/test_user_scenarios.py::test_scenario_4_owner_follows_upcoming_procedures` — passed
 
@@ -334,6 +356,20 @@
 - `tests/test_states_endpoints.py::test_value_must_fit_category_type[liked-2]` — passed
 - `tests/test_states_endpoints.py::test_value_must_fit_category_type[weight--5]` — passed
 - `tests/test_user_scenarios.py::test_scenario_1_quick_form_highlights_the_missing_name` — passed
+
+</details>
+
+<details><summary>P.REPORT — Экспорт истории питомца в PDF с графиками (9)</summary>
+
+- `tests/test_pet_report.py::test_demo_data_migration_seeds_every_jury_account_in_place` — passed
+- `tests/test_pet_report.py::test_demo_history_reads_like_real_use` — passed
+- `tests/test_pet_report.py::test_each_jury_account_gets_its_own_pets` — passed
+- `tests/test_pet_report.py::test_empty_history_still_renders` — passed
+- `tests/test_pet_report.py::test_history_folds_into_procedures_and_monthly_activity` — passed
+- `tests/test_pet_report.py::test_measurements_and_food_become_series_and_verdicts` — passed
+- `tests/test_pet_report.py::test_report_includes_the_pet_photo` — passed
+- `tests/test_pet_report.py::test_report_is_a_downloadable_pdf` — passed
+- `tests/test_pet_report.py::test_report_of_someone_elses_pet_is_not_found` — passed
 
 </details>
 
@@ -390,7 +426,7 @@
 
 </details>
 
-<details><summary>P.ACCESS — Изоляция данных пользователей и права ролей (30)</summary>
+<details><summary>P.ACCESS — Изоляция данных пользователей и права ролей (31)</summary>
 
 - `tests/test_animals_breeds_endpoints.py::test_only_admin_writes_the_catalog` — passed
 - `tests/test_animals_breeds_endpoints.py::test_requires_auth` — passed
@@ -404,6 +440,7 @@
 - `tests/test_notes_endpoints.py::test_other_users_notes_are_invisible` — passed
 - `tests/test_notes_endpoints.py::test_requires_auth` — passed
 - `tests/test_notifications_endpoints.py::test_isolation_and_unknown_event` — passed
+- `tests/test_pet_report.py::test_report_of_someone_elses_pet_is_not_found` — passed
 - `tests/test_pets_endpoints.py::test_list_returns_only_current_users_pets` — passed
 - `tests/test_pets_endpoints.py::test_other_users_pet_is_not_found` — passed
 - `tests/test_resilience_and_edge_cases.py::test_database_outage_returns_uniform_500[/api/v1/animals-animals]` — passed
@@ -527,7 +564,7 @@
 
 </details>
 
-<details><summary>P.ARCH — Контракт API, схема БД, границы слоёв (7)</summary>
+<details><summary>P.ARCH — Контракт API, схема БД, границы слоёв (8)</summary>
 
 - `tests/test_architecture_and_contract.py::test_inner_layers_do_not_import_frameworks_or_outer_layers` — passed
 - `tests/test_architecture_and_contract.py::test_openapi_matches_the_documented_api_contract` — passed
@@ -536,6 +573,62 @@
 - `tests/test_models.py::test_schemas_user_role_is_the_canonical_enum` — passed
 - `tests/test_models.py::test_tables_have_expected_columns` — passed
 - `tests/test_models.py::test_user_role_enum_values` — passed
+- `tests/test_pet_report.py::test_demo_data_migration_seeds_every_jury_account_in_place` — passed
 
 </details>
 
+<details><summary>P.CHECK — Демо-данные жюри: разные питомцы и история (3)</summary>
+
+- `tests/test_pet_report.py::test_demo_data_migration_seeds_every_jury_account_in_place` — passed
+- `tests/test_pet_report.py::test_demo_history_reads_like_real_use` — passed
+- `tests/test_pet_report.py::test_each_jury_account_gets_its_own_pets` — passed
+
+</details>
+
+
+## Код
+
+Строки и ветвления по модулям; файлы со 100 % покрытием не показаны.
+
+| Name                                                    |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
+|-------------------------------------------------------- | -------: | -------: | -------: | -------: | ------: | --------: |
+| src/app/application/animals/interactors.py              |       57 |        0 |        4 |        1 |     98% |   60-\>62 |
+| src/app/application/auth/interactors.py                 |      105 |        2 |       16 |        0 |     98% |     88-89 |
+| src/app/application/breeds/interactors.py               |       73 |        1 |       10 |        3 |     95% |83, 84-\>87, 87-\>89 |
+| src/app/application/categories/interactors.py           |       75 |        0 |       12 |        1 |     99% | 100-\>102 |
+| src/app/application/foods/interactors.py                |       69 |        0 |        8 |        2 |     97% |104-\>106, 106-\>108 |
+| src/app/application/notes/interactors.py                |       57 |        0 |        6 |        1 |     98% |   71-\>73 |
+| src/app/application/notifications/interactors.py        |       68 |        3 |        6 |        1 |     95% |   108-110 |
+| src/app/application/pets/interactors.py                 |      114 |        2 |       28 |        4 |     96% |33-\>35, 96-\>98, 131, 134 |
+| src/app/application/reports/builder.py                  |       99 |        0 |       36 |        3 |     98% |105-\>104, 117-\>108, 119-\>108 |
+| src/app/application/reports/interactors.py              |       44 |        0 |        6 |        1 |     98% |   43-\>41 |
+| src/app/application/states/interactors.py               |       94 |        0 |       16 |        1 |     99% | 117-\>119 |
+| src/app/application/users/interactors.py                |       30 |        2 |        4 |        2 |     88% |    35, 43 |
+| src/app/infra/config.py                                 |       18 |        4 |        4 |        1 |     68% |     40-43 |
+| src/app/infra/database/unit\_of\_work.py                |       21 |        2 |        0 |        0 |     90% |     18-19 |
+| src/app/infra/gateways/animal.py                        |       37 |        5 |        2 |        1 |     85% |20-21, 38-39, 44 |
+| src/app/infra/gateways/breed.py                         |       40 |        4 |        4 |        0 |     91% |21-22, 41-42 |
+| src/app/infra/gateways/category.py                      |       40 |        4 |        4 |        0 |     91% |21-22, 40-41 |
+| src/app/infra/gateways/event.py                         |       75 |        6 |       14 |        1 |     92% |21-\>23, 26-27, 72-73, 92-93 |
+| src/app/infra/gateways/food.py                          |       56 |        6 |        8 |        1 |     89% |20-\>22, 25-26, 68-69, 81-82 |
+| src/app/infra/gateways/note.py                          |       47 |        4 |        6 |        1 |     91% |20-\>22, 25-26, 46-47 |
+| src/app/infra/gateways/notification.py                  |       54 |        5 |       10 |        2 |     89% |23-\>25, 28-29, 74-75, 98 |
+| src/app/infra/gateways/pet.py                           |       35 |        4 |        2 |        1 |     86% |19-\>21, 24-25, 47-48 |
+| src/app/infra/gateways/refresh\_token.py                |       31 |       10 |        0 |        0 |     68% |17-22, 29-30, 36-37 |
+| src/app/infra/gateways/state.py                         |       79 |        8 |       16 |        1 |     91% |29-\>31, 34-35, 77-78, 105-106, 118-119 |
+| src/app/infra/gateways/user.py                          |       24 |        2 |        0 |        0 |     92% |     28-29 |
+| src/app/infra/logger.py                                 |       37 |        6 |        8 |        3 |     80% |15-16, 20-21, 29, 32 |
+| src/app/infra/photos/storage.py                         |       30 |        1 |        8 |        1 |     95% |        28 |
+| src/app/infra/reports/pdf.py                            |      332 |        3 |       74 |        6 |     98% |114, 123-\>125, 166-\>168, 319, 372, 418-\>427 |
+| src/app/infra/security/jwt\_service.py                  |       45 |        0 |        4 |        1 |     98% |   26-\>28 |
+| src/app/infra/singleton.py                              |        6 |        0 |        2 |        1 |     88% |     5-\>7 |
+| src/app/presentation/http/api/v1/endpoints/events.py    |       51 |        0 |        6 |        1 |     98% | 106-\>108 |
+| src/app/presentation/http/api/v1/exceptions/handlers.py |       45 |        4 |        6 |        2 |     88% |30-\>35, 38-39, 58-59 |
+| src/app/presentation/http/loc2field.py                  |       24 |        1 |       12 |        2 |     92% | 6-\>8, 12 |
+| src/app/presentation/http/middleware/observability.py   |       36 |        1 |        6 |        1 |     95% |        23 |
+| src/app/presentation/http/paginated.py                  |       20 |        5 |        2 |        0 |     68% |10, 14, 25-28 |
+| src/app/presentation/http/schemas/base.py               |       14 |        3 |        6 |        3 |     70% |  6, 9, 16 |
+| src/app/presentation/http/schemas/pet.py                |       60 |        3 |       10 |        1 |     94% | 31, 47-48 |
+| **TOTAL**                                               | **4341** |  **101** |  **440** |   **51** | **97%** |           |
+
+175 files skipped due to complete coverage.
