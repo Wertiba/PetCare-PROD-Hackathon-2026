@@ -457,7 +457,7 @@ export function PetHome({
             <ol className="mt-4 divide-y divide-[var(--forest)]/10">
               {states.data.items.map((state) => {
                 const category = categoryById.get(
-                  state.catId,
+                  state.categoryId,
                 );
                 return (
                   <li

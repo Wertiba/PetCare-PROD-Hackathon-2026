@@ -184,10 +184,10 @@ function HealthEntryItem({
 
 function HealthBoard({
   pet,
-  weightCatId,
+  weightCategoryId,
 }: {
   pet: Pet;
-  weightCatId: Uid | null;
+  weightCategoryId: Uid | null;
 }) {
   const [entryType, setEntryType] =
     useState<EntryType | null>(null);
@@ -206,7 +206,7 @@ function HealthBoard({
     page: 0,
     size: 100,
     petId: pet.id,
-    catId: weightCatId ?? undefined,
+    categoryId: weightCategoryId ?? undefined,
   });
 
   const eventItems = events.data?.items;
@@ -214,7 +214,7 @@ function HealthBoard({
   const entries = useMemo(() => {
     // States come newest first, so the next item is the previous weighing.
     const weightStates = (stateItems ?? []).filter(
-      (state) => state.catId === weightCatId,
+      (state) => state.categoryId === weightCategoryId,
     );
     const result: HealthEntry[] = [
       ...weightStates.map((state, index): HealthEntry => ({
@@ -234,7 +234,7 @@ function HealthBoard({
       })),
     ];
     return result.sort((a, b) => b.time - a.time);
-  }, [eventItems, stateItems, weightCatId]);
+  }, [eventItems, stateItems, weightCategoryId]);
 
   const presentTypes = entryTypes.filter((type) =>
     entries.some((entry) => entryTypeOf(entry) === type),
@@ -401,10 +401,10 @@ function HealthBoard({
                 type={entryType}
                 onSuccess={(event) => finish(event.name)}
               />
-            ) : weightCatId ? (
+            ) : weightCategoryId ? (
               <AddWeightForm
                 petId={pet.id}
-                catId={weightCatId}
+                categoryId={weightCategoryId}
                 onSuccess={(state) =>
                   finish(`Вес ${formatWeight(state.value)}`)
                 }
@@ -447,7 +447,7 @@ export function HealthPanel({ pet }: { pet: Pet }) {
   return (
     <HealthBoard
       pet={pet}
-      weightCatId={weightCategory?.id ?? null}
+      weightCategoryId={weightCategory?.id ?? null}
     />
   );
 }

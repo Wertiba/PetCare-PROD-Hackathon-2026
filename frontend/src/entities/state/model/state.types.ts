@@ -6,7 +6,7 @@ import {
 export interface State {
   id: Uid;
   petId: Uid;
-  catId: Uid;
+  categoryId: Uid;
   value: number;
   time: Timestamp;
 }

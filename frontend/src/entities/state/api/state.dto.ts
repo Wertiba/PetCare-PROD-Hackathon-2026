@@ -9,7 +9,7 @@ export interface FetchStatesReqDto {
   page: number;
   size: number;
   petId?: Uid;
-  catId?: Uid;
+  categoryId?: Uid;
   from?: Timestamp;
   to?: Timestamp;
 }
@@ -23,7 +23,7 @@ export interface FetchStatesResDto {
 
 export interface CreateStateReqDto {
   petId: Uid;
-  catId: Uid;
+  categoryId: Uid;
   value: number;
   time: Timestamp;
 }
