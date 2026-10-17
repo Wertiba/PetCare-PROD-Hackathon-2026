@@ -2,7 +2,7 @@ from fastapi import UploadFile
 
 from app.application.pets.interactors import photo_extension
 from app.application.ports.photos import MAX_PHOTO_BYTES, PhotoUpload
-from app.domain.pets.errors import FileTooLargeError
+from app.domain.pets.errors import FileTooLargeError, UnsupportedFileTypeError
 
 
 async def read_photo(upload: UploadFile) -> PhotoUpload:
@@ -14,4 +14,7 @@ async def read_photo(upload: UploadFile) -> PhotoUpload:
         if total > MAX_PHOTO_BYTES:
             raise FileTooLargeError
         chunks.append(chunk)
+    if total == 0:
+        # An empty file is no image: storing it would leave the pet with a broken photo.
+        raise UnsupportedFileTypeError
     return PhotoUpload(content=b"".join(chunks), content_type=upload.content_type)

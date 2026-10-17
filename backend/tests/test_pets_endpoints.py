@@ -206,6 +206,9 @@ def test_photo_upload_wrong_type_and_too_large(client, photo_objects, monkeypatc
     assert wrong.status_code == 415
     assert wrong.json()["code"] == "UNSUPPORTED_FILE_TYPE"
     assert new_key in photo_objects
+    empty = client.put(f"/api/v1/pets/{pet_id}/photo", files={"file": ("a.png", b"", "image/png")}, headers=headers)
+    assert empty.status_code == 415
+    assert new_key in photo_objects
     monkeypatch.setattr("app.presentation.http.uploads.MAX_PHOTO_BYTES", 8)
     too_big = client.put(
         f"/api/v1/pets/{pet_id}/photo", files={"file": ("big.png", b"x" * 32, "image/png")}, headers=headers
