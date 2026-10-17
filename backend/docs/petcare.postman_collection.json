@@ -717,6 +717,28 @@
               ]
             }
           }
+        },
+        {
+          "name": "Export Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "report"
+              ],
+              "query": []
+            },
+            "description": "Export Report"
+          }
         }
       ]
     },

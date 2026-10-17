@@ -1,13 +1,22 @@
 #!/usr/bin/env sh
-# Refresh the committed test reports in docs/: requirement coverage and code coverage by module.
+# Refresh docs/coverage.md: which requirements the tests cover and how much code they run.
 # Run from backend/: sh scripts/coverage_report.sh
 set -eu
-uv run python -m pytest -q --cov --cov-report=html:reports/coverage-html --req-report=docs/requirements-coverage.md
+requirements=$(mktemp)
+trap 'rm -f "$requirements"' EXIT
+uv run python -m pytest -q --cov --req-report="$requirements"
 {
-  echo "# Покрытие кода тестами"
+  echo "# Покрытие тестами"
   echo
-  echo "Снимок \`coverage report\` (строки и ветвления). Обновить: \`sh scripts/coverage_report.sh\`;"
-  echo "HTML-отчёт с подсветкой строк — \`reports/coverage-html/index.html\` и артефакт CI-задачи \`test-backend\`."
+  echo "Обновить: \`sh scripts/coverage_report.sh\` из \`backend/\`. Тот же отчёт строит CI-задача \`test-backend\`."
   echo
-  uv run coverage report --format=markdown
-} > docs/code-coverage.md
+  # The requirement report's own headings move one level down under this document's title.
+  echo "## Требования"
+  sed -e '1d' -e 's/^## /### /' "$requirements"
+  echo
+  echo "## Код"
+  echo
+  echo "Строки и ветвления по модулям; файлы со 100 % покрытием не показаны."
+  echo
+  uv run coverage report --format=markdown --skip-covered
+} > docs/coverage.md

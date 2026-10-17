@@ -9,11 +9,13 @@ from app.application.foods.di import FoodProvider
 from app.application.notes.di import NoteProvider
 from app.application.notifications.di import NotificationProvider
 from app.application.pets.di import PetProvider
+from app.application.reports.di import ReportProvider
 from app.application.states.di import StateProvider
 from app.application.users.di import UserProvider
 from app.infra.database.di import DatabaseProvider
 from app.infra.gateways.di import GatewayProvider
 from app.infra.photos.di import PhotoProvider
+from app.infra.reports.di import ReportRendererProvider
 from app.infra.security.di import SecurityProvider
 
 
@@ -23,6 +25,7 @@ def build_container() -> AsyncContainer:
         GatewayProvider(),
         SecurityProvider(),
         PhotoProvider(),
+        ReportRendererProvider(),
         AuthProvider(),
         UserProvider(),
         PetProvider(),
@@ -34,4 +37,5 @@ def build_container() -> AsyncContainer:
         NotificationProvider(),
         NoteProvider(),
         FoodProvider(),
+        ReportProvider(),
     )
