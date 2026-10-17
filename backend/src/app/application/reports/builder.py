@@ -60,7 +60,7 @@ def procedures(events: Iterable[Event], now: float) -> list[ProcedureSummary]:
     groups: dict[tuple[EventType, str], list[Event]] = defaultdict(list)
     for event in events:
         if event.type in _TRACKED or event.period != EventPeriod.NONE:
-            groups[(event.type, event.name)].append(event)
+            groups[event.type, event.name].append(event)
     result = []
     for (type_, name), group in groups.items():
         done = [_done_at(event) for event in group if event.status == EventStatus.DONE]
