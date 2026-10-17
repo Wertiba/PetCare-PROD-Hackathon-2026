@@ -1,3 +1,8 @@
+import pytest
+
+pytestmark = pytest.mark.req("P.OBS")
+
+
 def test_response_always_includes_trace_id_header(client):
     response = client.get("/health/liveness")
     assert "x-trace-id" in {k.lower() for k in response.headers}

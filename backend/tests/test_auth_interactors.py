@@ -11,6 +11,8 @@ from app.infra.gateways.user import SqlAlchemyUserGateway
 from app.infra.gateways.refresh_token import SqlAlchemyRefreshTokenGateway
 from app.infra.security.jwt_service import JWTService
 
+pytestmark = pytest.mark.req("P.AUTH")
+
 
 @pytest.fixture
 async def session_factory():
@@ -58,22 +60,16 @@ async def test_register_rejects_duplicate_login(session_factory):
     async with session_factory() as session:
         interactors = _auth_interactors(session)
         with pytest.raises(UserAlreadyExistsError):
-            await interactors.register(
-                UserRegisterData(login="dup", password="password2", fullName="User Two")
-            )
+            await interactors.register(UserRegisterData(login="dup", password="password2", fullName="User Two"))
 
 
 async def test_login_with_correct_credentials_returns_token_pair(session_factory):
     async with session_factory() as session:
         interactors = _auth_interactors(session)
-        await interactors.register(
-            UserRegisterData(login="login", password="password1", fullName="Login User")
-        )
+        await interactors.register(UserRegisterData(login="login", password="password1", fullName="Login User"))
     async with session_factory() as session:
         interactors = _auth_interactors(session)
-        response, refresh_token, _ = await interactors.login_user(
-            UserLoginData(login="login", password="password1")
-        )
+        response, refresh_token, _ = await interactors.login_user(UserLoginData(login="login", password="password1"))
         assert response.user.login == "login"
         assert refresh_token
 

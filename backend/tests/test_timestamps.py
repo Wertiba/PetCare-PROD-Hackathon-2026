@@ -14,6 +14,8 @@ from app.domain.events.enums import EventPeriod
 from app.domain.events.periods import next_occurrence
 from app.infra.database.mappings import metadata
 
+pytestmark = pytest.mark.req("P.TIME")
+
 
 def test_fractional_timestamp_roundtrip_and_epoch_zero(client, auth, pet_id, system_categories):
     instant = 1770000000.125

@@ -1,5 +1,8 @@
+import pytest
 from fastapi import Response
 from app.presentation.http.api.v1.utils.cookies import REFRESH_COOKIE_NAME, delete_refresh_cookie, set_refresh_cookie
+
+pytestmark = pytest.mark.req("P.AUTH")
 
 
 def test_set_refresh_cookie_sets_expected_attributes():

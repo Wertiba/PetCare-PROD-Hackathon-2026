@@ -3,6 +3,8 @@ import pytest
 from app.domain.users.errors import InvalidCredentialsError
 from app.infra.security.jwt_service import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE, JWTService
 
+pytestmark = pytest.mark.req("P.AUTH")
+
 
 @pytest.fixture
 def jwt_service():

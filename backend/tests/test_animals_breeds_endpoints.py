@@ -1,7 +1,11 @@
+import pytest
 import uuid
 from conftest import CAT_BREED_ID, CAT_ID, DOG_ID
 
+pytestmark = pytest.mark.req("P.CATALOG")
 
+
+@pytest.mark.req("5.1.2")
 def test_everyone_reads_seeded_animals_and_breeds(client, auth):
     animals = client.get("/api/v1/animals", headers=auth).json()
     assert [item["name"] for item in animals["items"]] == ["Кошка", "Собака"]
@@ -21,6 +25,7 @@ def test_everyone_reads_seeded_animals_and_breeds(client, auth):
     assert client.get(f"/api/v1/breeds/{uuid.uuid4()}", headers=auth).status_code == 404
 
 
+@pytest.mark.req("P.ACCESS")
 def test_only_admin_writes_the_catalog(client, auth):
     for method, path, payload in (
         ("post", "/api/v1/animals", {"name": "Хомяк"}),
@@ -68,6 +73,7 @@ def test_admin_manages_animals_and_breeds(client, admin, auth):
     assert orphan["animal"] is None
 
 
+@pytest.mark.req("7.1")
 def test_catalog_validation_and_duplicates(client, admin):
     duplicate = client.post("/api/v1/animals", json={"name": "Кошка"}, headers=admin)
     assert duplicate.status_code == 409
@@ -94,6 +100,7 @@ def test_breed_search_by_name(client, auth):
     assert [item["id"] for item in response["items"]] == [CAT_BREED_ID]
 
 
+@pytest.mark.req("P.ACCESS")
 def test_requires_auth(client):
     assert client.get("/api/v1/animals").status_code == 401
     assert client.get("/api/v1/breeds").status_code == 401

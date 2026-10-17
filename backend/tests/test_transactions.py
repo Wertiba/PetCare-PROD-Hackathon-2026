@@ -1,3 +1,4 @@
+import pytest
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -14,6 +15,8 @@ from app.infra.database.unit_of_work import SqlAlchemyUnitOfWork
 from app.infra.gateways.pet import SqlAlchemyPetGateway
 from app.infra.gateways.user import SqlAlchemyUserGateway
 from app.infra.metrics import DOMAIN_EVENTS_TOTAL
+
+pytestmark = pytest.mark.req("P.TX")
 
 
 async def fail_after_flush(session):
@@ -61,6 +64,7 @@ async def test_failed_rotation_preserves_original_refresh_token(client, db_sessi
         assert await session.scalar(select(func.count()).select_from(RefreshToken)) == 1
 
 
+@pytest.mark.req("5.4.1")
 async def test_failed_completion_rolls_back_both_events(client, auth, pet_id, db_session_factory, monkeypatch):
     created = client.post(
         "/api/v1/events",
@@ -80,6 +84,7 @@ async def test_failed_completion_rolls_back_both_events(client, auth, pet_id, db
         assert events[0].done_at is None
 
 
+@pytest.mark.req("5.1.3")
 async def test_failed_photo_update_keeps_old_file_and_removes_new_file(
     client, auth, pet_id, db_session_factory, tmp_path, monkeypatch
 ):

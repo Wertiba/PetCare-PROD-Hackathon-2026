@@ -5,6 +5,8 @@ import pytest
 from alembic import command
 from alembic.config import Config
 
+pytestmark = pytest.mark.req("P.AUTH")
+
 
 def test_register_returns_201_and_sets_cookie(client):
     response = client.post(
@@ -66,6 +68,7 @@ def test_register_rejects_duplicate_login(client):
     assert body["details"] == {"field": "login", "value": "dup"}
 
 
+@pytest.mark.req("7.1")
 def test_register_rejects_full_name_with_invalid_characters(client):
     response = client.post(
         "/api/v1/auth/register", json={"login": "badname", "password": "password1", "fullName": "User!!!"}
@@ -81,6 +84,7 @@ def test_register_accepts_cyrillic_full_name(client):
     assert response.status_code == 201
 
 
+@pytest.mark.req("7.1")
 def test_validation_error_message_is_english(client):
     response = client.post("/api/v1/auth/register", json={"login": "not-an-login", "password": "x", "fullName": ""})
     assert response.status_code == 422
@@ -88,9 +92,7 @@ def test_validation_error_message_is_english(client):
 
 
 def test_login_returns_200_and_sets_refresh_cookie(client):
-    client.post(
-        "/api/v1/auth/register", json={"login": "login", "password": "password1", "fullName": "Login User"}
-    )
+    client.post("/api/v1/auth/register", json={"login": "login", "password": "password1", "fullName": "Login User"})
     response = client.post("/api/v1/auth/login", json={"login": "login", "password": "password1"})
     assert response.status_code == 200
     assert response.json()["user"]["login"] == "login"
@@ -98,9 +100,7 @@ def test_login_returns_200_and_sets_refresh_cookie(client):
 
 
 def test_login_with_wrong_password_returns_401(client):
-    client.post(
-        "/api/v1/auth/register", json={"login": "badpw", "password": "password1", "fullName": "User"}
-    )
+    client.post("/api/v1/auth/register", json={"login": "badpw", "password": "password1", "fullName": "User"})
     for login, password in (("badpw", "wrong-password"), ("ghost", "password1")):
         response = client.post("/api/v1/auth/login", json={"login": login, "password": password})
         assert response.status_code == 401

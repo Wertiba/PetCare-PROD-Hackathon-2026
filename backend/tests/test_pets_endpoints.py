@@ -3,6 +3,8 @@ from datetime import UTC, date, datetime
 import pytest
 from conftest import CAT_BREED_ID, CAT_ID, DOG_BREED_ID, DOG_ID
 
+pytestmark = pytest.mark.req("5.1.1")
+
 PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
 
 
@@ -23,6 +25,7 @@ def _create_pet(client, token, **overrides):
     return client.post("/api/v1/pets", json=payload, headers=_auth(token))
 
 
+@pytest.mark.req("5.1.2")
 def test_create_minimal_pet(client):
     _, token = _register(client)
     response = _create_pet(client, token, name="  Барсик  ")
@@ -37,6 +40,7 @@ def test_create_minimal_pet(client):
     assert response.headers["location"] == f"/api/v1/pets/{body['id']}"
 
 
+@pytest.mark.req("7.1")
 def test_blank_name_is_422(client):
     _, token = _register(client)
     response = _create_pet(client, token, name="   ")
@@ -45,6 +49,7 @@ def test_blank_name_is_422(client):
     assert "name" in fields
 
 
+@pytest.mark.req("7.1")
 def test_null_name_on_patch_is_422(client):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -54,6 +59,7 @@ def test_null_name_on_patch_is_422(client):
     assert "name" in fields
 
 
+@pytest.mark.req("5.1.2", "7.1")
 def test_future_birth_date_is_422(client):
     _, token = _register(client)
     response = _create_pet(client, token, birthDate=4070908800.0)
@@ -62,6 +68,7 @@ def test_future_birth_date_is_422(client):
     assert "birthDate" in fields
 
 
+@pytest.mark.req("5.1.2")
 def test_past_birth_date_returns_age_months(client):
     _, token = _register(client)
     birth = date(2020, 1, 15)
@@ -76,6 +83,7 @@ def test_past_birth_date_returns_age_months(client):
     assert body["ageMonths"] == months
 
 
+@pytest.mark.req("5.1.4", "P.ACCESS")
 def test_list_returns_only_current_users_pets(client):
     _, token_a = _register(client, login="a")
     _, token_b = _register(client, login="b")
@@ -88,6 +96,7 @@ def test_list_returns_only_current_users_pets(client):
     assert [item["name"] for item in body["items"]] == ["Алфа"]
 
 
+@pytest.mark.req("P.ACCESS")
 def test_other_users_pet_is_not_found(client):
     _, token_a = _register(client, login="owner")
     _, token_b = _register(client, login="stranger")
@@ -109,6 +118,7 @@ def test_other_users_pet_is_not_found(client):
     assert still_there.json()["name"] == "Барсик"
 
 
+@pytest.mark.req("5.1.2", "7.1")
 def test_breed_is_required_and_must_exist(client):
     _, token = _register(client)
     missing = _create_pet(client, token, breedId=str(uuid.uuid4()))
@@ -120,6 +130,7 @@ def test_breed_is_required_and_must_exist(client):
     assert "breedId" in [err["field"] for err in response.json()["fieldErrors"]]
 
 
+@pytest.mark.req("5.1.2")
 def test_patch_changes_breed_and_animal_and_clears_birth_date(client):
     _, token = _register(client)
     created = _create_pet(client, token, birthDate=1579046400.0)
@@ -138,6 +149,7 @@ def test_patch_changes_breed_and_animal_and_clears_birth_date(client):
     assert null_breed.status_code == 422
 
 
+@pytest.mark.req("P.CATALOG")
 def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
     _, token = _register(client)
     breed = client.post("/api/v1/breeds", json={"animalId": CAT_ID, "name": "Сфинкс"}, headers=admin).json()
@@ -148,6 +160,7 @@ def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
     assert body["animal"] is None
 
 
+@pytest.mark.req("5.1.3", "7.1")
 def test_photo_upload_wrong_type_and_too_large(client, tmp_path, monkeypatch):
     monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
     _, token = _register(client)
@@ -185,6 +198,7 @@ def test_photo_upload_wrong_type_and_too_large(client, tmp_path, monkeypatch):
     assert new_path.is_file()
 
 
+@pytest.mark.req("5.1.3")
 def test_delete_pet_removes_photo_file(client, tmp_path, monkeypatch):
     monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
     _, token = _register(client)

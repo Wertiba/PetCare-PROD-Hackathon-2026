@@ -4,6 +4,8 @@ import uuid
 import pytest
 from conftest import CAT_BREED_ID, DOG_BREED_ID, register_user
 
+pytestmark = pytest.mark.req("5.2.5")
+
 
 def _record(client, headers, pet_id, cat_id, value, time=None, **extra):
     payload = {"petId": pet_id, "catId": cat_id, "value": value, **extra}
@@ -34,6 +36,7 @@ def test_time_defaults_to_now(client, auth, pet_id, system_categories):
 @pytest.mark.parametrize(
     ("category", "value"), [("liked", 2), ("liked", -1), ("appetite", 0), ("appetite", 6), ("weight", -5)]
 )
+@pytest.mark.req("7.1")
 def test_value_must_fit_category_type(client, auth, pet_id, system_categories, category, value):
     response = _record(client, auth, pet_id, system_categories[category], value)
     assert response.status_code == 422
@@ -42,6 +45,7 @@ def test_value_must_fit_category_type(client, auth, pet_id, system_categories, c
     assert body["details"] == {"field": "value", "value": value}
 
 
+@pytest.mark.req("P.ACCESS")
 def test_foreign_pet_and_unknown_category(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
@@ -62,6 +66,7 @@ def test_foreign_pet_and_unknown_category(client, system_categories):
     assert missing_category.json()["code"] == "CATEGORY_NOT_FOUND"
 
 
+@pytest.mark.req("P.ACCESS")
 def test_list_filters_and_isolation(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
