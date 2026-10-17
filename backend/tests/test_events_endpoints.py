@@ -1,3 +1,4 @@
+import pytest
 import uuid
 from datetime import UTC, datetime, timedelta
 from conftest import CAT_BREED_ID, DOG_BREED_ID, register_user
@@ -20,6 +21,7 @@ def _create(client, headers, pet_id, **overrides):
     return client.post("/api/v1/events", json=payload, headers=headers)
 
 
+@pytest.mark.req("5.2.1")
 def test_create_with_defaults_and_frontend_shape(client, auth, pet_id):
     minimal = client.post(
         "/api/v1/events", json={"petId": pet_id, "name": "Осмотр", "schedule": 1893492000.0}, headers=auth
@@ -35,6 +37,7 @@ def test_create_with_defaults_and_frontend_shape(client, auth, pet_id):
     assert minimal.headers["location"] == f"/api/v1/events/{body['id']}"
 
 
+@pytest.mark.req("5.4.1")
 def test_next_schedule_is_calculated(client, auth, pet_id):
     body = _create(client, auth, pet_id, schedule=1769853600.0, period="monthly").json()
     assert body["nextSchedule"] == 1772272800.0
@@ -42,6 +45,7 @@ def test_next_schedule_is_calculated(client, auth, pet_id):
     assert yearly["nextSchedule"] == 1825063200.0
 
 
+@pytest.mark.req("5.4.1", "5.4.5")
 def test_complete_plans_next_occurrence(client, auth, pet_id):
     completed = DOMAIN_EVENTS_TOTAL.labels(entity="event", action="completed")
     planned = DOMAIN_EVENTS_TOTAL.labels(entity="event", action="auto_planned")
@@ -62,6 +66,7 @@ def test_complete_plans_next_occurrence(client, auth, pet_id):
     assert (completed._value.get(), planned._value.get()) == (before[0] + 1, before[1] + 1)
 
 
+@pytest.mark.req("5.4.1")
 def test_late_completion_counts_from_done_date(client, auth, pet_id):
     event_id = _create(client, auth, pet_id, schedule=1768039200.0, period="yearly").json()["id"]
     response = client.post(f"/api/v1/events/{event_id}/complete", json={"doneAt": 1773576000.0}, headers=auth)
@@ -70,12 +75,14 @@ def test_late_completion_counts_from_done_date(client, auth, pet_id):
     assert body["nextEvent"]["schedule"] == 1805112000.0
 
 
+@pytest.mark.req("5.2.3")
 def test_one_off_completion_has_no_next(client, auth, pet_id):
     event_id = _create(client, auth, pet_id, period="none", type="vet_visit").json()["id"]
     body = client.post(f"/api/v1/events/{event_id}/complete", headers=auth).json()
     assert body["nextEvent"] is None
 
 
+@pytest.mark.req("5.4.1")
 def test_patch_status_done_also_plans_next(client, auth, pet_id):
     completed = DOMAIN_EVENTS_TOTAL.labels(entity="event", action="completed")
     planned_counter = DOMAIN_EVENTS_TOTAL.labels(entity="event", action="auto_planned")
@@ -92,6 +99,7 @@ def test_patch_status_done_also_plans_next(client, auth, pet_id):
     assert reopened.json()["doneAt"] is None
 
 
+@pytest.mark.req("5.4.6")
 def test_upcoming_includes_overdue_and_excludes_far_and_done(client, auth, pet_id):
     now = datetime.now(UTC)
     overdue = _create(client, auth, pet_id, name="Просрочено", schedule=_timestamp(now - timedelta(days=2))).json()
@@ -106,6 +114,7 @@ def test_upcoming_includes_overdue_and_excludes_far_and_done(client, auth, pet_i
     assert items[1]["isOverdue"] is False
 
 
+@pytest.mark.req("5.2.1", "5.2.2", "5.2.3")
 def test_list_filters(client, auth, pet_id):
     _create(client, auth, pet_id, type="vaccination", schedule=1777593600.0)
     _create(client, auth, pet_id, type="parasite_treatment", schedule=1780272000.0)
@@ -116,6 +125,7 @@ def test_list_filters(client, auth, pet_id):
     assert [item["type"] for item in summer["items"]] == ["vet_visit", "parasite_treatment"]
 
 
+@pytest.mark.req("P.ACCESS")
 def test_isolation_and_unknown_pet(client):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
@@ -132,6 +142,7 @@ def test_isolation_and_unknown_pet(client):
     assert _create(client, stranger, str(uuid.uuid4())).json()["code"] == "PET_NOT_FOUND"
 
 
+@pytest.mark.req("5.2.1", "7.1")
 def test_update_validation_and_delete(client, auth, pet_id):
     event_id = _create(client, auth, pet_id).json()["id"]
     renamed = client.patch(
@@ -149,6 +160,7 @@ def test_update_validation_and_delete(client, auth, pet_id):
     assert client.get(f"/api/v1/events/{event_id}", headers=auth).status_code == 404
 
 
+@pytest.mark.req("5.2.1")
 def test_deleting_pet_cascades_to_events(client, auth, pet_id):
     event_id = _create(client, auth, pet_id).json()["id"]
     client.delete(f"/api/v1/pets/{pet_id}", headers=auth)

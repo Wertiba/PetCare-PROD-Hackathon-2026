@@ -1,5 +1,8 @@
+import pytest
 import uuid
 from conftest import register_user
+
+pytestmark = pytest.mark.req("5.3.1")
 
 
 def _feed(client, headers, pet_id, **overrides):
@@ -10,6 +13,7 @@ def _feed(client, headers, pet_id, **overrides):
     return response.json()
 
 
+@pytest.mark.req("5.3.2", "5.3.3", "5.3.4")
 def test_crud(client, auth, pet_id):
     food = _feed(client, auth, pet_id, ingredients=[" Курица ", "рис", "курица", "  "], isApproach=True)
     assert food["ingredients"] == ["Курица", "рис"]
@@ -32,6 +36,7 @@ def test_crud(client, auth, pet_id):
     assert client.get(f"/api/v1/foods/{food['id']}", headers=auth).status_code == 404
 
 
+@pytest.mark.req("5.3.2", "5.3.3", "5.3.5")
 def test_list_filters(client, auth, pet_id):
     _feed(client, auth, pet_id, name="A", isApproach=True, isTolerability=True)
     _feed(client, auth, pet_id, name="B", isApproach=False, isTolerability=False)
@@ -44,6 +49,7 @@ def test_list_filters(client, auth, pet_id):
     assert [item["name"] for item in bad["items"]] == ["B"]
 
 
+@pytest.mark.req("5.3.4", "5.3.5")
 def test_suspects_are_ingredients_never_seen_in_earlier_tolerated_food(client, auth, pet_id):
     _feed(client, auth, pet_id, ingredients=["Курица", "Рис"], isTolerability=True)
     _feed(client, auth, pet_id, ingredients=["Говядина"], isTolerability=False)
@@ -62,6 +68,7 @@ def test_suspects_are_ingredients_never_seen_in_earlier_tolerated_food(client, a
     assert client.get(f"/api/v1/foods/{later['id']}/suspects", headers=auth).json()["suspects"] == ["Горох"]
 
 
+@pytest.mark.req("5.3.5")
 def test_everything_is_suspect_without_tolerated_history(client, auth, pet_id):
     first = _feed(client, auth, pet_id, ingredients=["Курица", "Рис"])
     response = client.get(f"/api/v1/foods/{first['id']}/suspects", headers=auth).json()
@@ -69,6 +76,7 @@ def test_everything_is_suspect_without_tolerated_history(client, auth, pet_id):
     assert response["comparedFoods"] == 0
 
 
+@pytest.mark.req("P.ACCESS")
 def test_other_users_food_is_invisible(client, auth, pet_id):
     food_id = _feed(client, auth, pet_id)["id"]
     _, stranger = register_user(client, login="stranger")
@@ -82,6 +90,7 @@ def test_other_users_food_is_invisible(client, auth, pet_id):
     assert foreign.json()["code"] == "PET_NOT_FOUND"
 
 
+@pytest.mark.req("7.1")
 def test_validation(client, auth, pet_id):
     for payload in (
         {"petId": pet_id, "name": "  "},
@@ -94,6 +103,7 @@ def test_validation(client, auth, pet_id):
     assert client.patch(f"/api/v1/foods/{food_id}", json={"ingredients": None}, headers=auth).status_code == 422
 
 
+@pytest.mark.req("P.ACCESS")
 def test_requires_auth(client):
     assert client.get("/api/v1/foods").status_code == 401
     assert client.get(f"/api/v1/foods/{uuid.uuid4()}/suspects").status_code == 401

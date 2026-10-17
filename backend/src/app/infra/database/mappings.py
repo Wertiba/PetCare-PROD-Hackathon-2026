@@ -114,12 +114,12 @@ states = Table(
     metadata,
     Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
     Column("pet_id", PGUUID(as_uuid=True), ForeignKey("pets.id", ondelete="CASCADE"), nullable=False),
-    Column("cat_id", PGUUID(as_uuid=True), ForeignKey("categories.id", ondelete="CASCADE"), nullable=False),
+    Column("category_id", PGUUID(as_uuid=True), ForeignKey("categories.id", ondelete="CASCADE"), nullable=False),
     Column("value", Integer, nullable=False),
     Column("note", String(1000), nullable=True),
     Column("time", Double(), nullable=False),
     Column("created_at", Double(), nullable=False, default=lambda: time()),
-    Index("idx_states_pet_id_cat_id_time", "pet_id", "cat_id", "time"),
+    Index("idx_states_pet_id_category_id_time", "pet_id", "category_id", "time"),
 )
 events = Table(
     "events",

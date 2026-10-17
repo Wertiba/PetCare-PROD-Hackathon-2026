@@ -771,6 +771,28 @@
               "raw": "{\n  \"source\": \"photo\"\n}"
             }
           }
+        },
+        {
+          "name": "Export Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "report"
+              ],
+              "query": []
+            },
+            "description": "Export Report"
+          }
         }
       ]
     },
@@ -957,7 +979,7 @@
                   "disabled": true
                 },
                 {
-                  "key": "catId",
+                  "key": "categoryId",
                   "value": "",
                   "description": "",
                   "disabled": true
@@ -1016,7 +1038,7 @@
             "description": "Create State",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"catId\": \"{{categoryId}}\",\n  \"value\": 1\n}"
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"value\": 1\n}"
             }
           },
           "event": [
@@ -1057,7 +1079,7 @@
                   "disabled": false
                 },
                 {
-                  "key": "catId",
+                  "key": "categoryId",
                   "value": "{{categoryId}}",
                   "description": "",
                   "disabled": false

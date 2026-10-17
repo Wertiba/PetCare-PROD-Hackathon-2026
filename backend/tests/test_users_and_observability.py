@@ -3,7 +3,10 @@ import pytest
 from app.domain.events.enums import EventPeriod
 from app.domain.events.periods import next_occurrence
 
+pytestmark = pytest.mark.req("P.OBS")
 
+
+@pytest.mark.req("P.AUTH")
 def test_me_returns_and_updates_profile(client, auth):
     me = client.get("/api/v1/users/me", headers=auth)
     assert me.status_code == 200
@@ -51,6 +54,7 @@ def test_validation_error_with_non_uuid_trace_id(client):
         (EventPeriod.YEARLY, datetime(2027, 1, 30, 9, tzinfo=UTC)),
     ],
 )
+@pytest.mark.req("5.4.1", "5.4.2")
 def test_next_occurrence(period, expected):
     base = datetime(2026, 1, 30, 9, tzinfo=UTC)
     assert next_occurrence(base.timestamp(), period) == (expected.timestamp() if expected else None)

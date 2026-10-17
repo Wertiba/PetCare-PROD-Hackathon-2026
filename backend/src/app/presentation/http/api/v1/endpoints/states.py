@@ -41,7 +41,7 @@ async def list_states(
     interactor: FromDishka[ListStates],
     pagination: PaginationDep,
     petId: PetId | None = Query(None),
-    catId: CategoryId | None = Query(None),
+    categoryId: CategoryId | None = Query(None),
     from_: float | None = Query(None, alias="from", description="Inclusive lower bound of `time`", allow_inf_nan=False),
     to: float | None = Query(None, description="Inclusive upper bound of `time`", allow_inf_nan=False),
 ) -> Page[StateReadResponse]:
@@ -51,7 +51,7 @@ async def list_states(
             user.id,
             Pagination(page=pagination.page, size=pagination.size),
             pet_id=petId,
-            cat_id=catId,
+            category_id=categoryId,
             from_=from_,
             to=to,
         ),
@@ -64,13 +64,13 @@ async def summarize_states(
     user: CurrentUserDep,
     interactor: FromDishka[SummarizeStates],
     petId: PetId = Query(...),
-    catId: CategoryId = Query(...),
+    categoryId: CategoryId = Query(...),
     from_: float | None = Query(None, alias="from", description="Inclusive lower bound of `time`", allow_inf_nan=False),
     to: float | None = Query(None, description="Inclusive upper bound of `time`", allow_inf_nan=False),
 ) -> StateSummaryResponse:
     """Aggregate of one category for one pet over a period, computed by the category `kind`."""
     return StateSummaryResponse.model_validate(
-        await interactor(user.id, pet_id=petId, cat_id=catId, from_=from_, to=to), from_attributes=True
+        await interactor(user.id, pet_id=petId, category_id=categoryId, from_=from_, to=to), from_attributes=True
     )
 
 

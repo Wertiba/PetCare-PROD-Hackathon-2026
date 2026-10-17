@@ -9,6 +9,8 @@ from app.infra.database.unit_of_work import SqlAlchemyUnitOfWork
 from app.infra.gateways.refresh_token import SqlAlchemyRefreshTokenGateway
 from app.infra.gateways.user import SqlAlchemyUserGateway
 
+pytestmark = pytest.mark.req("P.TX")
+
 
 def make_user(login="user"):
     return User(login=login, password="hashed", full_name="Test User", role=UserRole.USER)

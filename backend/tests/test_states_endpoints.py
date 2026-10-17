@@ -4,9 +4,11 @@ import uuid
 import pytest
 from conftest import CAT_BREED_ID, DOG_BREED_ID, register_user
 
+pytestmark = pytest.mark.req("5.2.5")
 
-def _record(client, headers, pet_id, cat_id, value, time=None, **extra):
-    payload = {"petId": pet_id, "catId": cat_id, "value": value, **extra}
+
+def _record(client, headers, pet_id, category_id, value, time=None, **extra):
+    payload = {"petId": pet_id, "categoryId": category_id, "value": value, **extra}
     if time is not None:
         payload["time"] = time
     return client.post("/api/v1/states", json=payload, headers=headers)
@@ -34,6 +36,7 @@ def test_time_defaults_to_now(client, auth, pet_id, system_categories):
 @pytest.mark.parametrize(
     ("category", "value"), [("liked", 2), ("liked", -1), ("appetite", 0), ("appetite", 6), ("weight", -5)]
 )
+@pytest.mark.req("7.1")
 def test_value_must_fit_category_type(client, auth, pet_id, system_categories, category, value):
     response = _record(client, auth, pet_id, system_categories[category], value)
     assert response.status_code == 422
@@ -42,6 +45,7 @@ def test_value_must_fit_category_type(client, auth, pet_id, system_categories, c
     assert body["details"] == {"field": "value", "value": value}
 
 
+@pytest.mark.req("P.ACCESS")
 def test_foreign_pet_and_unknown_category(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
@@ -62,6 +66,7 @@ def test_foreign_pet_and_unknown_category(client, system_categories):
     assert missing_category.json()["code"] == "CATEGORY_NOT_FOUND"
 
 
+@pytest.mark.req("P.ACCESS")
 def test_list_filters_and_isolation(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
@@ -74,7 +79,7 @@ def test_list_filters_and_isolation(client, system_categories):
     everything = client.get("/api/v1/states", headers=owner).json()
     assert everything["total"] == 4
     weights = client.get(
-        "/api/v1/states", params={"petId": pet, "catId": system_categories["weight"]}, headers=owner
+        "/api/v1/states", params={"petId": pet, "categoryId": system_categories["weight"]}, headers=owner
     ).json()
     assert [item["value"] for item in weights["items"]] == [10500, 10000]
     september = client.get(
@@ -122,7 +127,7 @@ def test_summary_aggregates_by_kind(client, auth, pet_id, system_categories, cat
             datetime(2026, 10, day, 12, tzinfo=UTC).timestamp(),
         )
     response = client.get(
-        "/api/v1/states/summary", params={"petId": pet_id, "catId": system_categories[category]}, headers=auth
+        "/api/v1/states/summary", params={"petId": pet_id, "categoryId": system_categories[category]}, headers=auth
     )
     assert response.status_code == 200, response.text
     body = response.json()
@@ -136,17 +141,17 @@ def test_summary_with_period_and_empty(client, auth, pet_id, system_categories):
     _record(client, auth, pet_id, food, 200, 1790942400.0)
     one_day = client.get(
         "/api/v1/states/summary",
-        params={"petId": pet_id, "catId": food, "from": 1790899200.0, "to": 1790985599.0},
+        params={"petId": pet_id, "categoryId": food, "from": 1790899200.0, "to": 1790985599.0},
         headers=auth,
     ).json()
     assert one_day["value"] == 200.0
     assert one_day["from"] == 1790899200.0
     empty = client.get(
-        "/api/v1/states/summary", params={"petId": pet_id, "catId": system_categories["weight"]}, headers=auth
+        "/api/v1/states/summary", params={"petId": pet_id, "categoryId": system_categories["weight"]}, headers=auth
     ).json()
     assert empty == {
         "petId": pet_id,
-        "catId": system_categories["weight"],
+        "categoryId": system_categories["weight"],
         "kind": "last",
         "unit": "g",
         "value": None,

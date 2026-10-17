@@ -41,12 +41,12 @@ class SqlAlchemyStateGateway(StateGateway):
         limit: int,
         *,
         pet_id: PetId | None = None,
-        cat_id: CategoryId | None = None,
+        category_id: CategoryId | None = None,
         from_: float | None = None,
         to: float | None = None,
     ) -> list[State]:
         stmt = self._apply_criteria(
-            self._owned(select(State), user_id), pet_id=pet_id, cat_id=cat_id, from_=from_, to=to
+            self._owned(select(State), user_id), pet_id=pet_id, category_id=category_id, from_=from_, to=to
         )
         stmt = stmt.order_by(State.time.desc(), State.created_at.desc()).offset(offset).limit(limit)
         try:
@@ -60,14 +60,14 @@ class SqlAlchemyStateGateway(StateGateway):
         user_id: UserId,
         *,
         pet_id: PetId | None = None,
-        cat_id: CategoryId | None = None,
+        category_id: CategoryId | None = None,
         from_: float | None = None,
         to: float | None = None,
     ) -> int:
         stmt = self._apply_criteria(
             self._owned(select(func.count()).select_from(State), user_id),
             pet_id=pet_id,
-            cat_id=cat_id,
+            category_id=category_id,
             from_=from_,
             to=to,
         )
@@ -78,11 +78,11 @@ class SqlAlchemyStateGateway(StateGateway):
             raise ApplicationError("Database error") from e
 
     async def aggregate(
-        self, pet_id: PetId, cat_id: CategoryId, kind: CategoryKind, from_: float | None, to: float | None
+        self, pet_id: PetId, category_id: CategoryId, kind: CategoryKind, from_: float | None, to: float | None
     ) -> tuple[float | None, int]:
         """Return (aggregated value, number of states) for one pet and category over [from_, to]."""
         count_stmt = self._apply_criteria(
-            select(func.count()).select_from(State), pet_id=pet_id, cat_id=cat_id, from_=from_, to=to
+            select(func.count()).select_from(State), pet_id=pet_id, category_id=category_id, from_=from_, to=to
         )
         try:
             count = (await self.session.execute(count_stmt)).scalar_one()
@@ -91,24 +91,26 @@ class SqlAlchemyStateGateway(StateGateway):
             if kind == CategoryKind.COUNT:
                 return (float(count), count)
             if kind == CategoryKind.LAST:
-                last_stmt = self._apply_criteria(select(State.value), pet_id=pet_id, cat_id=cat_id, from_=from_, to=to)
+                last_stmt = self._apply_criteria(
+                    select(State.value), pet_id=pet_id, category_id=category_id, from_=from_, to=to
+                )
                 last_stmt = last_stmt.order_by(State.time.desc(), State.created_at.desc()).limit(1)
                 value = (await self.session.execute(last_stmt)).scalar_one()
                 return (float(value), count)
             agg_stmt = self._apply_criteria(
-                select(_AGGREGATES[kind](State.value)), pet_id=pet_id, cat_id=cat_id, from_=from_, to=to
+                select(_AGGREGATES[kind](State.value)), pet_id=pet_id, category_id=category_id, from_=from_, to=to
             )
             value = (await self.session.execute(agg_stmt)).scalar_one()
             return (float(value) if value is not None else None, count)
         except SQLAlchemyError as e:
             raise ApplicationError("Database error") from e
 
-    async def count_by_category_of_others(self, cat_id: CategoryId, user_id: UserId) -> int:
+    async def count_by_category_of_others(self, category_id: CategoryId, user_id: UserId) -> int:
         stmt = (
             select(func.count())
             .select_from(State)
             .join(Pet, Pet.id == State.pet_id)
-            .where(State.cat_id == cat_id, Pet.user_id != user_id)
+            .where(State.category_id == category_id, Pet.user_id != user_id)
         )
         try:
             result = await self.session.execute(stmt)
@@ -125,14 +127,14 @@ class SqlAlchemyStateGateway(StateGateway):
         stmt: Select,
         *,
         pet_id: PetId | None = None,
-        cat_id: CategoryId | None = None,
+        category_id: CategoryId | None = None,
         from_: float | None = None,
         to: float | None = None,
     ) -> Select:
         if pet_id is not None:
             stmt = stmt.where(State.pet_id == pet_id)
-        if cat_id is not None:
-            stmt = stmt.where(State.cat_id == cat_id)
+        if category_id is not None:
+            stmt = stmt.where(State.category_id == category_id)
         if from_ is not None:
             stmt = stmt.where(State.time >= from_)
         if to is not None:

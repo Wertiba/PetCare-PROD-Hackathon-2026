@@ -1,6 +1,8 @@
 import pytest
 from app.infra.duration import parse_duration_seconds
 
+pytestmark = pytest.mark.req("P.AUTH")
+
 
 def test_parses_minutes():
     assert parse_duration_seconds("15m") == 900

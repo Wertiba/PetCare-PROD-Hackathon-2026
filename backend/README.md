@@ -4,6 +4,8 @@
 
 Код перенесён из ветки `backend/roma_crud` (коммит `3d9b36a`) в каталог `backend/`.
 
+Архитектура, диаграммы C4, карта эндпоинтов и отчёты о тестах: [`docs/architecture.md`](docs/architecture.md).
+
 ## Структура проекта
 
 ```text
@@ -76,7 +78,7 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 
 ## Методы
 
-Все списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`. Все моменты времени — числовые Unix seconds в UTC, например `1770000000.125`: в теле запроса, query-параметрах и ответах. Это относится к `createdAt`, `updatedAt`, `schedule`, `doneAt`, `nextSchedule`, `time`, `from`, `to`, `birthDate` и `timestamp` в ошибках. `birthDate` нормализуется к полуночи UTC. ISO-строки дат больше не принимаются. Продолжительности (`expiresIn`, `days`, `ageMonths`) сохраняют свои единицы. Используются обычные `float` и стандартные модули Python `time`, `datetime`, `calendar`. Чужие и несуществующие объекты отвечают `404`. Ссылка в теле запроса на чужой/несуществующий объект (`petId`, `catId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
+Все списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`. Все моменты времени — числовые Unix seconds в UTC, например `1770000000.125`: в теле запроса, query-параметрах и ответах. Это относится к `createdAt`, `updatedAt`, `schedule`, `doneAt`, `nextSchedule`, `time`, `from`, `to`, `birthDate` и `timestamp` в ошибках. `birthDate` нормализуется к полуночи UTC. ISO-строки дат больше не принимаются. Продолжительности (`expiresIn`, `days`, `ageMonths`) сохраняют свои единицы. Используются обычные `float` и стандартные модули Python `time`, `datetime`, `calendar`. Чужие и несуществующие объекты отвечают `404`. Ссылка в теле запроса на чужой/несуществующий объект (`petId`, `categoryId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
 
 | Метод | Путь | Что делает |
 |---|---|---|
@@ -93,10 +95,11 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ. Новое фото сбрасывает сгенерированный аватар |
 | POST | `/api/v1/pets/{petId}/avatar/generate` | Стилизованный аватар по уже загруженному фото. `avatarSource` не меняется |
 | PUT | `/api/v1/pets/{petId}/avatar` | Какую картинку показывать: `{"source": "photo"}` или `{"source": "generated"}` |
+| GET | `/api/v1/pets/{petId}/report` | PDF-отчёт: ближайшие процедуры, прививки и обработки, активность по месяцам, график веса, самочувствие, корма и заключения врачей |
 | GET / POST | `/api/v1/categories?type=&q=` | Общие для всех категории: встроенные, затем созданные пользователями / создать |
 | GET / PATCH / DELETE | `/api/v1/categories/{id}` | Менять может автор или админ (иначе `403`, для встроенных `SYSTEM_CATEGORY_READ_ONLY`). Пока категорией пользуются другие, нельзя удалить её или сменить `kind`/`type`: `409 CATEGORY_IN_USE` |
-| GET / POST | `/api/v1/states?petId=&catId=&from=&to=` | Замеры (вес, корм, реакции...) |
-| GET | `/api/v1/states/summary?petId=&catId=&from=&to=` | Агрегат за период по `kind` категории: sum, avg, last, count, min, max |
+| GET / POST | `/api/v1/states?petId=&categoryId=&from=&to=` | Замеры (вес, корм, реакции...) |
+| GET | `/api/v1/states/summary?petId=&categoryId=&from=&to=` | Агрегат за период по `kind` категории: sum, avg, last, count, min, max |
 | GET / PATCH / DELETE | `/api/v1/states/{id}` | Замер |
 | GET / POST | `/api/v1/events?petId=&status=&type=&from=&to=` | События: прививки, обработки, визиты к ветеринару, лекарства |
 | GET | `/api/v1/events/upcoming?days=30&petId=` | Ближайшие запланированные, включая просроченные (`isOverdue`) |
@@ -113,7 +116,7 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 
 ### Правила предметной области
 
-- **Аккаунты жюри** `жюри1`…`жюри10` с паролем `qwerty12345` создаёт миграция `0007` (для кнопок быстрого входа на фронте).
+- **Аккаунты жюри** `жюри1`…`жюри10` с паролем `qwerty12345` создаёт миграция `0007` (для кнопок быстрого входа на фронте), а `0009` наполняет их историей: у каждого 2–3 своих питомца, просроченные и ближайшие процедуры, замеры за год, журнал кормов, заметки. Даты отсчитываются от момента применения миграции.
 - **Админ** — пользователь с `role = 'ADMIN'`. Через API роль не выдаётся: `UPDATE users SET role = 'ADMIN' WHERE login = '...'`.
 - **Подозрительные ингредиенты.** Сравнение без учёта регистра и лишних пробелов. Если у питомца ещё не было подошедших кормов, подозрительны все ингредиенты. Ингредиенты при сохранении очищаются от пустых строк и повторов.
 
@@ -151,6 +154,8 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 uv run python -m pytest
 uv run ruff check .
 ```
+
+Покрытие требований и кода: `uv run pytest --cov`; отчёт `docs/coverage.md` обновляет `sh scripts/coverage_report.sh`.
 
 Тесты идут на SQLite в памяти с включёнными внешними ключами. `.env` им не нужен: тестовые значения подставляет `tests/conftest.py`. Отдельных тестовых контейнеров и фабрик приложения нет. Контракт API сравнивается с `docs/openapi.json`, а определения таблиц и индексов PostgreSQL — с сохранённым снимком. Проверяются также границы слоёв, откаты транзакций, общая сессия запроса, дробные timestamp, epoch zero, календарные повторы и SQL прямой/обратной миграции. На виртуальную машину тесты не выкладываются.
 
