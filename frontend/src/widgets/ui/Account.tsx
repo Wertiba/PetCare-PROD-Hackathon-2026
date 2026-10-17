@@ -1,5 +1,14 @@
+'use client';
+
+import {
+  selectIsSessionRestored,
+  selectUser,
+  useUserStore,
+} from '@src/entities/user';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 import { AccountSettings } from './AccountSettings';
 import { CareCalendar } from './CareCalendar';
@@ -55,6 +64,18 @@ const accountTabs = [
 ];
 
 export function Account({ activeTab }: AccountProps) {
+  const router = useRouter();
+  const user = useUserStore(selectUser);
+  const isSessionRestored = useUserStore(
+    selectIsSessionRestored,
+  );
+
+  useEffect(() => {
+    if (isSessionRestored && !user) {
+      router.replace('/login');
+    }
+  }, [isSessionRestored, user, router]);
+
   return (
     <div className="min-h-dvh bg-[var(--cream)] text-[var(--ink)]">
       <header className="border-b border-[var(--forest)]/15 bg-[var(--cream)]">

@@ -1,7 +1,6 @@
 'use client';
 
 import { useUserStore } from '@src/entities/user';
-import { queryKeys } from '@src/shared/api/query-keys';
 import { clearAccessToken } from '@src/shared/lib';
 import {
   useMutation,
@@ -23,7 +22,7 @@ export function useLogoutMutation() {
     onSettled: () => {
       clearAccessToken();
       clearUser();
-      qc.removeQueries({ queryKey: queryKeys.user.me });
+      qc.clear();
       router.replace('/');
     },
   });

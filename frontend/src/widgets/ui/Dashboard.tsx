@@ -11,6 +11,7 @@ import {
 } from '@src/entities/pet';
 import { useGetStatesQuery } from '@src/entities/state';
 import {
+  selectIsSessionRestored,
   selectUser,
   useUserStore,
 } from '@src/entities/user';
@@ -29,6 +30,7 @@ import { PetHome } from '@src/widgets/ui/PetHome';
 import { motion, useReducedMotion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   useEffect,
   useMemo,
@@ -227,7 +229,11 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
 }
 
 export function Dashboard() {
+  const router = useRouter();
   const user = useUserStore(selectUser);
+  const isSessionRestored = useUserStore(
+    selectIsSessionRestored,
+  );
   const petsQuery = useGetPetQuery({ page: 0, size: 100 });
   const logout = useLogoutMutation();
   const deletion = useDeletePetMutation();
@@ -259,6 +265,12 @@ export function Dashboard() {
     setSelectedId(item.id);
     setPetsOpen(false);
   };
+
+  useEffect(() => {
+    if (isSessionRestored && !user) {
+      router.replace('/login');
+    }
+  }, [isSessionRestored, user, router]);
 
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
