@@ -30,3 +30,13 @@ export interface FetchFoodsResDto {
   size: number;
   total: number;
 }
+
+export interface CreateFoodReqDto {
+  petId: Uid;
+  name: string;
+  weight?: number | null;
+  ingredients?: string[];
+  isApproach?: boolean | null;
+  isTolerability?: boolean | null;
+  consequences?: string | null;
+}

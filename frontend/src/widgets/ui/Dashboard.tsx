@@ -1,7 +1,6 @@
 'use client';
 
 import { useGetEventsQuery } from '@src/entities/event';
-import { useGetFoodsQuery } from '@src/entities/food';
 import { useGetNotificationsQuery } from '@src/entities/notification';
 import {
   type Pet,
@@ -21,6 +20,8 @@ import {
   DashboardSidebar,
   type DashboardTool,
 } from '@src/widgets/ui/DashboardSidebar';
+import { FoodPanel } from '@src/widgets/ui/FoodPanel';
+import { HealthPanel } from '@src/widgets/ui/HealthPanel';
 import { motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';
 import {
@@ -82,11 +83,6 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
     size: 12,
     petId: pet.id,
   });
-  const foods = useGetFoodsQuery({
-    page: 0,
-    size: 20,
-    petId: pet.id,
-  });
   const reminders = useGetNotificationsQuery({
     page: 0,
     size: 20,
@@ -125,53 +121,33 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
       </section>
     );
   const list =
-    tool === 'food'
-      ? foods.data?.items.map((item) => (
+    tool === 'reminders'
+      ? reminders.data?.items.map((item) => (
           <div
             key={item.id}
-            className="rounded-sm border border-[var(--forest)]/20 p-4"
+            className="border-b border-[var(--forest)]/10 pb-3"
           >
-            <b>{item.name}</b>
-            <p className="mt-2 text-sm text-[var(--ink)]/60">
-              {item.isApproach
-                ? 'Нравится'
-                : 'Предпочтение не указано'}{' '}
-              ·{' '}
-              {item.isTolerability
-                ? 'Подходит'
-                : 'Переносимость не указана'}
+            <b>{item.eventName}</b>
+            <p className="text-sm text-[var(--ink)]/60">
+              {formatDate(item.time)}
             </p>
           </div>
         ))
-      : tool === 'reminders'
-        ? reminders.data?.items.map((item) => (
-            <div
-              key={item.id}
-              className="border-b border-[var(--forest)]/10 pb-3"
-            >
-              <b>{item.eventName}</b>
-              <p className="text-sm text-[var(--ink)]/60">
-                {formatDate(item.time)}
-              </p>
-            </div>
-          ))
-        : events.data?.items.map((item) => (
-            <div
-              key={item.id}
-              className="border-b border-[var(--forest)]/10 pb-3"
-            >
-              <b>{item.name}</b>
-              <p className="text-sm text-[var(--ink)]/60">
-                {formatDate(item.schedule)} · {item.status}
-              </p>
-            </div>
-          ));
+      : events.data?.items.map((item) => (
+          <div
+            key={item.id}
+            className="border-b border-[var(--forest)]/10 pb-3"
+          >
+            <b>{item.name}</b>
+            <p className="text-sm text-[var(--ink)]/60">
+              {formatDate(item.schedule)} · {item.status}
+            </p>
+          </div>
+        ));
   const title =
-    tool === 'food'
-      ? 'Дневник питания'
-      : tool === 'reminders'
-        ? 'Ближайшие напоминания'
-        : 'История здоровья';
+    tool === 'reminders'
+      ? 'Ближайшие напоминания'
+      : 'История здоровья';
   return (
     <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
       <section className="rounded-md border-2 border-[var(--forest)] bg-white p-5 shadow-[4px_4px_0_var(--lime)]">
@@ -215,9 +191,8 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
             {pet.name}
           </h2>
           <p className="mt-3 text-sm leading-6 text-[var(--ink)]/65">
-            {tool === 'food'
-              ? 'Здесь учитываются предпочтение и переносимость каждого корма.'
-              : 'Напоминания строятся из запланированных процедур.'}
+            Напоминания строятся из запланированных
+            процедур.
           </p>
         </section>
       )}
@@ -601,6 +576,10 @@ export function Dashboard() {
               </div>
             </section>
           </>
+        ) : tool === 'health' ? (
+          <HealthPanel key={pet.id} pet={pet} />
+        ) : tool === 'food' ? (
+          <FoodPanel key={pet.id} pet={pet} />
         ) : (
           <Panel pet={pet} tool={tool} />
         )}

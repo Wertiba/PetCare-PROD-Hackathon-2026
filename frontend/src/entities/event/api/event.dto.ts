@@ -41,7 +41,6 @@ export interface UpdateEventReqDto {
   name?: string;
   type?: EventType;
   status?: EventStatus;
-  schedule?: Timestamp;
+  scheduledAt?: Timestamp;
   period?: EventPeriod;
-  description?: string;
 }

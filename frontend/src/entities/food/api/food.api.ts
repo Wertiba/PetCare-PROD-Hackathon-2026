@@ -1,8 +1,10 @@
 import api from '@src/shared/api/client';
 
 import type {
+  CreateFoodReqDto,
   FetchFoodsReqDto,
   FetchFoodsResDto,
+  Food,
 } from './food.dto';
 
 export const fetchFoods = async (query: FetchFoodsReqDto) =>
@@ -11,3 +13,6 @@ export const fetchFoods = async (query: FetchFoodsReqDto) =>
       params: query,
     })
   ).data;
+
+export const createFood = async (food: CreateFoodReqDto) =>
+  (await api.post<Food>('/foods', food)).data;
