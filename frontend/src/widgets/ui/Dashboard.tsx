@@ -593,6 +593,11 @@ export function Dashboard() {
       <main className="p-5 sm:p-8 lg:p-10">
         {petsQuery.isPending ? (
           'Загружаем питомцев…'
+        ) : petsQuery.isError ? (
+          <p role="alert" className="text-red-800">
+            Не удалось загрузить питомцев. Обновите
+            страницу.
+          </p>
         ) : !pet ? (
           <section className="mx-auto max-w-xl rounded-md border-2 border-[var(--forest)] bg-white p-8 shadow-[6px_6px_0_var(--lime)]">
             <h1 className="text-3xl font-black text-[var(--forest)]">
@@ -627,7 +632,10 @@ export function Dashboard() {
             pet={pet}
             onCreate={() => setDialog('create')}
             onEdit={() => setDialog('edit')}
-            onDelete={() => setDialog('delete')}
+            onDelete={() => {
+              deletion.reset();
+              setDialog('delete');
+            }}
           />
         ) : tool === 'health' ? (
           <HealthPanel key={pet.id} pet={pet} />
@@ -671,6 +679,15 @@ export function Dashboard() {
             Профиль «{pet.name}» будет удалён. Это действие
             нельзя отменить.
           </p>
+          {deletion.isError ? (
+            <p
+              role="alert"
+              className="mt-4 border-l-4 border-red-700 bg-red-50 px-4 py-3 text-sm leading-5 text-red-800"
+            >
+              Не удалось удалить питомца. Попробуйте ещё
+              раз.
+            </p>
+          ) : null}
           <div className="mt-6 flex justify-end gap-3">
             <button
               onClick={() => setDialog(null)}

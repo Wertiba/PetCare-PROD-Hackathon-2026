@@ -10,9 +10,16 @@ export const useDeletePetMutation = () => {
 
   return useMutation({
     mutationFn: deletePet,
+    // The pet's events and reminders go with it, including in the all-pets upcoming list.
     onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.pets.all,
-      }),
+      Promise.all(
+        [
+          queryKeys.pets.all,
+          queryKeys.events.all,
+          queryKeys.notifications.all,
+        ].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      ),
   });
 };
