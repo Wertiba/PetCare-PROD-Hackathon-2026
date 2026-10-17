@@ -64,7 +64,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-md border-2 border-[var(--forest)] bg-[var(--cream)] shadow-[6px_6px_0_var(--forest)]"
+        className="max-h-[calc(100dvh-2rem)] w-fit max-w-full overflow-y-auto rounded-md border-2 border-[var(--forest)] bg-[var(--cream)] shadow-[6px_6px_0_var(--forest)]"
       >
         {children}
       </div>

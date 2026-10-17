@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface AuthShellProps {
@@ -22,8 +23,14 @@ export function AuthShell({
             href="/"
             className="group flex items-center gap-3"
           >
-            <span className="grid size-8 place-items-center border border-[var(--cream)] bg-[var(--lime)] text-sm font-black text-[var(--forest)] transition-transform group-hover:-rotate-6">
-              +
+            <span className="grid size-10 place-items-center bg-[var(--forest)] transition-transform group-hover:-rotate-6">
+              <Image
+                src="/images/petcare-mark.svg"
+                alt=""
+                width={40}
+                height={40}
+                className="size-full object-contain"
+              />
             </span>
             <span className="font-mono text-xs font-bold uppercase tracking-[0.22em]">
               petcare

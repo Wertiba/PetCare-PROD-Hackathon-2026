@@ -5,6 +5,7 @@ import {
   selectUser,
   useUserStore,
 } from '@src/entities/user';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LandingHeader() {
@@ -21,8 +22,14 @@ export default function LandingHeader() {
           className="group flex items-center gap-3"
           aria-label="главная petcare"
         >
-          <span className="grid size-8 place-items-center border border-[var(--cream)] bg-[var(--lime)] text-sm font-black text-[var(--forest)] transition-transform group-hover:-rotate-6">
-            +
+          <span className="grid size-10 place-items-center bg-[var(--forest)] transition-transform group-hover:-rotate-6">
+            <Image
+              src="/images/petcare-mark.svg"
+              alt=""
+              width={40}
+              height={40}
+              className="size-full object-contain"
+            />
           </span>
           <span className="font-mono text-xs font-bold uppercase tracking-[0.22em]">
             petcare
@@ -36,13 +43,13 @@ export default function LandingHeader() {
             href="#inside"
             className="hidden text-sm tracking-[0.01em] text-[var(--cream)]/75 transition-colors hover:text-[var(--lime)] sm:inline"
           >
-            возможности
+            Возможности
           </a>
           <a
             href="#why"
             className="hidden text-sm tracking-[0.01em] text-[var(--cream)]/75 transition-colors hover:text-[var(--lime)] sm:inline"
           >
-            зачем это нужно
+            Зачем это нужно
           </a>
           {isSessionRestored ? (
             user ? (
@@ -50,22 +57,23 @@ export default function LandingHeader() {
                 href="/dashboard"
                 className="border-b border-[var(--lime)] pb-1 text-sm font-semibold tracking-[0.01em] text-[var(--cream)] transition-colors hover:text-[var(--lime)]"
               >
-                мои питомцы{' '}
+                Мои питомцы{' '}
                 <span aria-hidden="true">↗</span>
               </Link>
             ) : (
               <div className="flex items-center gap-4">
                 <Link
                   href="/register"
-                  className="hidden text-sm font-semibold tracking-[0.01em] text-[var(--cream)]/80 transition-colors hover:text-[var(--lime)] sm:inline"
+                  className="border-b border-[var(--lime)] pb-1 text-sm font-semibold tracking-[0.01em] text-[var(--cream)] transition-colors hover:text-[var(--lime)]"
                 >
-                  создать аккаунт
+                  Создать аккаунт{' '}
+                  <span aria-hidden="true">↗</span>
                 </Link>
                 <Link
                   href="/login"
                   className="border-b border-[var(--lime)] pb-1 text-sm font-semibold tracking-[0.01em] text-[var(--cream)] transition-colors hover:text-[var(--lime)]"
                 >
-                  войти <span aria-hidden="true">↗</span>
+                  Войти <span aria-hidden="true">↗</span>
                 </Link>
               </div>
             )

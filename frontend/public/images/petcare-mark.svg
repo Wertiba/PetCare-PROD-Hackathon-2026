@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <g fill="#CFFA91">
+    <circle cx="16" cy="22" r="8" />
+    <circle cx="32" cy="13" r="8" />
+    <circle cx="48" cy="22" r="8" />
+    <path fill-rule="evenodd" d="M32 27c-11.3 0-20 9.1-20 19.2C12 55.5 20.8 61 32 61s20-5.5 20-14.8C52 36.1 43.3 27 32 27Zm0 25.1-8.6-8.3a5.2 5.2 0 0 1 7.2-7.5l1.4 1.3 1.4-1.3a5.2 5.2 0 0 1 7.2 7.5L32 52.1Z" clip-rule="evenodd" />
+  </g>
+</svg>

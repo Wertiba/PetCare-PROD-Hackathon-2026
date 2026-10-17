@@ -13,7 +13,7 @@ export default function ProductIntro() {
             <span className="size-3 border border-[var(--ink)] bg-[var(--lime)]" />
             Зачем это нужно
           </div>
-          <h2 className="relative z-10 max-w-full text-[clamp(4.2rem,6vw,7.32rem)] font-black leading-[0.82] tracking-[-0.07em] text-[var(--forest)]">
+          <h2 className="relative z-10 max-w-full text-[clamp(3.4rem,6vw,6.25rem)] font-black leading-[0.82] tracking-[-0.07em] text-[var(--forest)]">
             <span className="block">Забота</span>
             <span className="block">становится</span>
             <span className="block w-fit bg-[var(--lime)] px-2 text-[var(--ink)] shadow-[5px_5px_0_var(--ink)]">
@@ -39,11 +39,11 @@ export default function ProductIntro() {
           </div>
         </div>
         <div className="flex min-h-[360px] flex-col bg-[var(--lime)] md:min-h-[500px] xl:min-h-[660px]">
-          <ol className="grid grid-cols-3 border-b border-[var(--ink)] xl:grid-cols-1">
+          <ol className="grid grid-cols-1 border-b border-[var(--ink)] sm:grid-cols-3 xl:grid-cols-1">
             {careSteps.map(({ number, label }, index) => (
               <li
                 key={number}
-                className={`p-4 sm:p-6 xl:flex xl:items-baseline xl:gap-5 xl:px-8 xl:py-5 ${index < careSteps.length - 1 ? 'border-r border-[var(--ink)] xl:border-b xl:border-r-0' : ''}`}
+                className={`p-4 sm:p-6 xl:flex xl:items-baseline xl:gap-5 xl:px-8 xl:py-5 ${index < careSteps.length - 1 ? 'border-b border-[var(--ink)] sm:border-b-0 sm:border-r xl:border-b xl:border-r-0' : ''}`}
               >
                 <span className="block font-mono text-xl font-black leading-none tracking-[-0.08em] text-[var(--forest)]">
                   {number}

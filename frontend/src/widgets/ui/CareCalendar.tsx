@@ -469,7 +469,7 @@ function CreateEventDialog({
       labelledBy="create-event-title"
       onClose={onClose}
     >
-      <div className="mx-auto max-w-lg p-5 sm:p-6">
+      <div className="mx-auto w-3xl max-w-full p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
           <div>
             <p className="text-sm font-semibold text-[var(--ink)]/55">
