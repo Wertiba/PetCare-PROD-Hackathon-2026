@@ -1,14 +1,6 @@
-import { CreateEventForm } from '@src/features/event/create-event';
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
-const CreateEventPage = () => {
-  return (
-    <div>
-      <Suspense>
-        <CreateEventForm />
-      </Suspense>
-    </div>
-  );
-};
-
-export default CreateEventPage;
+// Early scaffolding page: creating pets and events lives on the dashboard.
+export default function Page() {
+  redirect('/dashboard');
+}
