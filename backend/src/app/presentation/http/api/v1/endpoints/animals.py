@@ -9,6 +9,7 @@ from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
 from app.presentation.http.paginated import Page
 from app.presentation.http.schemas.animal import AnimalCreateBody, AnimalReadResponse, AnimalUpdateBody
+from app.presentation.http.schemas.base import NO_NUL_PATTERN
 from app.presentation.http.schemas.responses import ErrorResponse
 
 router = APIRouter(prefix="/animals", tags=["Animals"], route_class=DishkaRoute)
@@ -22,7 +23,7 @@ async def list_animals(
     _: CurrentUserDep,
     interactor: FromDishka[ListAnimals],
     pagination: PaginationDep,
-    q: str | None = Query(None, description="Substring of the animal name"),
+    q: str | None = Query(None, pattern=NO_NUL_PATTERN, description="Substring of the animal name"),
 ) -> Page[AnimalReadResponse]:
     """Seeded animals first, then the ones admins added."""
     return Page[AnimalReadResponse].model_validate(

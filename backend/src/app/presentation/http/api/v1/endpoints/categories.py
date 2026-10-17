@@ -15,6 +15,7 @@ from app.domain.categories.ids import CategoryId
 from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
 from app.presentation.http.paginated import Page
+from app.presentation.http.schemas.base import NO_NUL_PATTERN
 from app.presentation.http.schemas.category import CategoryCreateBody, CategoryReadResponse, CategoryUpdateBody
 from app.presentation.http.schemas.responses import ErrorResponse
 
@@ -35,7 +36,7 @@ async def list_categories(
     interactor: FromDishka[ListCategories],
     pagination: PaginationDep,
     type: CategoryType | None = Query(None),
-    q: str | None = Query(None, description="Substring of the category name"),
+    q: str | None = Query(None, pattern=NO_NUL_PATTERN, description="Substring of the category name"),
 ) -> Page[CategoryReadResponse]:
     """Categories are shared by all users: built-in ones first, then the ones users created."""
     return Page[CategoryReadResponse].model_validate(

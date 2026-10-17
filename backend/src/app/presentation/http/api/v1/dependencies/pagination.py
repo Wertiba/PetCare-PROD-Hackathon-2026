@@ -6,7 +6,7 @@ from app.presentation.http.paginated import PaginationParams
 
 
 def get_pagination(
-    page: int = Query(0, ge=0, description="Page number"),
+    page: int = Query(0, ge=0, le=1_000_000, description="Page number"),
     size: int = Query(20, ge=1, le=100, description="Page size"),
 ) -> PaginationParams:
     return PaginationParams(page=page, size=size)

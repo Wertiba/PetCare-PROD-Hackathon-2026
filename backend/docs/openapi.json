@@ -252,7 +252,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -269,6 +270,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -589,7 +591,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -606,6 +609,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -908,6 +912,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -1444,7 +1449,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -1461,6 +1467,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -1822,6 +1829,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -2244,6 +2252,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -2374,6 +2383,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -2799,6 +2809,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -3068,7 +3079,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -3085,6 +3097,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -3385,6 +3398,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -4407,6 +4421,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 2147483647.0,
                 "minimum": 0.0
               },
               {
@@ -4617,6 +4632,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 2147483647.0,
                 "minimum": 0.0
               },
               {
@@ -5459,6 +5475,8 @@
           },
           "value": {
             "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
             "title": "Value"
           },
           "time": {
@@ -5620,7 +5638,9 @@
           "value": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": -2147483648.0
               },
               {
                 "type": "null"
@@ -5692,6 +5712,7 @@
           },
           "password": {
             "type": "string",
+            "maxLength": 72,
             "title": "Password"
           }
         },

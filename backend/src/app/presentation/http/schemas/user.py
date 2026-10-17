@@ -23,7 +23,8 @@ class UserUpdateBody(PyModel):
 
 class UserLoginBody(PyModel):
     login: Annotated[str, Field(min_length=1, max_length=255)]
-    password: str
+    # Registration allows at most 72 characters; a longer one overflows the hasher with a 500.
+    password: Annotated[str, Field(max_length=72)]
 
 
 class UserData(PyModel):

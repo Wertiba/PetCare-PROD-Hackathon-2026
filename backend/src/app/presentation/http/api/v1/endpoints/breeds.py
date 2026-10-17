@@ -9,6 +9,7 @@ from app.domain.breeds.ids import BreedId
 from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
 from app.presentation.http.paginated import Page
+from app.presentation.http.schemas.base import NO_NUL_PATTERN
 from app.presentation.http.schemas.breed import BreedCreateBody, BreedReadResponse, BreedUpdateBody
 from app.presentation.http.schemas.responses import ErrorResponse
 
@@ -27,7 +28,7 @@ async def get_breeds(
     interactor: FromDishka[ListBreeds],
     pagination: PaginationDep,
     animalId: AnimalId | None = Query(None),
-    q: str | None = Query(None, description="Substring of the breed name"),
+    q: str | None = Query(None, pattern=NO_NUL_PATTERN, description="Substring of the breed name"),
 ) -> Page[BreedReadResponse]:
     """Seeded breeds first, then the ones admins added."""
     return Page[BreedReadResponse].model_validate(
