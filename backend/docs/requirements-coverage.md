@@ -69,7 +69,7 @@
 | P.TX | Транзакции: Unit of Work и откаты | 10 | ✅ покрыто |
 | P.TIME | Единый формат времени (Unix seconds, UTC) | 25 | ✅ покрыто |
 | P.OBS | Наблюдаемость: trace id, логи, метрики, health | 31 | ✅ покрыто |
-| P.ARCH | Контракт API, схема БД, границы слоёв | 6 | ✅ покрыто |
+| P.ARCH | Контракт API, схема БД, границы слоёв | 7 | ✅ покрыто |
 
 ## Тесты по требованиям
 
@@ -527,11 +527,12 @@
 
 </details>
 
-<details><summary>P.ARCH — Контракт API, схема БД, границы слоёв (6)</summary>
+<details><summary>P.ARCH — Контракт API, схема БД, границы слоёв (7)</summary>
 
 - `tests/test_architecture_and_contract.py::test_inner_layers_do_not_import_frameworks_or_outer_layers` — passed
 - `tests/test_architecture_and_contract.py::test_openapi_matches_the_documented_api_contract` — passed
 - `tests/test_architecture_and_contract.py::test_postgres_schema_matches_documented_tables_and_indexes` — passed
+- `tests/test_models.py::test_category_id_migration_renames_column_constraint_and_index_in_place` — passed
 - `tests/test_models.py::test_schemas_user_role_is_the_canonical_enum` — passed
 - `tests/test_models.py::test_tables_have_expected_columns` — passed
 - `tests/test_models.py::test_user_role_enum_values` — passed

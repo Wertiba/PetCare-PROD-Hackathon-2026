@@ -10,7 +10,7 @@ from app.domain.states.ids import StateId
 @dataclass(kw_only=True)
 class StateCreateData:
     petId: PetId
-    catId: CategoryId
+    categoryId: CategoryId
     value: int
     time: float | None = None
     note: str | None = None
@@ -25,7 +25,7 @@ class StateUpdateData:
 class StateResult:
     id: StateId
     petId: PetId
-    catId: CategoryId
+    categoryId: CategoryId
     value: int
     note: str | None
     time: float
@@ -35,7 +35,7 @@ class StateResult:
 @dataclass(kw_only=True)
 class StateSummaryResult:
     petId: PetId
-    catId: CategoryId
+    categoryId: CategoryId
     kind: CategoryKind
     unit: CategoryUnit
     value: float | None

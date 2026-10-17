@@ -52,7 +52,7 @@ HTML-отчёт с подсветкой строк — `reports/coverage-html/in
 | src/app/application/ports/user\_gateway.py                     |        3 |        0 |        0 |        0 |    100% |           |
 | src/app/application/states/di.py                               |        5 |        0 |        0 |        0 |    100% |           |
 | src/app/application/states/dto.py                              |       35 |        0 |        0 |        0 |    100% |           |
-| src/app/application/states/interactors.py                      |       94 |        0 |       16 |        1 |     99% | 109-\>111 |
+| src/app/application/states/interactors.py                      |       94 |        0 |       16 |        1 |     99% | 117-\>119 |
 | src/app/application/users/access.py                            |       10 |        0 |        2 |        0 |    100% |           |
 | src/app/application/users/di.py                                |        5 |        0 |        0 |        0 |    100% |           |
 | src/app/application/users/dto.py                               |       41 |        0 |        0 |        0 |    100% |           |
@@ -117,7 +117,7 @@ HTML-отчёт с подсветкой строк — `reports/coverage-html/in
 | src/app/infra/gateways/notification.py                         |       54 |        5 |       10 |        2 |     89% |23-\>25, 28-29, 74-75, 98 |
 | src/app/infra/gateways/pet.py                                  |       35 |        4 |        2 |        1 |     86% |19-\>21, 24-25, 47-48 |
 | src/app/infra/gateways/refresh\_token.py                       |       31 |       10 |        0 |        0 |     68% |17-22, 29-30, 36-37 |
-| src/app/infra/gateways/state.py                                |       79 |        8 |       16 |        1 |     91% |29-\>31, 34-35, 77-78, 103-104, 116-117 |
+| src/app/infra/gateways/state.py                                |       79 |        8 |       16 |        1 |     91% |29-\>31, 34-35, 77-78, 105-106, 118-119 |
 | src/app/infra/gateways/user.py                                 |       24 |        2 |        0 |        0 |     92% |     28-29 |
 | src/app/infra/logger.py                                        |       37 |        6 |        8 |        3 |     80% |15-16, 20-21, 29, 32 |
 | src/app/infra/metrics.py                                       |        7 |        0 |        0 |        0 |    100% |           |

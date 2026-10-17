@@ -104,7 +104,7 @@ def test_scenario_2_owner_keeps_the_health_history(client, owner, barsik, system
             "/api/v1/states",
             json={
                 "petId": barsik,
-                "catId": system_categories["weight"],
+                "categoryId": system_categories["weight"],
                 "value": grams,
                 "time": _days_from_now(-days_ago),
             },
@@ -127,7 +127,7 @@ def test_scenario_2_owner_keeps_the_health_history(client, owner, barsik, system
     assert notes[0]["content"].startswith("Заключение")
 
     weight = client.get(
-        "/api/v1/states/summary", params={"petId": barsik, "catId": system_categories["weight"]}, headers=owner
+        "/api/v1/states/summary", params={"petId": barsik, "categoryId": system_categories["weight"]}, headers=owner
     ).json()
     assert weight["value"] == 4650
     assert weight["count"] == 2

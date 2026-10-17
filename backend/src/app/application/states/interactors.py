@@ -33,7 +33,7 @@ class _StateContext:
         return StateResult(
             id=state.id,
             petId=state.pet_id,
-            catId=state.cat_id,
+            categoryId=state.category_id,
             value=state.value,
             note=state.note,
             time=state.time,
@@ -44,8 +44,8 @@ class _StateContext:
         if await self.pet_gateway.get_by_id(pet_id, user_id=user_id) is None:
             raise RelatedPetNotFoundError
 
-    async def _require_category(self, cat_id: CategoryId) -> Category:
-        category = await self.category_gateway.get_by_id(cat_id)
+    async def _require_category(self, category_id: CategoryId) -> Category:
+        category = await self.category_gateway.get_by_id(category_id)
         if category is None:
             raise RelatedCategoryNotFoundError
         return category
@@ -64,14 +64,22 @@ class ListStates(_StateContext):
         pagination: Pagination,
         *,
         pet_id: PetId | None = None,
-        cat_id: CategoryId | None = None,
+        category_id: CategoryId | None = None,
         from_: float | None = None,
         to: float | None = None,
     ) -> Page[StateResult]:
         states = await self.state_gateway.get_by_user_id(
-            user_id, offset=pagination.offset, limit=pagination.limit, pet_id=pet_id, cat_id=cat_id, from_=from_, to=to
+            user_id,
+            offset=pagination.offset,
+            limit=pagination.limit,
+            pet_id=pet_id,
+            category_id=category_id,
+            from_=from_,
+            to=to,
         )
-        total = await self.state_gateway.count_by_user_id(user_id, pet_id=pet_id, cat_id=cat_id, from_=from_, to=to)
+        total = await self.state_gateway.count_by_user_id(
+            user_id, pet_id=pet_id, category_id=category_id, from_=from_, to=to
+        )
         items = [self._to_read_response(state) for state in states]
         return Page.build(items=items, total=total, pagination=pagination)
 
@@ -84,11 +92,11 @@ class GetState(_StateContext):
 class CreateState(_StateContext):
     async def __call__(self, user_id: UserId, data: StateCreateData) -> StateResult:
         await self._require_pet(user_id, data.petId)
-        category = await self._require_category(data.catId)
+        category = await self._require_category(data.categoryId)
         validate_state_value(category.type, data.value)
         state = State(
             pet_id=data.petId,
-            cat_id=data.catId,
+            category_id=data.categoryId,
             value=data.value,
             note=data.note,
             time=data.time if data.time is not None else time(),
@@ -105,7 +113,7 @@ class UpdateState(_StateContext):
         provided = data.changes
         values: dict[str, Any] = {}
         if "value" in provided:
-            category = await self.category_gateway.get_by_id(state.cat_id)
+            category = await self.category_gateway.get_by_id(state.category_id)
             if category is not None:
                 validate_state_value(category.type, provided["value"])
             values["value"] = provided["value"]
@@ -132,15 +140,21 @@ class DeleteState(_StateContext):
 
 class SummarizeStates(_StateContext):
     async def __call__(
-        self, user_id: UserId, pet_id: PetId, cat_id: CategoryId, *, from_: float | None = None, to: float | None = None
+        self,
+        user_id: UserId,
+        pet_id: PetId,
+        category_id: CategoryId,
+        *,
+        from_: float | None = None,
+        to: float | None = None,
     ) -> StateSummaryResult:
         """Aggregate a pet's states of one category the way the category kind says (sum, avg, last...)."""
         await self._require_pet(user_id, pet_id)
-        category = await self._require_category(cat_id)
-        value, count = await self.state_gateway.aggregate(pet_id, cat_id, category.kind, from_, to)
+        category = await self._require_category(category_id)
+        value, count = await self.state_gateway.aggregate(pet_id, category_id, category.kind, from_, to)
         return StateSummaryResult(
             petId=pet_id,
-            catId=cat_id,
+            categoryId=category_id,
             kind=category.kind,
             unit=category.unit,
             value=value,

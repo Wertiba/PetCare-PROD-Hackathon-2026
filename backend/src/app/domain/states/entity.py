@@ -11,7 +11,7 @@ from app.domain.states.ids import StateId
 class State:
     id: StateId = field(default_factory=uuid4)
     pet_id: PetId
-    cat_id: CategoryId
+    category_id: CategoryId
     value: int
     note: str | None = None
     time: float

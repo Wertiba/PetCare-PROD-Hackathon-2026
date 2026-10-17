@@ -127,7 +127,7 @@ def test_password_rules_point_at_the_password_field(client, password, issue):
 def test_state_patch_changes_only_the_given_fields(client, auth, pet_id, system_categories):
     created = client.post(
         "/api/v1/states",
-        json={"petId": pet_id, "catId": system_categories["appetite"], "value": 3, "time": 1780000000.0},
+        json={"petId": pet_id, "categoryId": system_categories["appetite"], "value": 3, "time": 1780000000.0},
         headers=auth,
     ).json()
     url = f"/api/v1/states/{created['id']}"

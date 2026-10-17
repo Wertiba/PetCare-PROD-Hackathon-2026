@@ -1713,7 +1713,7 @@
             }
           },
           {
-            "name": "catId",
+            "name": "categoryId",
             "in": "query",
             "required": false,
             "schema": {
@@ -1725,7 +1725,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Catid"
+              "title": "Categoryid"
             }
           },
           {
@@ -1873,7 +1873,7 @@
             }
           },
           {
-            "name": "catId",
+            "name": "categoryId",
             "in": "query",
             "required": true,
             "schema": {
@@ -5402,7 +5402,7 @@
           "petId": {
             "$ref": "#/components/schemas/PetId"
           },
-          "catId": {
+          "categoryId": {
             "$ref": "#/components/schemas/CategoryId"
           },
           "value": {
@@ -5437,7 +5437,7 @@
         "type": "object",
         "required": [
           "petId",
-          "catId",
+          "categoryId",
           "value"
         ],
         "title": "StateCreateBody"
@@ -5454,7 +5454,7 @@
           "petId": {
             "$ref": "#/components/schemas/PetId"
           },
-          "catId": {
+          "categoryId": {
             "$ref": "#/components/schemas/CategoryId"
           },
           "value": {
@@ -5487,7 +5487,7 @@
         "required": [
           "id",
           "petId",
-          "catId",
+          "categoryId",
           "value",
           "note",
           "time",
@@ -5500,7 +5500,7 @@
           "petId": {
             "$ref": "#/components/schemas/PetId"
           },
-          "catId": {
+          "categoryId": {
             "$ref": "#/components/schemas/CategoryId"
           },
           "kind": {
@@ -5553,7 +5553,7 @@
         "type": "object",
         "required": [
           "petId",
-          "catId",
+          "categoryId",
           "kind",
           "unit",
           "value",
