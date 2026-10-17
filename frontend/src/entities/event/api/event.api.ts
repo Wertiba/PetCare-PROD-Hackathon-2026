@@ -6,6 +6,7 @@ import {
   CreateEventReqDto,
   FetchEventsReqDto,
   FetchEventsResDto,
+  FetchUpcomingEventsReqDto,
   UpdateEventReqDto,
 } from './event.dto';
 
@@ -14,6 +15,15 @@ export const fetchEvents = async (
 ) =>
   (
     await api.get<FetchEventsResDto>('/events', {
+      params: query,
+    })
+  ).data;
+
+export const fetchUpcomingEvents = async (
+  query: FetchUpcomingEventsReqDto,
+) =>
+  (
+    await api.get<FetchEventsResDto>('/events/upcoming', {
       params: query,
     })
   ).data;

@@ -8,7 +8,7 @@ export type DashboardTool =
 interface DashboardSidebarProps {
   activeTool: DashboardTool | 'home';
   hasPet: boolean;
-  onToolChange: (tool: DashboardTool) => void;
+  onToolChange: (tool: DashboardTool | 'home') => void;
 }
 
 interface ToolItem {
@@ -88,7 +88,31 @@ export function DashboardSidebar({
   return (
     <aside className="border-b border-[var(--forest)]/20 bg-white lg:border-r lg:border-b-0">
       <div className="flex h-full flex-col px-3 py-5 sm:px-5 lg:px-4">
-        <div className="mb-4 hidden px-2 lg:block">
+        <nav aria-label="Главная" className="mb-4">
+          <button
+            aria-current={
+              activeTool === 'home' ? 'page' : undefined
+            }
+            type="button"
+            onClick={() => onToolChange('home')}
+            className={`group flex w-full shrink-0 items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-[var(--forest)] focus-visible:ring-offset-2 ${
+              activeTool === 'home'
+                ? 'bg-[var(--lime)] text-[var(--forest)]'
+                : 'text-[var(--ink)]/70 hover:bg-[var(--cream)] hover:text-[var(--forest)]'
+            }`}
+          >
+            <span className="grid size-7 shrink-0 place-items-center rounded-sm border border-current/15 bg-white/50 p-1.5 transition-colors group-hover:bg-white">
+              <ToolIcon>
+                <path d="m3 11 9-8 9 8M5 10v10h14V10M9 20v-6h6v6" />
+              </ToolIcon>
+            </span>
+            <span className="whitespace-nowrap">
+              Главная
+            </span>
+          </button>
+        </nav>
+
+        <div className="mb-4 hidden border-t border-[var(--forest)]/20 px-2 pt-4 lg:block">
           <p className="text-[10px] font-black tracking-[.16em] text-[var(--forest)]/45 uppercase">
             Забота
           </p>

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { AccountSettings } from './AccountSettings';
@@ -62,8 +63,14 @@ export function Account({ activeTab }: AccountProps) {
             href="/dashboard"
             className="group flex items-center gap-3 text-[var(--forest)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--forest)]"
           >
-            <span className="grid size-10 place-items-center rounded-sm bg-[var(--lime)] text-xl transition-transform group-hover:-rotate-6">
-              +
+            <span className="grid size-12 place-items-center bg-[var(--cream)] transition-transform group-hover:-rotate-6">
+              <Image
+                src="/images/petcare-mark.svg"
+                alt=""
+                width={48}
+                height={48}
+                className="size-full object-contain"
+              />
             </span>
             <span className="text-lg font-black tracking-tight">
               PetCare

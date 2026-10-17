@@ -1,6 +1,9 @@
 'use client';
 
-import { useGetEventsQuery } from '@src/entities/event';
+import {
+  useGetEventsQuery,
+  useGetUpcomingEventsQuery,
+} from '@src/entities/event';
 import { useGetNotificationsQuery } from '@src/entities/notification';
 import {
   type Pet,
@@ -22,7 +25,9 @@ import {
 } from '@src/widgets/ui/DashboardSidebar';
 import { FoodPanel } from '@src/widgets/ui/FoodPanel';
 import { HealthPanel } from '@src/widgets/ui/HealthPanel';
+import { PetHome } from '@src/widgets/ui/PetHome';
 import { motion, useReducedMotion } from 'motion/react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   useEffect,
@@ -39,6 +44,27 @@ const formatDate = (value: number | null | undefined) =>
       }).format(new Date(value * 1000))
     : 'Не указано';
 
+function ChevronDown() {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid size-5 place-items-center"
+    >
+      <svg
+        className="size-4"
+        fill="none"
+        viewBox="0 0 16 16"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.25"
+      >
+        <path d="m4 6 4 4 4-4" />
+      </svg>
+    </span>
+  );
+}
+
 function PetModal({
   children,
   close,
@@ -50,7 +76,7 @@ function PetModal({
 }) {
   return (
     <Dialog labelledBy="pet-modal-title" onClose={close}>
-      <div className="mx-auto w-full max-w-md p-5 sm:p-6">
+      <div className="mx-auto w-2xl max-w-full p-5 sm:p-6">
         <div className="mb-5 flex justify-between border-b border-[var(--forest)]/15 pb-4">
           <div>
             <p className="text-xs font-bold tracking-[.12em] text-[var(--forest)]/60 uppercase">
@@ -212,35 +238,36 @@ export function Dashboard() {
   const [dialog, setDialog] = useState<
     'create' | 'edit' | 'delete' | null
   >(null);
-  const [search, setSearch] = useState('');
-  const [open, setOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] =
+    useState(false);
+  const [petsOpen, setPetsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const petsMenuRef = useRef<HTMLDivElement>(null);
+  const notificationsMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const upcomingEvents = useGetUpcomingEventsQuery({
+    days: 30,
+    page: 0,
+    size: 100,
+  });
   const petItems = petsQuery.data?.items;
   const pets = useMemo(() => petItems ?? [], [petItems]);
   const pet =
     pets.find((item) => item.id === selectedId) ?? pets[0];
-  const found = useMemo(
-    () =>
-      pets.filter((item) =>
-        item.name
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-      ),
-    [pets, search],
-  );
   const choose = (item: Pet) => {
     setSelectedId(item.id);
-    setOpen(false);
+    setPetsOpen(false);
   };
 
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as Node;
       if (!petsMenuRef.current?.contains(target)) {
-        setOpen(false);
+        setPetsOpen(false);
+      }
+      if (!notificationsMenuRef.current?.contains(target)) {
+        setNotificationsOpen(false);
       }
       if (!profileMenuRef.current?.contains(target)) {
         setProfileOpen(false);
@@ -249,7 +276,8 @@ export function Dashboard() {
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
+        setPetsOpen(false);
+        setNotificationsOpen(false);
         setProfileOpen(false);
       }
     };
@@ -274,8 +302,14 @@ export function Dashboard() {
           href="/"
           className="group flex items-center gap-3 text-[var(--forest)]"
         >
-          <span className="grid size-10 place-items-center rounded-sm bg-[var(--lime)] transition-transform group-hover:-rotate-6">
-            +
+          <span className="grid size-12 place-items-center rounded-sm bg-[var(--forest)] transition-transform group-hover:-rotate-6">
+            <Image
+              src="/images/petcare-mark.svg"
+              alt=""
+              width={48}
+              height={48}
+              className="size-full object-contain"
+            />
           </span>
           <span className="hidden text-lg font-black tracking-tight sm:inline">
             PetCare
@@ -283,188 +317,235 @@ export function Dashboard() {
         </Link>
         <div
           ref={petsMenuRef}
-          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 text-center"
+          className="relative flex min-w-0 justify-center"
         >
-          {pets.length <= 3 ? (
-            <>
-              {pets.length ? (
-                <div
-                  className="flex min-w-0 items-center rounded-md border border-[var(--forest)]/20 bg-white p-1"
-                  aria-label="Выбор питомца"
-                >
-                  {pets.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => choose(item)}
-                      aria-pressed={pet?.id === item.id}
-                      className={`max-w-24 truncate rounded-sm px-2.5 py-1.5 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)] sm:max-w-32 ${pet?.id === item.id ? 'bg-[var(--lime)] text-[var(--forest)]' : 'text-[var(--ink)]/65 hover:bg-[var(--cream)] hover:text-[var(--forest)]'}`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <span className="hidden text-sm font-semibold text-[var(--ink)]/55 sm:inline">
-                  Питомец не выбран
-                </span>
-              )}
-            </>
-          ) : (
+          {pet ? (
             <>
               <button
                 type="button"
-                onClick={() => setOpen((value) => !value)}
-                aria-expanded={open}
+                onClick={() => {
+                  setPetsOpen((value) => !value);
+                  setNotificationsOpen(false);
+                  setProfileOpen(false);
+                }}
+                aria-expanded={petsOpen}
                 aria-haspopup="listbox"
-                className="inline-flex max-w-44 items-center gap-2 rounded-md border border-[var(--forest)]/30 bg-white px-3 py-2 text-sm font-bold text-[var(--forest)] transition-colors hover:bg-[var(--cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+                aria-label="Выбрать питомца"
+                className="grid min-w-0 max-w-64 grid-cols-[auto_minmax(0,1fr)_1.25rem] items-center gap-2 rounded-md border border-[var(--forest)]/55 bg-white px-3 py-2 text-sm font-bold text-[var(--forest)] transition-colors hover:bg-[var(--cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
               >
-                <span className="truncate">
-                  {pet?.name ?? 'Выберите питомца'}
+                <span className="hidden leading-none text-xs font-bold tracking-[.08em] text-[var(--forest)]/50 uppercase sm:inline">
+                  Питомец
                 </span>
-                <span aria-hidden="true">⌄</span>
+                <span className="min-w-0 truncate leading-none">
+                  {pet.name}
+                </span>
+                <ChevronDown />
               </button>
-              {open ? (
-                <div className="absolute left-1/2 top-full z-30 mt-2 w-72 -translate-x-1/2 rounded-md border border-[var(--forest)] bg-white p-2 text-left shadow-[4px_4px_0_var(--lime)]">
-                  <input
-                    value={search}
-                    onChange={(event) =>
-                      setSearch(event.target.value)
-                    }
-                    placeholder="Найти питомца…"
-                    className="w-full rounded-sm border border-[var(--forest)]/25 bg-[var(--cream)] px-3 py-2 text-sm outline-none placeholder:text-[var(--ink)]/45 focus:border-[var(--forest)]"
-                  />
-                  <div
-                    role="listbox"
-                    aria-label="Питомцы"
-                    className="mt-1 max-h-52 overflow-y-auto"
-                  >
-                    {found.length ? (
-                      found.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          role="option"
-                          aria-selected={
-                            pet?.id === item.id
-                          }
-                          onClick={() => choose(item)}
-                          className={`flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-[var(--lime)] ${pet?.id === item.id ? 'bg-[var(--cream)]' : ''}`}
-                        >
-                          <span className="truncate">
-                            {item.name}
-                          </span>
-                          {pet?.id === item.id ? (
-                            <span className="text-[var(--forest)]">
-                              ✓
-                            </span>
-                          ) : null}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="px-3 py-5 text-center text-sm text-[var(--ink)]/55">
-                        Ничего не найдено
-                      </p>
-                    )}
+              {petsOpen ? (
+                <div
+                  role="listbox"
+                  aria-label="Питомцы"
+                  className="absolute top-[calc(100%+.65rem)] left-1/2 z-40 w-60 -translate-x-1/2 rounded-md border border-[var(--forest)] bg-white p-2 shadow-[4px_4px_0_var(--lime)]"
+                >
+                  <p className="border-b border-[var(--forest)]/15 px-3 py-2 text-xs font-bold tracking-[.1em] text-[var(--forest)]/55 uppercase">
+                    Мои питомцы
+                  </p>
+                  <div className="mt-1 max-h-64 overflow-y-auto">
+                    {pets.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        role="option"
+                        aria-selected={pet.id === item.id}
+                        onClick={() => choose(item)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)] ${
+                          pet.id === item.id
+                            ? 'bg-[var(--cream)] text-[var(--forest)]'
+                            : 'text-[var(--ink)]/70'
+                        }`}
+                      >
+                        <span className="truncate">
+                          {item.name}
+                        </span>
+                        {pet.id === item.id ? (
+                          <span aria-hidden="true">✓</span>
+                        ) : null}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : null}
             </>
+          ) : (
+            <span className="hidden text-sm font-semibold text-[var(--ink)]/55 sm:inline">
+              Питомец не выбран
+            </span>
           )}
-          <div className="flex shrink-0 items-center gap-1">
+        </div>
+        <div className="flex items-center gap-2">
+          <div
+            ref={notificationsMenuRef}
+            className="relative"
+          >
             <button
               type="button"
-              onClick={() => setDialog('create')}
-              aria-label="Добавить питомца"
-              title="Добавить питомца"
-              className="grid size-8 place-items-center rounded-sm border border-[var(--forest)]/30 bg-white text-lg leading-none text-[var(--forest)] transition-colors hover:border-[var(--forest)] hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+              onClick={() => {
+                setNotificationsOpen((value) => !value);
+                setPetsOpen(false);
+                setProfileOpen(false);
+              }}
+              aria-expanded={notificationsOpen}
+              aria-haspopup="dialog"
+              aria-label="Ближайшие события"
+              title="Ближайшие события"
+              className="grid size-10 place-items-center rounded-md border border-[var(--forest)]/55 bg-white text-[var(--forest)] transition-colors hover:bg-[var(--cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
             >
-              +
-            </button>
-            {pet ? (
-              <button
-                type="button"
-                onClick={() => setDialog('delete')}
-                aria-label={`Удалить питомца ${pet.name}`}
-                title={`Удалить ${pet.name}`}
-                className="grid size-8 place-items-center rounded-sm border border-[var(--forest)]/20 bg-white text-lg leading-none text-[var(--forest)]/70 transition-colors hover:border-red-800/50 hover:bg-red-50 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+              <svg
+                aria-hidden="true"
+                className="size-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
               >
-                −
-              </button>
+                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M10 21h4" />
+              </svg>
+            </button>
+            {notificationsOpen ? (
+              <section
+                role="dialog"
+                aria-label="Ближайшие события"
+                className="absolute right-0 top-[calc(100%+.65rem)] z-40 w-80 rounded-md border border-[var(--forest)] bg-white p-2 shadow-[4px_4px_0_var(--lime)] sm:w-96"
+              >
+                <div className="border-b border-[var(--forest)]/15 px-3 py-3">
+                  <h2 className="text-sm font-black text-[var(--forest)]">
+                    Ближайшие события
+                  </h2>
+                  <p className="mt-0.5 text-sm text-[var(--ink)]/60">
+                    На ближайшие 30 дней
+                  </p>
+                </div>
+                <div className="max-h-80 divide-y divide-[var(--forest)]/10 overflow-y-auto">
+                  {upcomingEvents.isPending ? (
+                    <p className="px-3 py-5 text-sm text-[var(--ink)]/60">
+                      Загружаем события…
+                    </p>
+                  ) : upcomingEvents.isError ? (
+                    <p className="px-3 py-5 text-sm text-red-800">
+                      Не удалось загрузить события.
+                    </p>
+                  ) : upcomingEvents.data?.items.length ? (
+                    upcomingEvents.data.items.map(
+                      (event) => (
+                        <div
+                          key={event.id}
+                          className="px-3 py-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-bold text-[var(--forest)]">
+                              {event.name}
+                            </p>
+                            {event.isOverdue ? (
+                              <span className="shrink-0 rounded-sm bg-red-50 px-1.5 py-0.5 text-xs font-bold text-red-800">
+                                Просрочено
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 text-sm text-[var(--ink)]/60">
+                            {formatDate(event.schedule)}
+                          </p>
+                        </div>
+                      ),
+                    )
+                  ) : (
+                    <p className="px-3 py-5 text-sm text-[var(--ink)]/60">
+                      Ближайших событий нет.
+                    </p>
+                  )}
+                </div>
+              </section>
             ) : null}
           </div>
-        </div>
-        <div ref={profileMenuRef} className="relative">
-          <button
-            type="button"
-            onClick={() =>
-              setProfileOpen((value) => !value)
-            }
-            aria-expanded={profileOpen}
-            aria-haspopup="menu"
-            className="flex h-10 items-center gap-2 rounded-md border border-[var(--forest)]/55 bg-white px-2 text-sm font-bold text-[var(--forest)] transition-colors hover:bg-[var(--cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
-          >
-            <span className="grid size-7 place-items-center rounded-full bg-[var(--forest)] text-xs text-white">
-              {user?.fullName?.slice(0, 1).toUpperCase() ??
-                'P'}
-            </span>
-            <span className="hidden max-w-28 truncate md:inline">
-              {user?.fullName ?? 'Профиль'}
-            </span>
-            <span aria-hidden="true">⌄</span>
-          </button>
-          {profileOpen ? (
-            <div
-              role="menu"
-              aria-label="Профиль"
-              className="absolute right-0 top-[calc(100%+.65rem)] z-40 w-60 rounded-md border border-[var(--forest)] bg-white p-2 shadow-[4px_4px_0_var(--lime)]"
+          <div ref={profileMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setProfileOpen((value) => !value);
+                setPetsOpen(false);
+                setNotificationsOpen(false);
+              }}
+              aria-expanded={profileOpen}
+              aria-haspopup="menu"
+              className="grid h-10 grid-cols-[auto_minmax(0,1fr)_1.25rem] items-center gap-2 rounded-md border border-[var(--forest)]/55 bg-white px-2 text-sm font-bold text-[var(--forest)] transition-colors hover:bg-[var(--cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
             >
-              <div className="border-b border-[var(--forest)]/15 px-3 py-3">
-                <p className="text-sm font-bold text-[var(--forest)]">
-                  {user?.fullName ?? 'Профиль'}
-                </p>
-                <p className="mt-0.5 truncate text-sm text-[var(--ink)]/60">
-                  @{user?.login ?? 'user'}
-                </p>
+              <span className="grid size-7 place-items-center rounded-full bg-[var(--forest)] text-xs text-white">
+                {user?.fullName
+                  ?.slice(0, 1)
+                  .toUpperCase() ?? 'P'}
+              </span>
+              <span className="hidden max-w-28 truncate leading-none md:inline">
+                {user?.fullName ?? 'Профиль'}
+              </span>
+              <ChevronDown />
+            </button>
+            {profileOpen ? (
+              <div
+                role="menu"
+                aria-label="Профиль"
+                className="absolute right-0 top-[calc(100%+.65rem)] z-40 w-60 rounded-md border border-[var(--forest)] bg-white p-2 shadow-[4px_4px_0_var(--lime)]"
+              >
+                <div className="border-b border-[var(--forest)]/15 px-3 py-3">
+                  <p className="text-sm font-bold text-[var(--forest)]">
+                    {user?.fullName ?? 'Профиль'}
+                  </p>
+                  <p className="mt-0.5 truncate text-sm text-[var(--ink)]/60">
+                    @{user?.login ?? 'user'}
+                  </p>
+                </div>
+                <Link
+                  href="/account"
+                  role="menuitem"
+                  onClick={() => setProfileOpen(false)}
+                  className="mt-2 flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      aria-hidden="true"
+                      className="size-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                    >
+                      <circle cx="12" cy="8" r="3" />
+                      <path d="M5 20a7 7 0 0 1 14 0" />
+                    </svg>
+                    Личный кабинет
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={logout.isPending}
+                  onClick={() => logout.mutate()}
+                  className="mt-2 flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span>
+                    {logout.isPending
+                      ? 'Выходим…'
+                      : 'Выйти'}
+                  </span>
+                  <span aria-hidden="true">↗</span>
+                </button>
               </div>
-              <Link
-                href="/account"
-                role="menuitem"
-                onClick={() => setProfileOpen(false)}
-                className="mt-2 flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
-              >
-                <span className="flex items-center gap-2">
-                  <svg
-                    aria-hidden="true"
-                    className="size-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
-                  >
-                    <circle cx="12" cy="8" r="3" />
-                    <path d="M5 20a7 7 0 0 1 14 0" />
-                  </svg>
-                  Личный кабинет
-                </span>
-                <span aria-hidden="true">→</span>
-              </Link>
-              <button
-                type="button"
-                role="menuitem"
-                disabled={logout.isPending}
-                onClick={() => logout.mutate()}
-                className="mt-2 flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span>
-                  {logout.isPending ? 'Выходим…' : 'Выйти'}
-                </span>
-                <span aria-hidden="true">↗</span>
-              </button>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </header>
       <DashboardSidebar
@@ -504,78 +585,13 @@ export function Dashboard() {
             </motion.button>
           </section>
         ) : tool === 'home' ? (
-          <>
-            <div className="mb-6 flex flex-wrap justify-between gap-4 border-b border-[var(--forest)]/15 pb-5">
-              <div>
-                <p className="text-sm text-[var(--ink)]/60">
-                  {pet.animal?.name ?? 'Питомец'} ·{' '}
-                  {pet.breed?.name ?? 'не указано'}
-                </p>
-                <h1 className="text-3xl font-black text-[var(--forest)]">
-                  {pet.name}
-                </h1>
-                <p className="text-sm text-[var(--ink)]/60">
-                  Дата рождения: {formatDate(pet.birthDate)}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDialog('create')}
-                  className="rounded-sm border border-[var(--forest)] px-3 py-2 text-sm font-bold"
-                >
-                  + Добавить
-                </button>
-                <button
-                  onClick={() => setDialog('edit')}
-                  className="rounded-sm border border-[var(--forest)] px-3 py-2 text-sm font-bold"
-                >
-                  Изменить
-                </button>
-                <button
-                  onClick={() => setDialog('delete')}
-                  className="rounded-sm border border-red-800/50 px-3 py-2 text-sm font-bold text-red-800"
-                >
-                  Удалить
-                </button>
-              </div>
-            </div>
-            <section className="grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
-              <Panel pet={pet} tool="health" />
-              <div className="rounded-md border border-[var(--forest)]/25 bg-white p-5">
-                <h2 className="text-xl font-black text-[var(--forest)]">
-                  Карточка питомца
-                </h2>
-                <dl className="mt-5 space-y-3 text-sm">
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-[var(--ink)]/60">
-                      Вид
-                    </dt>
-                    <dd className="font-semibold">
-                      {pet.animal?.name ?? 'Не указан'}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-[var(--ink)]/60">
-                      Порода
-                    </dt>
-                    <dd className="font-semibold">
-                      {pet.breed?.name ?? 'Не указана'}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-[var(--ink)]/60">
-                      Возраст
-                    </dt>
-                    <dd className="font-semibold">
-                      {pet.ageMonths
-                        ? `${pet.ageMonths} мес.`
-                        : 'Не указан'}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </section>
-          </>
+          <PetHome
+            key={pet.id}
+            pet={pet}
+            onCreate={() => setDialog('create')}
+            onEdit={() => setDialog('edit')}
+            onDelete={() => setDialog('delete')}
+          />
         ) : tool === 'health' ? (
           <HealthPanel key={pet.id} pet={pet} />
         ) : tool === 'food' ? (
@@ -592,6 +608,7 @@ export function Dashboard() {
           <CreatePetForm
             onSuccess={(item) => {
               setSelectedId(item.id);
+              setTool('home');
               setDialog(null);
             }}
           />

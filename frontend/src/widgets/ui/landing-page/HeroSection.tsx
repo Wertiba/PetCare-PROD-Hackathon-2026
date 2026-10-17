@@ -26,7 +26,7 @@ export default function HeroSection() {
             <p className="mb-9 max-w-[205px] font-mono text-xs font-bold uppercase leading-[1.5] tracking-[0.16em] text-[var(--forest)]/65">
               Небольшое место для заботы каждый день
             </p>
-            <h1 className="max-w-full text-[clamp(4.08rem,6.24vw,7.8rem)] font-black leading-[0.84] tracking-[-0.065em] text-[var(--forest)]">
+            <h1 className="max-w-full text-[clamp(3.4rem,6.24vw,6.25rem)] font-black leading-[0.84] tracking-[-0.065em] text-[var(--forest)]">
               <span className="block">Забота</span>
               <span className="block">начинается</span>
               <span className="block text-[var(--ink)]">

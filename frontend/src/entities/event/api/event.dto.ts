@@ -27,6 +27,13 @@ export interface FetchEventsResDto {
   total: number;
 }
 
+export interface FetchUpcomingEventsReqDto {
+  days?: number;
+  page: number;
+  petId?: Uid;
+  size: number;
+}
+
 export interface CreateEventReqDto {
   petId: Uid;
   name: string;

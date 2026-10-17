@@ -34,7 +34,7 @@ export default function FeatureShowcase() {
             <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lime)]">
               Что уже есть в PetCare
             </p>
-            <h2 className="mt-8 max-w-[720px] text-[clamp(4.2rem,7.4vw,8rem)] font-black leading-[0.78] tracking-[-0.07em]">
+            <h2 className="mt-8 max-w-[720px] text-[clamp(3.4rem,7.4vw,6.25rem)] font-black leading-[0.78] tracking-[-0.07em]">
               Всё важное —
               <span className="block text-[var(--lime)]">
                 вместе.
