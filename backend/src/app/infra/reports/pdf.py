@@ -10,7 +10,7 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.charts.lineplots import LinePlot
 from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.shapes import Drawing, String
+from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.widgets.markers import makeMarker
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
@@ -291,7 +291,8 @@ def _activity_chart(report: PetReport, width: float) -> Drawing | None:
         chart.bars[index].fillColor = _TYPE_COLORS[type_]
         chart.bars[index].strokeColor = None
     drawing.add(chart)
-    drawing.add(_legend([(_TYPE_COLORS[type_], _TYPE_LABELS[type_]) for type_ in types], width - 38 * mm, height - 6 * mm))
+    legend = [(_TYPE_COLORS[type_], _TYPE_LABELS[type_]) for type_ in types]
+    drawing.add(_legend(legend, width - 38 * mm, height - 6 * mm))
     return drawing
 
 
@@ -406,9 +407,10 @@ def _food(report: PetReport, width: float) -> list:
     table_width = width - 46 * mm
     table = _table(rows, [table_width - 106 * mm, 10 * mm, 22 * mm, 20 * mm, 54 * mm], highlight=bad)
     pie = _tolerance_chart(report.tolerance, 42 * mm)
+    verdicts = (("suited", "подошло", MINT), ("unsuited", "не подошло", CORAL), ("unknown", "не оценено", LINE))
     legend_lines = [
         f"<font color='{color.hexval().replace('0x', '#')}'>■</font> {label}: {report.tolerance.get(key, 0)}"
-        for key, label, color in (("suited", "подошло", MINT), ("unsuited", "не подошло", CORAL), ("unknown", "не оценено", LINE))
+        for key, label, color in verdicts
         if report.tolerance.get(key)
     ]
     side = [pie or "", Paragraph("<br/>".join(legend_lines), _SMALL)]
@@ -447,7 +449,11 @@ def _notes(report: PetReport) -> list:
     if not report.notes:
         return [heading, Paragraph("Заключений и заметок пока нет.", _SMALL)]
     blocks = [
-        [Paragraph(f"<b>{_date(note.moment)} · {_text(note.title)}</b>", _BODY), Paragraph(_text(note.text), _BODY), Spacer(1, 5)]
+        [
+            Paragraph(f"<b>{_date(note.moment)} · {_text(note.title)}</b>", _BODY),
+            Paragraph(_text(note.text), _BODY),
+            Spacer(1, 5),
+        ]
         for note in report.notes
     ]
     # A note never splits across pages, and the heading always sits on top of the first one.
