@@ -5,6 +5,11 @@
 		reverse_proxy backend:8000
 	}
 
+	@swagger path /docs /docs/* /openapi.json
+	handle @swagger {
+		reverse_proxy backend:8000
+	}
+
 	handle /media/* {
 		reverse_proxy backend:8000
 	}

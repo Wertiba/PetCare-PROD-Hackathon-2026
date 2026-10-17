@@ -28,6 +28,21 @@ stages:
         - backend/**/*
         - .gitlab-ci.yml
 
+lint-caddy:
+  stage: lint
+  image: caddy:2-alpine
+  variables:
+    DOMAIN: localhost
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - deploy/**/*
+        - docker-compose.yaml
+        - .gitlab-ci.yml
+  script:
+    - caddy validate --config deploy/Caddyfile --adapter caddyfile
+
 lint-backend:
   extends: .backend-job
   stage: lint
@@ -79,6 +94,7 @@ deploy-production:
   image: alpine:3
   extends: .production-job
   needs:
+    - lint-caddy
     - build-backend
     - build-frontend
   resource_group: production
@@ -122,4 +138,5 @@ deploy-production:
         cd petcare
         sudo -n docker compose pull
         sudo -n docker compose up -d
+        sudo -n docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
       ' < "$SPIRIT_DOCKER_SA_KEY"
