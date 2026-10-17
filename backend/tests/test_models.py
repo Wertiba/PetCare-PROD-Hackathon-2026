@@ -1,6 +1,9 @@
+import pytest
 from sqlalchemy import create_engine, inspect
 from app.domain.users.enums import UserRole
 from app.infra.database.mappings import metadata, RefreshToken, User
+
+pytestmark = pytest.mark.req("P.ARCH")
 
 
 def test_tables_have_expected_columns():

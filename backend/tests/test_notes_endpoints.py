@@ -1,5 +1,8 @@
+import pytest
 import uuid
 from conftest import CAT_BREED_ID, register_user
+
+pytestmark = pytest.mark.req("5.2.4")
 
 
 def test_crud(client, auth, pet_id):
@@ -28,6 +31,7 @@ def test_list_filters_by_pet_and_text_newest_first(client, auth, pet_id):
     assert by_text["total"] == 2
 
 
+@pytest.mark.req("P.ACCESS")
 def test_other_users_notes_are_invisible(client, auth, pet_id):
     note_id = client.post("/api/v1/notes", json={"petId": pet_id, "content": "Секрет"}, headers=auth).json()["id"]
     _, stranger = register_user(client, login="stranger")
@@ -40,6 +44,7 @@ def test_other_users_notes_are_invisible(client, auth, pet_id):
     assert foreign.json()["code"] == "PET_NOT_FOUND"
 
 
+@pytest.mark.req("7.1")
 def test_validation_and_pet_cascade(client, auth, pet_id):
     blank = client.post("/api/v1/notes", json={"petId": pet_id, "content": "   "}, headers=auth)
     assert blank.status_code == 422
@@ -50,6 +55,7 @@ def test_validation_and_pet_cascade(client, auth, pet_id):
     assert client.get(f"/api/v1/notes/{note_id}", headers=auth).status_code == 404
 
 
+@pytest.mark.req("P.ACCESS")
 def test_requires_auth(client):
     assert client.get("/api/v1/notes").status_code == 401
     assert client.get(f"/api/v1/notes/{uuid.uuid4()}").status_code == 401

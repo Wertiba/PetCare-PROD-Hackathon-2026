@@ -3,6 +3,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from conftest import register_user
 
+pytestmark = pytest.mark.req("5.4.5")
+
 
 @pytest.fixture
 def event_id(client, auth, pet_id):
@@ -26,6 +28,7 @@ def test_create_defaults_to_event_schedule(client, auth, pet_id, event_id):
     assert response.headers["location"] == f"/api/v1/notifications/{body['id']}"
 
 
+@pytest.mark.req("5.4.6")
 def test_due_filter_and_mark_read(client, auth, event_id):
     past = (datetime.now(UTC) - timedelta(minutes=5)).timestamp()
     due = client.post(
@@ -53,6 +56,7 @@ def test_filter_by_event(client, auth, pet_id, event_id):
     assert [item["eventName"] for item in only_one["items"]] == ["Груминг"]
 
 
+@pytest.mark.req("P.ACCESS")
 def test_isolation_and_unknown_event(client, event_id, auth):
     notification_id = client.post("/api/v1/notifications", json={"eventId": event_id}, headers=auth).json()["id"]
     _, stranger = register_user(client, login="stranger")
@@ -79,6 +83,7 @@ def test_delete_and_cascade_from_event(client, auth, event_id):
     assert client.get(f"/api/v1/notifications/{second}", headers=auth).status_code == 404
 
 
+@pytest.mark.req("7.1")
 def test_invalid_values(client, auth, event_id):
     bad_type = client.post("/api/v1/notifications", json={"eventId": event_id, "type": "sms"}, headers=auth)
     assert bad_type.status_code == 422

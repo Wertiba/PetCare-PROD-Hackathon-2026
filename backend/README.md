@@ -4,6 +4,8 @@
 
 Код перенесён из ветки `backend/roma_crud` (коммит `3d9b36a`) в каталог `backend/`.
 
+Архитектура, диаграммы C4, карта эндпоинтов и отчёты о тестах: [`docs/architecture.md`](docs/architecture.md).
+
 ## Структура проекта
 
 ```text
@@ -151,6 +153,8 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 uv run python -m pytest
 uv run ruff check .
 ```
+
+Покрытие требований и кода: `uv run pytest --cov`, снимки отчётов обновляет `sh scripts/coverage_report.sh` (`docs/requirements-coverage.md`, `docs/code-coverage.md`).
 
 Тесты идут на SQLite в памяти с включёнными внешними ключами. `.env` им не нужен: тестовые значения подставляет `tests/conftest.py`. Отдельных тестовых контейнеров и фабрик приложения нет. Контракт API сравнивается с `docs/openapi.json`, а определения таблиц и индексов PostgreSQL — с сохранённым снимком. Проверяются также границы слоёв, откаты транзакций, общая сессия запроса, дробные timestamp, epoch zero, календарные повторы и SQL прямой/обратной миграции. На виртуальную машину тесты не выкладываются.
 

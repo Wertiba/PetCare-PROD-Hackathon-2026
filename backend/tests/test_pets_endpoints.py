@@ -3,6 +3,8 @@ from datetime import UTC, date, datetime
 import pytest
 from conftest import CAT_BREED_ID, CAT_ID, DOG_BREED_ID, DOG_ID
 
+pytestmark = pytest.mark.req("5.1.1")
+
 PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
 
 
@@ -23,6 +25,7 @@ def _create_pet(client, token, **overrides):
     return client.post("/api/v1/pets", json=payload, headers=_auth(token))
 
 
+@pytest.mark.req("5.1.2")
 def test_create_minimal_pet(client):
     _, token = _register(client)
     response = _create_pet(client, token, name="  Барсик  ")
@@ -40,6 +43,7 @@ def test_create_minimal_pet(client):
     assert response.headers["location"] == f"/api/v1/pets/{body['id']}"
 
 
+@pytest.mark.req("7.1")
 def test_blank_name_is_422(client):
     _, token = _register(client)
     response = _create_pet(client, token, name="   ")
@@ -48,6 +52,7 @@ def test_blank_name_is_422(client):
     assert "name" in fields
 
 
+@pytest.mark.req("7.1")
 def test_null_name_on_patch_is_422(client):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -57,6 +62,7 @@ def test_null_name_on_patch_is_422(client):
     assert "name" in fields
 
 
+@pytest.mark.req("5.1.2", "7.1")
 def test_future_birth_date_is_422(client):
     _, token = _register(client)
     response = _create_pet(client, token, birthDate=4070908800.0)
@@ -65,6 +71,7 @@ def test_future_birth_date_is_422(client):
     assert "birthDate" in fields
 
 
+@pytest.mark.req("5.1.2")
 def test_past_birth_date_returns_age_months(client):
     _, token = _register(client)
     birth = date(2020, 1, 15)
@@ -79,6 +86,7 @@ def test_past_birth_date_returns_age_months(client):
     assert body["ageMonths"] == months
 
 
+@pytest.mark.req("5.1.4", "P.ACCESS")
 def test_list_returns_only_current_users_pets(client):
     _, token_a = _register(client, login="a")
     _, token_b = _register(client, login="b")
@@ -91,6 +99,7 @@ def test_list_returns_only_current_users_pets(client):
     assert [item["name"] for item in body["items"]] == ["Алфа"]
 
 
+@pytest.mark.req("P.ACCESS")
 def test_other_users_pet_is_not_found(client):
     _, token_a = _register(client, login="owner")
     _, token_b = _register(client, login="stranger")
@@ -112,6 +121,7 @@ def test_other_users_pet_is_not_found(client):
     assert still_there.json()["name"] == "Барсик"
 
 
+@pytest.mark.req("5.1.2", "7.1")
 def test_breed_is_required_and_must_exist(client):
     _, token = _register(client)
     missing = _create_pet(client, token, breedId=str(uuid.uuid4()))
@@ -123,6 +133,7 @@ def test_breed_is_required_and_must_exist(client):
     assert "breedId" in [err["field"] for err in response.json()["fieldErrors"]]
 
 
+@pytest.mark.req("5.1.2")
 def test_patch_changes_breed_and_animal_and_clears_birth_date(client):
     _, token = _register(client)
     created = _create_pet(client, token, birthDate=1579046400.0)
@@ -141,6 +152,7 @@ def test_patch_changes_breed_and_animal_and_clears_birth_date(client):
     assert null_breed.status_code == 422
 
 
+@pytest.mark.req("P.CATALOG")
 def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
     _, token = _register(client)
     breed = client.post("/api/v1/breeds", json={"animalId": CAT_ID, "name": "Сфинкс"}, headers=admin).json()
@@ -164,6 +176,7 @@ def _upload_photo(client, pet_id, token, content=PNG_BYTES):
     )
 
 
+@pytest.mark.req("5.1.3", "7.1")
 def test_photo_upload_wrong_type_and_too_large(client, storage, monkeypatch):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -198,6 +211,7 @@ def test_photo_upload_wrong_type_and_too_large(client, storage, monkeypatch):
     assert new_key in storage.objects
 
 
+@pytest.mark.req("5.1.3")
 def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, storage, generator):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -221,6 +235,7 @@ def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, stora
     assert fetched.json()["avatarSource"] == "photo"
 
 
+@pytest.mark.req("5.1.3")
 def test_select_generated_avatar_and_reject_missing_one(client):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -246,6 +261,7 @@ def test_select_generated_avatar_and_reject_missing_one(client):
     assert back.json()["generatedAvatarUrl"] == body["generatedAvatarUrl"]
 
 
+@pytest.mark.req("5.1.3")
 def test_reupload_resets_generated_avatar_and_deletes_old_objects(client, storage):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -266,6 +282,7 @@ def test_reupload_resets_generated_avatar_and_deletes_old_objects(client, storag
     assert storage.objects[_object_key(body["photoUrl"])][0] == b"new-photo"
 
 
+@pytest.mark.req("5.1.3")
 def test_delete_pet_removes_photo_and_avatar(client, storage):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
@@ -279,6 +296,7 @@ def test_delete_pet_removes_photo_and_avatar(client, storage):
     assert client.get(f"/api/v1/pets/{pet_id}", headers=headers).status_code == 404
 
 
+@pytest.mark.req("5.1.3", "P.ACCESS")
 def test_other_users_pet_avatar_endpoints_are_not_found(client):
     _, owner = _register(client, login="owner")
     _, stranger = _register(client, login="stranger")
@@ -293,6 +311,7 @@ def test_other_users_pet_avatar_endpoints_are_not_found(client):
     assert select.json()["code"] == "NOT_FOUND"
 
 
+@pytest.mark.req("5.1.3")
 def test_avatar_generation_failure_and_unavailable(client, generator):
     from app.domain.pets.errors import AvatarGenerationFailedError, AvatarGenerationUnavailableError
 

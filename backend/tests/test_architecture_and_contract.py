@@ -1,3 +1,4 @@
+import pytest
 import ast
 import json
 from pathlib import Path
@@ -5,6 +6,8 @@ from sqlalchemy.dialects.postgresql import dialect
 from sqlalchemy.schema import CreateIndex, CreateTable
 from app.infra.database.mappings import metadata
 from app.main import app
+
+pytestmark = pytest.mark.req("P.ARCH")
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SOURCE = Path(__file__).parents[1] / "src" / "app"

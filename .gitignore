@@ -3,3 +3,4 @@
 !.env.example
 .idea/
 /docker-compose.local.yaml
+/local/

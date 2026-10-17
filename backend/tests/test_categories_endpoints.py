@@ -1,5 +1,8 @@
+import pytest
 import uuid
 from conftest import DOG_BREED_ID, register_user
+
+pytestmark = pytest.mark.req("P.CATALOG")
 
 
 def _create(client, headers, **overrides):
@@ -8,6 +11,7 @@ def _create(client, headers, **overrides):
     return client.post("/api/v1/categories", json=payload, headers=headers)
 
 
+@pytest.mark.req("5.2.5", "5.3.4")
 def test_list_shows_system_first_then_own(client, auth, system_categories):
     created = _create(client, auth, name="Аквариум")
     assert created.status_code == 201, created.text
@@ -28,6 +32,7 @@ def test_filters_by_type_and_name(client, auth, system_categories):
     assert {item["name"] for item in by_name["items"]} == {"Корм", "Корм понравился"}
 
 
+@pytest.mark.req("P.ACCESS")
 def test_categories_are_shared_but_only_the_author_changes_them(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
@@ -41,6 +46,7 @@ def test_categories_are_shared_but_only_the_author_changes_them(client, system_c
     assert client.get(f"/api/v1/categories/{uuid.uuid4()}", headers=stranger).status_code == 404
 
 
+@pytest.mark.req("P.ACCESS")
 def test_system_category_is_read_only(client, auth, system_categories):
     weight_id = system_categories["weight"]
     assert client.get(f"/api/v1/categories/{weight_id}", headers=auth).status_code == 200
@@ -50,6 +56,7 @@ def test_system_category_is_read_only(client, auth, system_categories):
     assert client.delete(f"/api/v1/categories/{weight_id}", headers=auth).status_code == 403
 
 
+@pytest.mark.req("P.ACCESS")
 def test_admin_changes_any_category(client, admin, system_categories):
     weight_id = system_categories["weight"]
     patch = client.patch(f"/api/v1/categories/{weight_id}", json={"name": "Масса"}, headers=admin)
@@ -88,6 +95,7 @@ def test_update_and_delete_own(client, auth):
     assert client.get(f"/api/v1/categories/{category_id}", headers=auth).status_code == 404
 
 
+@pytest.mark.req("7.1")
 def test_validation_errors(client, auth):
     blank = _create(client, auth, name="  ")
     assert blank.status_code == 422
@@ -97,6 +105,7 @@ def test_validation_errors(client, auth):
     assert "kind" in [err["field"] for err in bad_kind.json()["fieldErrors"]]
 
 
+@pytest.mark.req("P.ACCESS")
 def test_requires_auth(client):
     assert client.get("/api/v1/categories").status_code == 401
     assert client.get(f"/api/v1/categories/{uuid.uuid4()}").status_code == 401

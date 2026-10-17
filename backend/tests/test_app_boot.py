@@ -1,5 +1,8 @@
+import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+
+pytestmark = pytest.mark.req("P.OBS")
 
 
 def test_app_imports_and_liveness_responds():
