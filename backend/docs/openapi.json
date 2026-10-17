@@ -5763,7 +5763,7 @@
           },
           "fullName": {
             "type": "string",
-            "pattern": "^[а-яА-Яa-zA-Z0-9 _-]{2,200}$",
+            "pattern": "^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$",
             "title": "Fullname"
           }
         },
@@ -5787,7 +5787,7 @@
         "properties": {
           "fullName": {
             "type": "string",
-            "pattern": "^[а-яА-Яa-zA-Z0-9 _-]{2,200}$",
+            "pattern": "^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$",
             "title": "Fullname"
           }
         },

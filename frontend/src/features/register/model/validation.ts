@@ -4,7 +4,7 @@ const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 72;
 
 /** Same pattern as the backend's `fullName` field validation. */
-const FULL_NAME_PATTERN = /^[а-яА-Яa-zA-Z0-9 _-]{2,200}$/;
+const FULL_NAME_PATTERN = /^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$/;
 
 export const registerSchema = z.object({
   login: z

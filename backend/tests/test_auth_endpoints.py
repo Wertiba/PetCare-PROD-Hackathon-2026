@@ -84,6 +84,14 @@ def test_register_accepts_cyrillic_full_name(client):
     assert response.status_code == 201
 
 
+def test_register_accepts_full_name_with_yo(client):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"login": "yo", "password": "password1", "fullName": "Пётр Семёнов"},
+    )
+    assert response.status_code == 201
+
+
 @pytest.mark.req("7.1")
 def test_validation_error_message_is_english(client):
     response = client.post("/api/v1/auth/register", json={"login": "not-an-login", "password": "x", "fullName": ""})
