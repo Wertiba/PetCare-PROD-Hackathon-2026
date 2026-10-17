@@ -1,0 +1,49 @@
+{
+  "breeds": {
+    "table": "\nCREATE TABLE breeds (\n\tid UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_breeds_type_name UNIQUE (type, name)\n)\n\n",
+    "indexes": []
+  },
+  "users": {
+    "table": "\nCREATE TABLE users (\n\tid UUID NOT NULL, \n\tlogin VARCHAR(255) NOT NULL, \n\tpassword VARCHAR(255) NOT NULL, \n\tfull_name VARCHAR(255) NOT NULL, \n\trole VARCHAR(20) NOT NULL, \n\tis_active BOOLEAN NOT NULL, \n\tcreated_by UUID, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (login), \n\tFOREIGN KEY(created_by) REFERENCES users (id)\n)\n\n",
+    "indexes": []
+  },
+  "categories": {
+    "table": "\nCREATE TABLE categories (\n\tid UUID NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tkind VARCHAR(20) NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tunit VARCHAR(20) NOT NULL, \n\tcreated_by UUID, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(created_by) REFERENCES users (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_categories_created_by ON categories (created_by)"
+    ]
+  },
+  "pets": {
+    "table": "\nCREATE TABLE pets (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tbreed_id UUID, \n\tname VARCHAR(100) NOT NULL, \n\tbirth_date DOUBLE PRECISION, \n\tphoto_url VARCHAR(255), \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, \n\tFOREIGN KEY(breed_id) REFERENCES breeds (id) ON DELETE SET NULL\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_pets_user_id ON pets (user_id)"
+    ]
+  },
+  "refresh_tokens": {
+    "table": "\nCREATE TABLE refresh_tokens (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\thashed_token VARCHAR(255) NOT NULL, \n\texpires_at DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_refresh_tokens_hashed_token ON refresh_tokens (hashed_token)",
+      "CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens (user_id)"
+    ]
+  },
+  "events": {
+    "table": "\nCREATE TABLE events (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\ttype VARCHAR(30) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tschedule DOUBLE PRECISION NOT NULL, \n\tperiod VARCHAR(20) NOT NULL, \n\tdescription VARCHAR(2000), \n\tdone_at DOUBLE PRECISION, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_events_pet_id ON events (pet_id)",
+      "CREATE INDEX idx_events_status_schedule ON events (status, schedule)"
+    ]
+  },
+  "states": {
+    "table": "\nCREATE TABLE states (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tcat_id UUID NOT NULL, \n\tvalue INTEGER NOT NULL, \n\tnote VARCHAR(1000), \n\ttime DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE, \n\tFOREIGN KEY(cat_id) REFERENCES categories (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_states_pet_id_cat_id_time ON states (pet_id, cat_id, time)"
+    ]
+  },
+  "notifications": {
+    "table": "\nCREATE TABLE notifications (\n\tid UUID NOT NULL, \n\tevent_id UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\ttime DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(event_id) REFERENCES events (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_notifications_event_id ON notifications (event_id)",
+      "CREATE INDEX idx_notifications_status_time ON notifications (status, time)"
+    ]
+  }
+}

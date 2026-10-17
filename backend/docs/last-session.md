@@ -28,7 +28,7 @@
 
 ## База данных
 
-Миграция `src/alembic/versions/0003_care_tracking.py`:
+Миграция `alembic/versions/0003_care_tracking.py`:
 
 - таблицы `categories`, `states`, `events`, `notifications`;
 - новый тип питомца `fish`;
@@ -38,7 +38,7 @@
 
 ## Наблюдаемость
 
-- **Логи** (loguru): stdout и `src/logs/petcare.log`. В каждой строке есть `trace_id` из заголовка `X-Trace-Id` (или сгенерированный). Он возвращается в ответе: в заголовке и в теле ошибки (`traceId`). На каждый запрос пишется одна строка access-лога: метод, путь, статус, время.
+- **Логи** (loguru): stdout и `logs/petcare.log`. В каждой строке есть `trace_id` из заголовка `X-Trace-Id` (или сгенерированный). Он возвращается в ответе: в заголовке и в теле ошибки (`traceId`). На каждый запрос пишется одна строка access-лога: метод, путь, статус, время.
 - **Метрики**: `petcare_http_requests_total{method,path,status}`, `petcare_http_request_duration_seconds`, `petcare_http_requests_in_progress`, бизнес-счётчик `petcare_domain_events_total{entity,action}`.
 - **Ошибки** в едином формате `{code, message, traceId, timestamp, path, details?}`. Добавлены `409` при конфликте и `500 INTERNAL_ERROR` для непредвиденных исключений (стектрейс пишется в лог).
 
@@ -50,7 +50,7 @@
 ## Тесты
 
 - Новые тесты: `test_categories_endpoints.py`, `test_states_endpoints.py`, `test_events_endpoints.py`, `test_notifications_endpoints.py`, `test_users_and_observability.py`; дополнен `test_models.py`.
-- Тестам больше не нужен `src/.env`: значения по умолчанию задаёт `tests/conftest.py`.
+- Тестам больше не нужен `.env`: значения по умолчанию задаёт `tests/conftest.py`.
 - В SQLite включены внешние ключи, чтобы каскадное удаление работало как в Postgres.
 
 Запуск из `src`: `uv run python -m pytest` и `uv run ruff check .`

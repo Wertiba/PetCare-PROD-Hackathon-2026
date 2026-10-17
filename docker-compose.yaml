@@ -49,7 +49,7 @@ services:
       APP_COOKIE_SECURE: "true"
       APP_CORS_ALLOWED_ORIGINS: https://${DOMAIN}
     volumes:
-      - backend_media:/app/src/media
+      - backend_media:/app/media
     depends_on:
       postgres:
         condition: service_healthy

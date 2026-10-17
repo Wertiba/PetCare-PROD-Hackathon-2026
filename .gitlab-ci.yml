@@ -35,7 +35,6 @@ lint-backend:
   script:
     - cd backend
     - uv sync --locked
-    - cd src
     - uv run ruff check .
 
 test-backend:
@@ -45,7 +44,6 @@ test-backend:
   script:
     - cd backend
     - uv sync --locked
-    - cd src
     - uv run python -m pytest
 
 build-backend:

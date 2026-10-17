@@ -1,15 +1,18 @@
 from contextlib import asynccontextmanager
 
+from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import ops_router, v1_router
-from app.api.v1.exceptions.handlers import register_exception_handlers
-from app.core.config import get_media_dir, settings
-from app.core.logger import Logger
-from app.core.middleware.observability import ObservabilityMiddleware
-from app.core.middleware.trace_id import TraceIdMiddleware
+from app.bootstrap import build_container
+from app.infra.config import get_media_dir, settings
+from app.infra.database.mappings import start_mappers
+from app.infra.logger import Logger
+from app.presentation.http.api import ops_router, v1_router
+from app.presentation.http.api.v1.exceptions.handlers import register_exception_handlers
+from app.presentation.http.middleware.observability import ObservabilityMiddleware
+from app.presentation.http.middleware.trace_id import TraceIdMiddleware
 
 logger = Logger()
 
@@ -18,11 +21,17 @@ logger = Logger()
 async def lifespan(app: FastAPI):  # noqa: RUF029
     get_media_dir().mkdir(parents=True, exist_ok=True)
     logger.get_logger().info("PetCare API started")
-    yield
+    start_mappers()
+    container = app.state.dishka_container
+    try:
+        yield
+    finally:
+        await container.close()
     logger.get_logger().info("PetCare API stopped")
 
 
 app = FastAPI(title=settings.app.name, version="1.0.0", lifespan=lifespan)
+setup_dishka(build_container(), app)
 register_exception_handlers(app)
 
 _DEFAULT_CORS_ORIGINS = "http://localhost,http://localhost:8080"

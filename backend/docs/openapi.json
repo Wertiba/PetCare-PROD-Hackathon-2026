@@ -235,33 +235,6 @@
         "operationId": "get_breeds_api_v1_breeds_get",
         "parameters": [
           {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Page number",
-              "default": 0,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Page size",
-              "default": 20,
-              "title": "Size"
-            },
-            "description": "Page size"
-          },
-          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -292,6 +265,33 @@
               ],
               "title": "Q"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
           }
         ],
         "responses": {
@@ -430,9 +430,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pet Id"
+              "$ref": "#/components/schemas/PetId"
             }
           }
         ],
@@ -481,9 +479,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pet Id"
+              "$ref": "#/components/schemas/PetId"
             }
           }
         ],
@@ -542,9 +538,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pet Id"
+              "$ref": "#/components/schemas/PetId"
             }
           }
         ],
@@ -588,9 +582,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pet Id"
+              "$ref": "#/components/schemas/PetId"
             }
           }
         ],
@@ -668,33 +660,6 @@
         "operationId": "list_categories_api_v1_categories_get",
         "parameters": [
           {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Page number",
-              "default": 0,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Page size",
-              "default": 20,
-              "title": "Size"
-            },
-            "description": "Page size"
-          },
-          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -727,6 +692,33 @@
               "title": "Q"
             },
             "description": "Substring of the category name"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
           }
         ],
         "responses": {
@@ -805,9 +797,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Category Id"
+              "$ref": "#/components/schemas/CategoryId"
             }
           }
         ],
@@ -856,9 +846,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Category Id"
+              "$ref": "#/components/schemas/CategoryId"
             }
           }
         ],
@@ -928,9 +916,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Category Id"
+              "$ref": "#/components/schemas/CategoryId"
             }
           }
         ],
@@ -981,6 +967,74 @@
         "operationId": "list_states_api_v1_states_get",
         "parameters": [
           {
+            "name": "petId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PetId"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Petid"
+            }
+          },
+          {
+            "name": "catId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CategoryId"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Catid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive lower bound of `time`",
+              "title": "From"
+            },
+            "description": "Inclusive lower bound of `time`"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive upper bound of `time`",
+              "title": "To"
+            },
+            "description": "Inclusive upper bound of `time`"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -1006,78 +1060,6 @@
               "title": "Size"
             },
             "description": "Page size"
-          },
-          {
-            "name": "petId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Petid"
-            }
-          },
-          {
-            "name": "catId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Catid"
-            }
-          },
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Inclusive lower bound of `time`",
-              "title": "From"
-            },
-            "description": "Inclusive lower bound of `time`"
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Inclusive upper bound of `time`",
-              "title": "To"
-            },
-            "description": "Inclusive upper bound of `time`"
           }
         ],
         "responses": {
@@ -1157,9 +1139,7 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Petid"
+              "$ref": "#/components/schemas/PetId"
             }
           },
           {
@@ -1167,9 +1147,7 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Catid"
+              "$ref": "#/components/schemas/CategoryId"
             }
           },
           {
@@ -1179,8 +1157,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date-time"
+                  "type": "number"
                 },
                 {
                   "type": "null"
@@ -1198,8 +1175,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date-time"
+                  "type": "number"
                 },
                 {
                   "type": "null"
@@ -1248,9 +1224,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "State Id"
+              "$ref": "#/components/schemas/StateId"
             }
           }
         ],
@@ -1299,9 +1273,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "State Id"
+              "$ref": "#/components/schemas/StateId"
             }
           }
         ],
@@ -1360,9 +1332,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "State Id"
+              "$ref": "#/components/schemas/StateId"
             }
           }
         ],
@@ -1403,41 +1373,13 @@
         "operationId": "list_events_api_v1_events_get",
         "parameters": [
           {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Page number",
-              "default": 0,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Page size",
-              "default": 20,
-              "title": "Size"
-            },
-            "description": "Page size"
-          },
-          {
             "name": "petId",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "$ref": "#/components/schemas/PetId"
                 },
                 {
                   "type": "null"
@@ -1485,8 +1427,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date-time"
+                  "type": "number"
                 },
                 {
                   "type": "null"
@@ -1504,8 +1445,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date-time"
+                  "type": "number"
                 },
                 {
                   "type": "null"
@@ -1515,6 +1455,33 @@
               "title": "To"
             },
             "description": "Inclusive upper bound of `schedule`"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
           }
         ],
         "responses": {
@@ -1610,8 +1577,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "$ref": "#/components/schemas/PetId"
                 },
                 {
                   "type": "null"
@@ -1685,9 +1651,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Event Id"
+              "$ref": "#/components/schemas/EventId"
             }
           }
         ],
@@ -1737,9 +1701,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Event Id"
+              "$ref": "#/components/schemas/EventId"
             }
           }
         ],
@@ -1798,9 +1760,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Event Id"
+              "$ref": "#/components/schemas/EventId"
             }
           }
         ],
@@ -1845,9 +1805,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Event Id"
+              "$ref": "#/components/schemas/EventId"
             }
           }
         ],
@@ -1922,41 +1880,13 @@
         "operationId": "list_notifications_api_v1_notifications_get",
         "parameters": [
           {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Page number",
-              "default": 0,
-              "title": "Page"
-            },
-            "description": "Page number"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Page size",
-              "default": 20,
-              "title": "Size"
-            },
-            "description": "Page size"
-          },
-          {
             "name": "eventId",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "$ref": "#/components/schemas/EventId"
                 },
                 {
                   "type": "null"
@@ -1972,8 +1902,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "$ref": "#/components/schemas/PetId"
                 },
                 {
                   "type": "null"
@@ -2009,6 +1938,33 @@
               "title": "Due"
             },
             "description": "Only pending notifications whose time has come"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
           }
         ],
         "responses": {
@@ -2087,9 +2043,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Notification Id"
+              "$ref": "#/components/schemas/NotificationId"
             }
           }
         ],
@@ -2138,9 +2092,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Notification Id"
+              "$ref": "#/components/schemas/NotificationId"
             }
           }
         ],
@@ -2199,9 +2151,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Notification Id"
+              "$ref": "#/components/schemas/NotificationId"
             }
           }
         ],
@@ -2267,12 +2217,14 @@
         ],
         "title": "Body_upload_photo_api_v1_pets__pet_id__photo_put"
       },
+      "BreedId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "BreedReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/BreedId"
           },
           "type": {
             "$ref": "#/components/schemas/PetType"
@@ -2317,6 +2269,10 @@
         ],
         "title": "CategoryCreateBody"
       },
+      "CategoryId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "CategoryKind": {
         "type": "string",
         "enum": [
@@ -2333,9 +2289,7 @@
       "CategoryReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/CategoryId"
           },
           "name": {
             "type": "string",
@@ -2353,22 +2307,21 @@
           "createdBy": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/UserId"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Createdby"
+            ]
           },
           "isSystem": {
             "type": "boolean",
             "title": "Issystem"
           },
           "createdAt": {
-            "type": "string",
-            "title": "Createdat"
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -2472,8 +2425,9 @@
             "title": "Traceid"
           },
           "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
+            "type": "number",
+            "title": "Timestamp",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "path": {
             "type": "string",
@@ -2507,15 +2461,14 @@
           "doneAt": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Doneat",
-            "description": "When the procedure was actually done. Defaults to now"
+            "description": "Actual completion time in fractional Unix seconds (UTC); defaults to now."
           }
         },
         "type": "object",
@@ -2547,9 +2500,7 @@
       "EventCreateBody": {
         "properties": {
           "petId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Petid"
+            "$ref": "#/components/schemas/PetId"
           },
           "name": {
             "type": "string",
@@ -2566,9 +2517,9 @@
             "default": "planned"
           },
           "schedule": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Schedule"
+            "type": "number",
+            "title": "Schedule",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "period": {
             "$ref": "#/components/schemas/EventPeriod",
@@ -2595,6 +2546,10 @@
         ],
         "title": "EventCreateBody"
       },
+      "EventId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "EventPeriod": {
         "type": "string",
         "enum": [
@@ -2611,14 +2566,10 @@
       "EventReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/EventId"
           },
           "petId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Petid"
+            "$ref": "#/components/schemas/PetId"
           },
           "name": {
             "type": "string",
@@ -2631,15 +2582,9 @@
             "$ref": "#/components/schemas/EventStatus"
           },
           "schedule": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Schedule"
+            "type": "number",
+            "title": "Schedule",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "period": {
             "$ref": "#/components/schemas/EventPeriod"
@@ -2658,13 +2603,14 @@
           "doneAt": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Doneat"
+            "title": "Doneat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "isOverdue": {
             "type": "boolean",
@@ -2674,22 +2620,24 @@
           "nextSchedule": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Nextschedule",
-            "description": "When the next occurrence is due for a repeating event"
+            "description": "Next occurrence in fractional Unix seconds (UTC), for a repeating event."
           },
           "createdAt": {
-            "type": "string",
-            "title": "Createdat"
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "updatedAt": {
-            "type": "string",
-            "title": "Updatedat"
+            "type": "number",
+            "title": "Updatedat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -2770,14 +2718,14 @@
           "schedule": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Schedule"
+            "title": "Schedule",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "period": {
             "anyOf": [
@@ -2821,9 +2769,7 @@
       "NotificationCreateBody": {
         "properties": {
           "eventId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Eventid"
+            "$ref": "#/components/schemas/EventId"
           },
           "type": {
             "$ref": "#/components/schemas/NotificationType",
@@ -2836,15 +2782,14 @@
           "time": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Time",
-            "description": "Defaults to the event schedule"
+            "description": "Defaults to the event schedule. Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -2853,22 +2798,20 @@
         ],
         "title": "NotificationCreateBody"
       },
+      "NotificationId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "NotificationReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/NotificationId"
           },
           "eventId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Eventid"
+            "$ref": "#/components/schemas/EventId"
           },
           "petId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Petid"
+            "$ref": "#/components/schemas/PetId"
           },
           "eventName": {
             "type": "string",
@@ -2881,19 +2824,14 @@
             "$ref": "#/components/schemas/NotificationStatus"
           },
           "time": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Time"
+            "type": "number",
+            "title": "Time",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "createdAt": {
-            "type": "string",
-            "title": "Createdat"
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -2953,14 +2891,14 @@
           "time": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Time"
+            "title": "Time",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -3155,9 +3093,7 @@
       "PetBreedReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/BreedId"
           },
           "name": {
             "type": "string",
@@ -3185,26 +3121,24 @@
           "breedId": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/BreedId"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Breedid"
+            ]
           },
           "birthDate": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Birthdate"
+            "title": "Birthdate",
+            "description": "Birth date as Unix seconds at UTC midnight."
           }
         },
         "type": "object",
@@ -3214,17 +3148,17 @@
         ],
         "title": "PetCreateBody"
       },
+      "PetId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "PetReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/PetId"
           },
           "userId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Userid"
+            "$ref": "#/components/schemas/UserId"
           },
           "name": {
             "type": "string",
@@ -3246,14 +3180,14 @@
           "birthDate": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Birthdate"
+            "title": "Birthdate",
+            "description": "Birth date as Unix seconds at UTC midnight."
           },
           "ageMonths": {
             "anyOf": [
@@ -3278,12 +3212,14 @@
             "title": "Photourl"
           },
           "createdAt": {
-            "type": "string",
-            "title": "Createdat"
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "updatedAt": {
-            "type": "string",
-            "title": "Updatedat"
+            "type": "number",
+            "title": "Updatedat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -3342,26 +3278,24 @@
           "breedId": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/BreedId"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Breedid"
+            ]
           },
           "birthDate": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Birthdate"
+            "title": "Birthdate",
+            "description": "Birth date as Unix seconds at UTC midnight."
           }
         },
         "type": "object",
@@ -3381,14 +3315,10 @@
       "StateCreateBody": {
         "properties": {
           "petId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Petid"
+            "$ref": "#/components/schemas/PetId"
           },
           "catId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Catid"
+            "$ref": "#/components/schemas/CategoryId"
           },
           "value": {
             "type": "integer",
@@ -3397,15 +3327,14 @@
           "time": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Time",
-            "description": "Defaults to now"
+            "description": "Defaults to now. Unix seconds in UTC; fractional seconds are supported."
           },
           "note": {
             "anyOf": [
@@ -3428,22 +3357,20 @@
         ],
         "title": "StateCreateBody"
       },
+      "StateId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "StateReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/StateId"
           },
           "petId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Petid"
+            "$ref": "#/components/schemas/PetId"
           },
           "catId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Catid"
+            "$ref": "#/components/schemas/CategoryId"
           },
           "value": {
             "type": "integer",
@@ -3461,19 +3388,14 @@
             "title": "Note"
           },
           "time": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Time"
+            "type": "number",
+            "title": "Time",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "createdAt": {
-            "type": "string",
-            "title": "Createdat"
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -3491,14 +3413,10 @@
       "StateSummaryResponse": {
         "properties": {
           "petId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Petid"
+            "$ref": "#/components/schemas/PetId"
           },
           "catId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Catid"
+            "$ref": "#/components/schemas/CategoryId"
           },
           "kind": {
             "$ref": "#/components/schemas/CategoryKind"
@@ -3525,24 +3443,26 @@
           "from": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "From"
+            "title": "From",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "to": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "To"
+            "title": "To",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
@@ -3574,14 +3494,14 @@
           "time": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Time"
+            "title": "Time",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "note": {
             "anyOf": [
@@ -3621,11 +3541,17 @@
         ],
         "title": "UserAndAccessTokenResponse"
       },
+      "UserId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "UserLoginBody": {
         "properties": {
-          "email": {
+          "login": {
             "type": "string",
-            "title": "Email"
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Login"
           },
           "password": {
             "type": "string",
@@ -3634,7 +3560,7 @@
         },
         "type": "object",
         "required": [
-          "email",
+          "login",
           "password"
         ],
         "title": "UserLoginBody"
@@ -3642,14 +3568,11 @@
       "UserReadResponse": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "$ref": "#/components/schemas/UserId"
           },
-          "email": {
+          "login": {
             "type": "string",
-            "format": "email",
-            "title": "Email"
+            "title": "Login"
           },
           "fullName": {
             "type": "string",
@@ -3663,23 +3586,23 @@
             "title": "Isactive"
           },
           "createdAt": {
-            "type": "string",
-            "title": "Createdat"
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "updatedAt": {
-            "type": "string",
-            "title": "Updatedat"
+            "type": "number",
+            "title": "Updatedat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           },
           "createdBy": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Createdby"
+            "$ref": "#/components/schemas/UserId"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "email",
+          "login",
           "fullName",
           "role",
           "isActive",
@@ -3691,11 +3614,11 @@
       },
       "UserRegisterBody": {
         "properties": {
-          "email": {
+          "login": {
             "type": "string",
-            "maxLength": 254,
-            "format": "email",
-            "title": "Email"
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Login"
           },
           "password": {
             "type": "string",
@@ -3709,7 +3632,7 @@
         },
         "type": "object",
         "required": [
-          "email",
+          "login",
           "password",
           "fullName"
         ],

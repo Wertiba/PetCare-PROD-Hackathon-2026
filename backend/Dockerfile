@@ -12,6 +12,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --locked --no-dev --no-install-project
 
+COPY src ./src
+RUN uv sync --locked --no-dev
+
 FROM base AS runtime
 
 RUN apt-get update \
@@ -22,9 +25,12 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /app/src
+WORKDIR /app
 COPY --from=builder --chown=10001:10001 /app/.venv /app/.venv
-COPY --chown=10001:10001 src ./
+COPY --from=builder --chown=10001:10001 /app/src ./src
+COPY --chown=10001:10001 alembic ./alembic
+COPY --chown=10001:10001 configs ./configs
+COPY --chown=10001:10001 alembic.ini ./
 RUN mkdir -p logs media && chown -R 10001:10001 logs media
 
 USER 10001:10001

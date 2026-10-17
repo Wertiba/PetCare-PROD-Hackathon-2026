@@ -1,0 +1,28 @@
+from pydantic import BaseModel, Field
+
+
+class PaginationParams(BaseModel):
+    page: int = Field(0, ge=0, description="Page number")
+    size: int = Field(20, ge=1, le=100, description="Page size")
+
+    @property
+    def offset(self) -> int:
+        return self.page * self.size
+
+    @property
+    def limit(self) -> int:
+        return self.size
+
+
+class Page[T](BaseModel):
+    items: list[T]
+    page: int
+    size: int
+    total: int
+
+    @staticmethod
+    def build[Item](items: list[Item], total: int, pagination: PaginationParams) -> "Page[Item]":
+        if len(items) > pagination.size:
+            raise ValueError("items length exceeds pagination.size")
+
+        return Page[Item](items=items, page=pagination.page, size=pagination.size, total=total)
