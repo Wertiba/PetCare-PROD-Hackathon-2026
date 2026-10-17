@@ -71,21 +71,40 @@ class _EventContext:
     async def _complete(self, user_id: UserId, event: Event, done_at: float) -> tuple[Event, Event | None]:
         """Mark a planned event done and, if it repeats, plan the next occurrence."""
         apply_changes(event, {"status": EventStatus.DONE, "done_at": done_at})
-        completed = event
-        next_at = next_schedule_for(completed)
-        if next_at is None:
-            return (completed, None)
+        return (event, await self._plan_next(user_id, event))
+
+    async def _plan_next(self, user_id: UserId, done: Event, *, not_before: float | None = None) -> Event | None:
+        next_at = next_schedule_for(done)
+        if next_at is None or (not_before is not None and next_at < not_before):
+            return None
+        if await self._has_planned_repeat(user_id, done):
+            # Done -> planned -> done again must not plan a second copy of the next occurrence.
+            return None
         next_event = Event(
-            pet_id=completed.pet_id,
-            name=completed.name,
-            type=completed.type,
+            pet_id=done.pet_id,
+            name=done.name,
+            type=done.type,
             status=EventStatus.PLANNED,
             schedule=next_at,
-            period=completed.period,
-            description=completed.description,
+            period=done.period,
+            description=done.description,
         )
         await self.uow.add(next_event)
-        return (completed, next_event)
+        return next_event
+
+    async def _has_planned_repeat(self, user_id: UserId, event: Event) -> bool:
+        later = await self.event_gateway.get_by_user_id(
+            user_id,
+            0,
+            100,
+            pet_id=event.pet_id,
+            status=EventStatus.PLANNED,
+            type_=event.type,
+            from_=event.schedule,
+        )
+        return any(
+            other.id != event.id and other.name == event.name and other.period == event.period for other in later
+        )
 
 
 class ListEvents(_EventContext):
@@ -182,9 +201,14 @@ class CreateEvent(_EventContext):
             schedule=data.schedule,
             period=data.period,
             description=data.description,
-            done_at=now if data.status == EventStatus.DONE else None,
+            # A past event recorded as done happened on its date, and the next one is due from that date.
+            done_at=min(data.schedule, now) if data.status == EventStatus.DONE else None,
         )
         await self.uow.add(event)
+        if event.status == EventStatus.DONE:
+            # Recording last month's yearly vaccination plans the next one; an old history entry,
+            # whose next occurrence has already passed, does not.
+            await self._plan_next(user_id, event, not_before=now)
         result = self._to_read_response(event, now)
         await self.uow.commit()
         return result

@@ -165,3 +165,30 @@ def test_deleting_pet_cascades_to_events(client, auth, pet_id):
     event_id = _create(client, auth, pet_id).json()["id"]
     client.delete(f"/api/v1/pets/{pet_id}", headers=auth)
     assert client.get(f"/api/v1/events/{event_id}", headers=auth).status_code == 404
+
+
+@pytest.mark.req("5.4.1")
+def test_recording_a_recent_done_event_plans_the_next_from_its_date(client, auth, pet_id):
+    """A vaccination done two months ago: the next one is due a year after it, not a year after today."""
+    done_on = datetime.now(UTC) - timedelta(days=60)
+    body = _create(client, auth, pet_id, status="done", schedule=_timestamp(done_on)).json()
+    assert body["doneAt"] == _timestamp(done_on)
+    planned = client.get("/api/v1/events", params={"petId": pet_id, "status": "planned"}, headers=auth).json()
+    assert [item["schedule"] for item in planned["items"]] == [body["nextSchedule"]]
+    assert body["nextSchedule"] < _timestamp(datetime.now(UTC) + timedelta(days=310))
+
+
+@pytest.mark.req("5.4.1")
+def test_recording_old_history_does_not_plan_past_occurrences(client, auth, pet_id):
+    _create(client, auth, pet_id, status="done", schedule=_timestamp(datetime.now(UTC) - timedelta(days=800)))
+    planned = client.get("/api/v1/events", params={"petId": pet_id, "status": "planned"}, headers=auth).json()
+    assert planned["items"] == []
+
+
+@pytest.mark.req("5.4.1")
+def test_reopening_and_completing_again_does_not_duplicate_the_next_event(client, auth, pet_id):
+    event_id = _create(client, auth, pet_id, schedule=1893488400.0, period="weekly").json()["id"]
+    for status in ("done", "planned", "done"):
+        assert client.patch(f"/api/v1/events/{event_id}", json={"status": status}, headers=auth).status_code == 200
+    planned = client.get("/api/v1/events", params={"petId": pet_id, "status": "planned"}, headers=auth).json()
+    assert planned["total"] == 1
