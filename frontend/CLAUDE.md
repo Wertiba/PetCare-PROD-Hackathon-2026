@@ -1,162 +1,162 @@
 # AGENTS.md
 
-Инструкции для AI-агента в этом Next.js-проекте.
+Instructions for the AI agent in this Next.js project.
 
-## Как мы работаем
+## How we work
 
-Я (разработчик) принимаю архитектурные и дизайнерские решения: придумываю шаблоны компонентов и функционала, пишу основную типизацию. Ты — исполнитель рутины: размножаешь существующие паттерны, верстаешь UI, делаешь механическую работу.
+I (the developer) make architectural and design decisions: I come up with component and feature templates and write the core typing. You are the executor of routine work: you replicate existing patterns, build UI, and do mechanical work.
 
-**Главный принцип: ты работаешь по аналогии, а не изобретаешь.**
-Перед любой задачей найди в проекте ближайший похожий пример и повтори его структуру, нейминг и стиль. Если аналога нет — это сигнал остановиться и спросить, а не придумывать самому.
+**Main principle: you work by analogy, you do not invent.**
+Before any task, find the closest similar example in the project and repeat its structure, naming, and style. If there is no analog, that is a signal to stop and ask, not to invent something yourself.
 
-## Что делаю я (не трогай без запроса)
+## What I do (do not touch without a request)
 
-- Шаблоны компонентов и фич (эталонные примеры структуры)
-- Основная типизация: доменные типы, общие интерфейсы, контракты API, схемы
-- Архитектурные решения: структура папок, границы модулей, выбор библиотек, стейт-менеджмент, data fetching
-- Новые паттерны, которых ещё нет в кодовой базе
+- Component and feature templates (reference examples of structure)
+- Core typing: domain types, shared interfaces, API contracts, schemas
+- Architectural decisions: folder structure, module boundaries, library choices, state management, data fetching
+- New patterns that do not yet exist in the codebase
 
-Файлы с типами и шаблонами — **read-only для тебя**. Не меняй их, не «улучшай», не переименовывай. Если для задачи не хватает типа или нужно изменить существующий — остановись и опиши, что именно нужно и почему. Я решу сам.
+Type files and templates are **read-only for you**. Do not change, "improve", or rename them. If a task lacks a type or needs an existing one changed, stop and describe exactly what is needed and why. I will decide myself.
 
-## Что делаешь ты
+## What you do
 
-- Новые компоненты, страницы, фичи **по аналогии** с существующими (копируешь структуру эталона)
-- Создание и стилизация UI по описанию или макету, используя существующие UI-компоненты и дизайн-токены
-- Рутина: переименования, рефакторинг по заданному правилу, миграции однотипного кода, форматирование, обновление импортов
-- Тесты по образцу существующих
-- Мелкие багфиксы с очевидной причиной
-- Подключение готовых типов к готовым компонентам (использование, а не определение)
+- New components, pages, and features **by analogy** with existing ones (copy the structure of the reference)
+- Creating and styling UI from a description or mockup, using existing UI components and design tokens
+- Routine: renames, refactoring by a given rule, migrations of repetitive code, formatting, import updates
+- Tests modeled on existing ones
+- Small bugfixes with an obvious cause
+- Connecting ready-made types to ready-made components (using, not defining)
 
-## Когда остановиться и спросить
+## When to stop and ask
 
-Не пиши код, а сначала задай вопрос или предложи варианты, если:
+Do not write code; first ask a question or propose options if:
 
-1. Нет похожего примера в проекте — нужен новый паттерн
-2. Нужен новый или изменённый тип, интерфейс, схема, API-контракт
-3. Задача требует архитектурного выбора (где лежит логика, server vs client, как хранить стейт, какую библиотеку взять)
-4. Требования неоднозначны и разные трактовки ведут к разному коду
-5. Для задачи придётся менять больше ~5 файлов или затрагивать общий код (layout, middleware, конфиги, провайдеры)
-6. Нужна новая зависимость
+1. There is no similar example in the project — a new pattern is needed
+2. A new or changed type, interface, schema, or API contract is needed
+3. The task requires an architectural choice (where logic lives, server vs client, how to store state, which library to use)
+4. Requirements are ambiguous and different interpretations lead to different code
+5. The task would require changing more than ~5 files or touching shared code (layout, middleware, configs, providers)
+6. A new dependency is needed
 
-В вопросе: коротко опиши развилку, предложи 2–3 варианта с компромиссами, укажи, какой бы выбрал ты. **Не принимай решение молча.**
+In the question: briefly describe the fork, offer 2–3 options with trade-offs, and say which one you would choose. **Do not make the decision silently.**
 
-## Порядок работы над задачей
+## Task workflow
 
-1. **Найди аналог.** Покажи, на какой существующий файл/компонент опираешься.
-2. **Скажи план в 2–4 строки**, если задача больше одного файла.
-3. **Пиши код по аналогии**: та же структура файлов, нейминг, порядок импортов, способ обработки ошибок.
-4. **Проверь**: линт, типы, билд/тесты (команды ниже).
-5. **Отчитайся коротко**: что сделано, на что опирался, что отклонилось от аналога и почему.
+1. **Find an analog.** Show which existing file/component you are basing the work on.
+2. **State a plan in 2–4 lines** if the task spans more than one file.
+3. **Write code by analogy**: same file structure, naming, import order, error handling approach.
+4. **Verify**: lint, types, build/tests (commands below).
+5. **Report briefly**: what was done, what you based it on, what deviated from the analog and why.
 
-## Правила кода
+## Code rules
 
-### Общее
-- Следуй стилю соседних файлов, даже если ты бы написал иначе
-- Минимальный дифф: меняй только то, что нужно для задачи. Никакого попутного рефакторинга и «заодно»
-- Не добавляй абстракции, хелперы и обобщения «на будущее»
-- Не удаляй и не переписывай чужой код, не относящийся к задаче
-- Комментарии — только там, где неочевидно *почему*, а не *что*
+### General
+- Follow the style of neighboring files, even if you would write it differently
+- Minimal diff: change only what the task needs. No incidental refactoring or "while I'm at it" changes
+- Do not add abstractions, helpers, or generalizations "for the future"
+- Do not delete or rewrite others' code unrelated to the task
+- Comments only where the *why* is non-obvious, not the *what*
 
 ### TypeScript
-- Используй существующие типы из общих файлов типов, не дублируй их локально
-- **Не определяй новые доменные и общие типы сам** — запрашивай у меня
-- Локальные типы допустимы только для пропсов компонента и внутренних деталей файла, по образцу существующих
-- Никаких `any`, `as unknown as`, `@ts-ignore`, `@ts-expect-error` для обхода ошибок. Если типы не сходятся — это повод остановиться и спросить, а не заглушить
-- Не расширяй и не ослабляй существующие типы, чтобы код скомпилировался
+- Use existing types from shared type files, do not duplicate them locally
+- **Do not define new domain or shared types yourself** — request them from me
+- Local types are allowed only for component props and internal details of a file, modeled on existing ones
+- No `any`, `as unknown as`, `@ts-ignore`, `@ts-expect-error` to work around errors. If types do not match, that is a reason to stop and ask, not to suppress
+- Do not extend or weaken existing types to make code compile
 
 ### Next.js
-- По умолчанию компоненты серверные. `"use client"` — только когда реально нужны хуки, состояние или браузерные API, и по образцу существующих клиентских компонентов
-- Новые страницы, layout, route handlers и server actions делай по аналогии с существующими; структуру роутинга не меняй
-- Data fetching, кэширование и revalidate — как в существующем коде. Не вводи новый способ загрузки данных
-- Не трогай `next.config`, middleware, корневой layout и провайдеры без явной просьбы
-- Для навигации, изображений, шрифтов используй встроенные компоненты Next.js, как принято в проекте
+- Components are server components by default. `"use client"` only when hooks, state, or browser APIs are truly needed, and modeled on existing client components
+- Make new pages, layouts, route handlers, and server actions by analogy with existing ones; do not change the routing structure
+- Data fetching, caching, and revalidate — as in existing code. Do not introduce a new way of loading data
+- Do not touch `next.config`, middleware, the root layout, or providers without an explicit request
+- For navigation, images, and fonts use built-in Next.js components, as is customary in the project
 
-### UI и стили
-- Сначала используй существующие компоненты из UI-кита проекта; новый базовый компонент создавай только по согласованию
-- Стили — тем же способом, что в проекте (Tailwind / CSS Modules / иное: см. «Стек»). Никаких инлайн-стилей и произвольных значений, если есть токены
-- Используй дизайн-токены (цвета, отступы, типографика), не хардкодь значения
-- Адаптивность и доступность обязательны: семантическая разметка, `alt`, `aria-*` и фокус, где нужно, адаптив под принятые в проекте брейкпоинты
-- Состояния UI (loading, empty, error) реализуй так же, как в аналогичных местах
+### UI and styles
+- First use existing components from the project's UI kit; create a new base component only by agreement
+- Styles — the same way as in the project (Tailwind / CSS Modules / other: see "Stack"). No inline styles or arbitrary values if tokens exist
+- Use design tokens (colors, spacing, typography), do not hardcode values
+- Responsiveness and accessibility are mandatory: semantic markup, `alt`, `aria-*` and focus where needed, responsive for the project's accepted breakpoints
+- Implement UI states (loading, empty, error) the same way as in similar places
 
-### Зависимости
-- Не добавляй и не обновляй пакеты без согласования
-- Не меняй lock-файл вручную
+### Dependencies
+- Do not add or update packages without agreement
+- Do not edit the lock file manually
 
-## Стек проекта
+## Project stack
 
 - Next.js: 16.4, App Router
-- Язык: TypeScript (strict)
-- Стили: Tailwind
-- Данные: React Query, axios
-- Стейт: zustand
-- Формы и валидация: react-hook-form
-- Пакетный менеджер: pnpm
+- Language: TypeScript (strict)
+- Styles: Tailwind
+- Data: React Query, axios
+- State: zustand
+- Forms and validation: react-hook-form
+- Package manager: pnpm
 
-## Структура проекта
+## Project structure
 
 ```
-/app: App Router для NextJS
-/pages: пустая папка для NextJS
+/app: App Router for NextJS
+/pages: empty folder for NextJS
 /src
-  /app: провайдеры, глобальная инициализация и стили
-  /pages: страницы
-  /widgets: основные самодостаточные блоки интерфейса
-  /features (основные взаимодействия пользователя с приложением):
-    - /Feature/ui - ui для фичи(например компонент формы из shared подстроенный под логику фичи)
-    - /Feature/api - запросы и dto связанные с фичёй (отличается от Entity/api тем что тут именно действия пользователя с какой-то логикой)
-    - /Feature/model - валидация, хуки мутаций для фичи
-  /entities (концепции бизнес-логики (например User)): 
-    - /Entity/api - запросы апи и dto связанные с сущностью
-    - /Entity/model - типы, состояние(зустанд, хуки и селекторы к стору)
-    - /Entity/ui - ui, относящийся к сущности
-  /shared: 
-    - /api - API-клиент
-    - /ui - UI-кит
-    - /config - переменные окружения
-    - /lib - хелперы/хуки/утилиты
+  /app: providers, global initialization and styles
+  /pages: pages
+  /widgets: main self-contained interface blocks
+  /features (main user interactions with the app):
+    - /Feature/ui - UI for the feature (e.g. a form component from shared adapted to the feature's logic)
+    - /Feature/api - requests and DTOs related to the feature (differs from Entity/api in that these are specifically user actions with some logic)
+    - /Feature/model - validation, mutation hooks for the feature
+  /entities (business logic concepts (e.g. User)):
+    - /Entity/api - API requests and DTOs related to the entity
+    - /Entity/model - types, state (zustand, hooks and selectors for the store)
+    - /Entity/ui - UI related to the entity
+  /shared:
+    - /api - API client
+    - /ui - UI kit
+    - /config - environment variables
+    - /lib - helpers/hooks/utilities
 ```
 
-### Правило импортов (FSD)
+### Import rule (FSD)
 
-Слои в порядке от верхнего к нижнему: `app` → `pages` → `widgets` → `features` → `entities` → `shared`.
+Layers from top to bottom: `app` → `pages` → `widgets` → `features` → `entities` → `shared`.
 
-**Модуль может импортировать только из слоёв строго ниже своего. Импорт из вышележащих слоёв запрещён.**
+**A module may import only from layers strictly below its own. Importing from higher layers is forbidden.**
 
-- `shared` не импортирует ничего из других слоёв
-- `entities` импортируют только из `shared`
-- `features` — из `entities` и `shared`
-- `widgets` — из `features`, `entities`, `shared`
-- `pages` — из `widgets`, `features`, `entities`, `shared`
-- `app` — из любых слоёв ниже
-- Импорты между слайсами одного слоя (одна фича в другую, одна сущность в другую) тоже запрещены. Если нужна общая логика — не импортируй напрямую, остановись и спроси (поднять в слой ниже или скомпоновать на слое выше)
-- Внутри слайса импорты идут по сегментам относительными путями; снаружи слайс импортируется только через публичный API (`index.ts`), без обращения к внутренним файлам
-- Если для задачи кажется, что нужен импорт «снизу вверх» — это признак неверного размещения кода. Не обходи правило, остановись и опиши проблему
+- `shared` imports nothing from other layers
+- `entities` import only from `shared`
+- `features` — from `entities` and `shared`
+- `widgets` — from `features`, `entities`, `shared`
+- `pages` — from `widgets`, `features`, `entities`, `shared`
+- `app` — from any layers below
+- Imports between slices of the same layer (one feature into another, one entity into another) are also forbidden. If shared logic is needed, do not import directly; stop and ask (move it to a lower layer or compose it at a higher layer)
+- Within a slice, imports go between segments via relative paths; from outside, a slice is imported only through its public API (`index.ts`), without reaching into internal files
+- If it seems a "bottom-up" import is needed, that is a sign the code is placed wrongly. Do not bypass the rule; stop and describe the problem
 
-## Команды
+## Commands
 
 ```bash
-pnpm dev          # локальный сервер
-pnpm lint         # линтер
-pnpm lint:fix      # линтер (автоматическое исправление)
+pnpm dev          # local server
+pnpm lint         # linter
+pnpm lint:fix      # linter (auto-fix)
 pnpm typecheck    # tsc --noEmit
-pnpm build        # продакшн-сборка
+pnpm build        # production build
 ```
 
-Перед сдачей задачи прогони `lint` и `typecheck`. Если что-то падает — исправь в рамках своей задачи или сообщи, если причина вне её.
+Before handing in a task, run `lint` and `typecheck`. If something fails, fix it within your task or report it if the cause is outside it.
 
-## Определение «готово»
+## Definition of "done"
 
-- Код следует найденному аналогу по структуре и стилю
-- Нет новых типов, придуманных агентом, и нет обходов типизации
-- Линт и типы проходят
-- Дифф минимален и не содержит побочных изменений
-- В отчёте указано, на какой пример опирался и что отличается
+- Code follows the found analog in structure and style
+- No new types invented by the agent, and no type-checking workarounds
+- Lint and types pass
+- The diff is minimal and contains no side changes
+- The report states which example was used as the basis and what differs
 
-## Чего не делать
+## What not to do
 
-- Не «вайбкодить» целые фичи без аналога и без согласования
-- Не принимать архитектурные решения молча
-- Не переписывать эталонные шаблоны и типы
-- Не маскировать проблему (`any`, `ts-ignore`, пустой `catch`, отключение правил линтера)
-- Не добавлять функциональность сверх запрошенной
-- Не коммитить и не пушить без явной просьбы
+- Do not "vibe-code" whole features without an analog and without agreement
+- Do not make architectural decisions silently
+- Do not rewrite reference templates and types
+- Do not mask a problem (`any`, `ts-ignore`, empty `catch`, disabling lint rules)
+- Do not add functionality beyond what was requested
+- Do not commit or push without an explicit request

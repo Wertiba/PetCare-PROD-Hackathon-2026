@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { whiteLinkClasses } from './Header';
 
 const INITIAL_VALUES: LoginValues = {
-  email: '',
+  login: '',
   password: '',
 };
 
@@ -46,8 +46,8 @@ export function LoginForm() {
         type="email"
         autoComplete="email"
         placeholder="you@example.com"
-        error={errors.email?.message}
-        {...register('email')}
+        error={errors.login?.message}
+        {...register('login')}
       />
       <FormField
         label="Password"

@@ -1,6 +1,5 @@
-/** Mirrors the backend's `UserRegisterBody`. */
 export interface RegisterDto {
-  email: string;
+  login: string;
   password: string;
   fullName: string;
 }

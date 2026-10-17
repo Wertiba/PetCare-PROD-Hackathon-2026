@@ -18,10 +18,10 @@ export const FormField = forwardRef<
   const errorId = fieldId ? `${fieldId}-error` : undefined;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <label
         htmlFor={fieldId}
-        className="text-sm text-neutral-600"
+        className="text-sm font-semibold tracking-[0.01em] text-[var(--forest)]"
       >
         {label}
       </label>
@@ -30,14 +30,14 @@ export const FormField = forwardRef<
         id={fieldId}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className="w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm text-black placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none"
+        className="w-full border border-[var(--ink)] bg-[var(--white)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--ink)]/45 focus:bg-[var(--cream)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--forest)]"
         {...inputProps}
       />
       {error ? (
         <span
           id={errorId}
           role="alert"
-          className="text-xs text-red-600"
+          className="text-sm text-red-700"
         >
           {error}
         </span>

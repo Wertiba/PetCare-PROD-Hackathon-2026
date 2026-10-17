@@ -7,7 +7,7 @@
   "bracketSpacing": true,
   "bracketSameLine": false,
   "trailingComma": "all",
-  "endOfLine": "lf",
+  "endOfLine": "auto",
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrder": [
     "<BUILTIN_MODULES>",
@@ -18,7 +18,7 @@
     "^@modules/(.*)$",
     "^@database/(.*)$",
     "^@common/(.*)$",
-    "^[./]"                      
+    "^[./]"
   ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,

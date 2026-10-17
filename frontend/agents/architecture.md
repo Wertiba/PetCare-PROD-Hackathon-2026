@@ -8,8 +8,8 @@ Auth template: Next.js 16 (App Router, React 19, Turbopack, React Compiler) + Ty
 app/                    # Next.js App Router — route entry points only
   layout.tsx            # Root layout: Google fonts (Geist only), QueryProvider → SessionProvider
   page.tsx              # Route "/" (landing)
-  login/page.tsx        # Route "/login" — AuthShell + LoginForm
-  register/page.tsx     # Route "/register" — AuthShell + RegisterForm
+  login/page.tsx        # Route "/login" — AuthShell + features/login LoginForm
+  register/page.tsx     # Route "/register" — AuthShell + features/register RegisterForm
   globals.css           # Tailwind v4 import + re-export of ../ui/globals.css
 ui/                     # Centralized design styles (design tokens, body styles) — replace this folder to re-skin the app
   globals.css           # :root tokens, @theme inline, body styles; imported by app/globals.css
@@ -20,19 +20,17 @@ src/                    # FSD-style layers, path alias @src/*
     styles/             # Reserved (currently empty)
   entities/             # Domain entities
     user/
-      api/              # fetch-user.ts (GET /users/me), user.dto.ts (UserDto, UserAndTokenDto — mirror backend schemas)
+      api/              # fetch-user.ts (GET /users/me), user.dto.ts (UserDto — mirrors backend schema)
       model/            # user.store.ts (Zustand useUserStore), user.selectors.ts, types.ts (domain User type)
       ui/               # Entity UI (currently empty)
   features/             # User-facing actions; each slice: api/ + model/ + ui/
-    login/              # api: login.ts + login.dto.ts; model: use-login-mutation.ts, validation.ts (Zod)
-    register/           # api: register.ts + register.dto.ts; model: use-register-mutation.ts, validation.ts
+    login/              # api + mutation + validation + LoginForm UI
+    register/           # api + mutation + validation + RegisterForm UI
     logout/             # api: logout.ts; model: use-logout-mutation.ts
   widgets/              # Large composed UI blocks; flat ui/ folder, named exports in barrel
     ui/AuthShell.tsx    # Shared auth-page layout (header + centered plain panel)
     ui/Background.tsx   # Plain white fixed layer (#app-background)
     ui/Header.tsx       # Standard top nav bar; exports linkClasses / whiteLinkClasses
-    ui/LoginForm.tsx    # React Hook Form + Zod + useLoginMutation
-    ui/RegisterForm.tsx
     ui/UserMenu.tsx     # Shows user from store, logout action
   shared/               # Framework-agnostic reusable code
     api/client.ts       # Axios instance for /api/v1: Bearer token injection, snake→camel case conversion, 401 → refresh-token retry, setOnUnauthorized()
@@ -53,7 +51,7 @@ Root config: `next.config.ts` (rewrites `/api/v1/*` → `BACKEND_ORIGIN` :8080, 
 
 ## Conventions
 
-- **Pages are thin**: route files in `app/` only compose widgets; all logic lives in `src/` layers.
+- **Pages are thin**: route files in `app/` only compose feature UI and widgets; all logic lives in `src/` layers.
 - **API**: endpoint functions in `<layer>/api/*.ts` using the shared `api` client; request/response types as `*Dto` interfaces mirroring backend schemas. Server responses are snake_case — the Axios interceptor converts to camelCase automatically.
 - **Server state**: TanStack Query mutations/queries in `<feature>/model/use-*.ts` hooks; query keys registered in `shared/api/query-keys.ts`.
 - **Auth state**: Zustand `useUserStore` (entities layer) holds the current user; access token via `shared/lib/token.ts`; session lifecycle wired in `src/app/providers/session-provider.tsx`.

@@ -1,19 +1,16 @@
-/** Mirrors the backend's `UserRole` enum. */
-export type UserRole = 'USER' | 'ADMIN';
+import {
+  Uid,
+  UserRole,
+} from '@src/shared/api/global.types';
 
-/** Mirrors the backend's `UserReadResponse`. */
 export interface UserDto {
-  id: string;
-  email: string;
-  fullName: string;
+  id: Uid;
+  name: string;
+  login: string;
+  password?: string;
   role: UserRole;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
 }
 
-/** Mirrors the backend's `UserAndAccessTokenResponse` returned by register and login. */
 export interface UserAndTokenDto {
   accessToken: string;
   expiresIn: number;

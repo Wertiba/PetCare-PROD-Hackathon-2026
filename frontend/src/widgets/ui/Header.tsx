@@ -17,13 +17,13 @@ export default function Header() {
     <header className="border-b border-neutral-200 bg-white">
       <div className="mx-auto flex h-12 w-full max-w-5xl items-center gap-6 px-4">
         <Link href="/" className={linkClasses}>
-          home
+          главная
         </Link>
         <Link href="/register" className={linkClasses}>
-          register
+          регистрация
         </Link>
         <Link href="/login" className={linkClasses}>
-          login
+          вход
         </Link>
         <UserMenu />
       </div>

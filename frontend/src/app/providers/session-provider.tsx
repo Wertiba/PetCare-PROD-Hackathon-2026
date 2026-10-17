@@ -1,7 +1,9 @@
 'use client';
 
-import { useUserStore } from '@src/entities/user';
-import { fetchUser } from '@src/entities/user/api/fetch-user';
+import {
+  fetchUser,
+  useUserStore,
+} from '@src/entities/user';
 import { setOnUnauthorized } from '@src/shared/api';
 import { getAccessToken } from '@src/shared/lib';
 import { useEffect } from 'react';

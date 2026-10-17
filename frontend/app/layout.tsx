@@ -19,7 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'шаблон',
+  title: 'petcare — держите важное рядом',
+  description:
+    'Спокойное место для ежедневных деталей заботы о питомце.',
 };
 
 export default function RootLayout({
@@ -27,7 +29,7 @@ export default function RootLayout({
 }: LayoutProps<'/'>) {
   return (
     <html
-      lang="en"
+      lang="ru"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

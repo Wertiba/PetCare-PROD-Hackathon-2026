@@ -71,4 +71,10 @@ Read `Design-style.md` before creating or substantially modifying UI.
 Follow its visual quality rules and anti-patterns.
 Review the rendered result before considering visual work complete.
 
+## Product Context
+- Read `product.md` before planning or implementing product features.
+- Treat it as the source of truth for product requirements.
+- Do not invent requirements or expand product scope without approval.
+- Read only the relevant sections when working on isolated tasks.
+
 <!-- END:nextjs-agent-rules -->

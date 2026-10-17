@@ -1,8 +1,7 @@
-import { UserDto } from '@src/entities';
+import type { UserDto } from '@src/entities/user';
 
-/** Mirrors the backend's `UserLoginBody`. */
 export interface LoginDto {
-  email: string;
+  login: string;
   password: string;
 }
 

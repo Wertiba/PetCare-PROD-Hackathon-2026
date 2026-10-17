@@ -1,0 +1,4 @@
+export type Uid = string;
+export type Timestamp = number;
+
+export type UserRole = 'User' | 'Admin';

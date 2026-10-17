@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { whiteLinkClasses } from './Header';
 
 const INITIAL_VALUES: RegisterValues = {
-  email: '',
+  login: '',
   password: '',
   fullName: '',
 };
@@ -32,7 +32,7 @@ export function RegisterForm() {
   const onSubmit = (values: RegisterValues) => {
     mutate({
       ...values,
-      email: values.email.trim(),
+      login: values.login.trim(),
       fullName: values.fullName.trim(),
     });
   };
@@ -58,8 +58,8 @@ export function RegisterForm() {
         type="email"
         autoComplete="email"
         placeholder="you@example.com"
-        error={errors.email?.message}
-        {...register('email')}
+        error={errors.login?.message}
+        {...register('login')}
       />
       <FormField
         label="Password"

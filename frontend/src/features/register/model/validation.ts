@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-const EMAIL_MAX_LENGTH = 254;
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 72;
 
@@ -8,12 +7,9 @@ const PASSWORD_MAX_LENGTH = 72;
 const FULL_NAME_PATTERN = /^[а-яА-Яa-zA-Z0-9 _-]{2,200}$/;
 
 export const registerSchema = z.object({
-  email: z
-    .email('Enter a valid email address')
-    .max(
-      EMAIL_MAX_LENGTH,
-      `Email must be at most ${EMAIL_MAX_LENGTH} characters`,
-    ),
+  login: z
+    .string()
+    .min(6, `Email must be at least 6 characters long`),
   password: z
     .string()
     .min(
