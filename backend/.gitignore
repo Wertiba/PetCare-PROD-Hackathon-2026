@@ -12,4 +12,4 @@ media/
 .coverage
 coverage.xml
 htmlcov/
-reports/
+/reports/
