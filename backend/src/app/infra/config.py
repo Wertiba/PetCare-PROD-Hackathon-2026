@@ -1,50 +1,88 @@
-from pathlib import Path
-
-from dynaconf import Dynaconf
-
-BASE_DIR = Path(__file__).resolve().parents[3]
-CONFIG_FILE = BASE_DIR / "configs" / "config.yaml"
-ENV_FILE = BASE_DIR / ".env"
+from pydantic import BaseModel, Field
+from sqlalchemy.engine import URL
 
 
-settings = Dynaconf(
-    envvar_prefix=False,
-    settings_files=[CONFIG_FILE],
-    load_dotenv=True,
-    dotenv_path=ENV_FILE,
-    environments=False,
-    merge_enabled=True,
-    lowercase_read=True,
-)
+class AppConfig(BaseModel):
+    name: str = Field(alias="APP_NAME", default="PetCare")
 
 
-def build_postgres_url() -> str:
-    return (
-        f"{settings.db.driver}://"
-        f"{settings.db_user}:"
-        f"{settings.db_password}@"
-        f"{settings.db_host}:"
-        f"{settings.db_port}/"
-        f"{settings.db_name}"
+class RunConfig(BaseModel):
+    host: str = Field(alias="RUN_HOST", default="0.0.0.0")  # noqa: S104 -- API listen address
+    port: int = Field(alias="RUN_PORT", default=8080)
+
+
+class DatabaseConfig(BaseModel):
+    host: str = Field(alias="DB_HOST")
+    name: str = Field(alias="DB_NAME")
+    user: str = Field(alias="DB_USER")
+    password: str = Field(alias="DB_PASSWORD", repr=False)
+    port: int = Field(alias="DB_PORT", default=5432)
+    driver: str = Field(alias="DB_DRIVER", default="postgresql+asyncpg")
+    echo: bool = Field(alias="DB_ECHO", default=False)
+    echo_pool: bool = Field(alias="DB_ECHO_POOL", default=False)
+    pool_size: int = Field(alias="DB_POOL_SIZE", default=50)
+    max_overflow: int = Field(alias="DB_MAX_OVERFLOW", default=10)
+
+
+class SecurityConfig(BaseModel):
+    jwt_secret: str = Field(alias="APP_SECURITY_JWT_SECRET", repr=False)
+    access_token_expiration: str = Field(alias="APP_SECURITY_ACCESS_TOKEN_EXPIRATION", default="15m")
+    refresh_token_expiration: str = Field(alias="APP_SECURITY_REFRESH_TOKEN_EXPIRATION", default="30d")
+    password_scheme: str = Field(alias="APP_SECURITY_PASSWORD_SCHEME", default="argon2")
+    algorithm: str = Field(alias="APP_SECURITY_ALGORITHM", default="HS256")
+
+
+class HttpConfig(BaseModel):
+    cookie_secure: bool = Field(alias="APP_COOKIE_SECURE", default=True)
+    cors_allowed_origins: str = Field(
+        alias="APP_CORS_ALLOWED_ORIGINS", default="http://localhost,http://localhost:8080"
     )
 
 
-settings.set("POSTGRES_URL", build_postgres_url())
+class LoggingConfig(BaseModel):
+    level: str = Field(alias="LOG_CONSOLE_LEVEL", default="INFO")
+    enqueue: bool = Field(alias="LOG_CONSOLE_ENQUEUE", default=True)
+    backtrace: bool = Field(alias="LOG_CONSOLE_BACKTRACE", default=True)
+    diagnose: bool = Field(alias="LOG_CONSOLE_DIAGNOSE", default=True)
+    format: str = Field(
+        alias="LOG_CONSOLE_FORMAT",
+        default=(
+            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | "
+            "<magenta>{extra[trace_id]}</magenta> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:"
+            "<cyan>{line}</cyan> | <level>{message}</level>"
+        ),
+    )
 
 
-def setting_text(name: str, default: str = "") -> str:
-    value = settings.get(name, default)
-    if value is None:
-        return default
-    return str(value).strip()
+class S3Config(BaseModel):
+    endpoint_url: str = Field(alias="S3_ENDPOINT_URL")
+    public_endpoint_url: str = Field(alias="S3_PUBLIC_ENDPOINT_URL")
+    access_key: str = Field(alias="S3_ACCESS_KEY", repr=False)
+    secret_key: str = Field(alias="S3_SECRET_KEY", repr=False)
+    bucket: str = Field(alias="S3_BUCKET", default="media")
+    region: str = Field(alias="S3_REGION", default="us-east-1")
+    presigned_ttl: int = Field(alias="S3_PRESIGNED_TTL", default=604800)
 
 
-def get_media_dir() -> Path:
-    raw = settings.get("APP_MEDIA_DIR", "")
-    text = str(raw).strip() if raw else ""
-    if not text:
-        return BASE_DIR / "media"
-    path = Path(text)
-    if not path.is_absolute():
-        return BASE_DIR / path
-    return path
+class RustFSAdminConfig(BaseModel):
+    access_key: str = Field(alias="RUSTFS_ACCESS_KEY", repr=False)
+    secret_key: str = Field(alias="RUSTFS_SECRET_KEY", repr=False)
+
+
+class AvatarConfig(BaseModel):
+    base_url: str = Field(alias="LLM_PROXY_URL", default="https://llm-proxy.spirit.t-education.com")
+    api_key: str = Field(alias="LLM_PROXY_API_KEY", default="", repr=False)
+    model: str = Field(alias="LLM_AVATAR_MODEL", default="openai/gpt-5.6-sol")
+    tool_model: str = Field(alias="LLM_IMAGE_TOOL_MODEL", default="gpt-image-1.5")
+    timeout: float = Field(alias="LLM_AVATAR_TIMEOUT", default=180.0)
+
+
+def build_postgres_url(config: DatabaseConfig) -> URL:
+    return URL.create(
+        config.driver,
+        username=config.user,
+        password=config.password,
+        host=config.host,
+        port=config.port,
+        database=config.name,
+    )

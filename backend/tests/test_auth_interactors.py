@@ -1,4 +1,5 @@
 import pytest
+from os import environ as env
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.domain.users.errors import InvalidCredentialsError
 from app.domain.users.errors import UserAlreadyExistsError
@@ -10,6 +11,7 @@ from app.application.auth.interactors import RegisterUser, LoginUser, RefreshTok
 from app.infra.gateways.user import SqlAlchemyUserGateway
 from app.infra.gateways.refresh_token import SqlAlchemyRefreshTokenGateway
 from app.infra.security.jwt_service import JWTService
+from app.infra.config import SecurityConfig
 
 pytestmark = pytest.mark.req("P.AUTH")
 
@@ -29,7 +31,7 @@ def _auth_interactors(session):
         uow=SqlAlchemyUnitOfWork(session),
         user_gateway=SqlAlchemyUserGateway(session),
         refresh_token_gateway=SqlAlchemyRefreshTokenGateway(session),
-        jwt_service=JWTService(),
+        jwt_service=JWTService(SecurityConfig(**env)),
     )
     return SimpleNamespace(
         register=RegisterUser(**dependencies),

@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, date, datetime
+from urllib.parse import parse_qs, urlsplit
 import pytest
 from conftest import CAT_BREED_ID, CAT_ID, DOG_BREED_ID, DOG_ID
 
@@ -164,8 +165,11 @@ def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
 
 
 def _object_key(url: str) -> str:
-    assert url.startswith("/media/")
-    return url.removeprefix("/media/")
+    signed = urlsplit(url)
+    assert signed.netloc == "testserver"
+    assert signed.path.startswith("/media/pets/")
+    assert "X-Amz-Signature" in parse_qs(signed.query)
+    return signed.path.removeprefix("/media/")
 
 
 def _upload_photo(client, pet_id, token, content=PNG_BYTES):
@@ -177,42 +181,42 @@ def _upload_photo(client, pet_id, token, content=PNG_BYTES):
 
 
 @pytest.mark.req("5.1.3", "7.1")
-def test_photo_upload_wrong_type_and_too_large(client, storage, monkeypatch):
+def test_photo_upload_wrong_type_and_too_large(client, photo_objects, monkeypatch):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
     headers = _auth(token)
     ok = _upload_photo(client, pet_id, token)
     assert ok.status_code == 200
     body = ok.json()
-    assert body["photoUrl"].startswith(f"/media/pets/{pet_id}/photo/")
-    assert body["photoUrl"].endswith(".png")
+    assert _object_key(body["photoUrl"]).startswith("pets/")
+    assert _object_key(body["photoUrl"]).endswith(".png")
     assert body["avatarUrl"] == body["photoUrl"]
     assert body["avatarSource"] == "photo"
     assert body["generatedAvatarUrl"] is None
     key = _object_key(body["photoUrl"])
-    assert storage.objects[key] == (PNG_BYTES, "image/png")
+    assert photo_objects[key] == PNG_BYTES
     replaced = _upload_photo(client, pet_id, token, content=b"second")
     assert replaced.status_code == 200
-    assert key not in storage.objects
+    assert key not in photo_objects
     new_key = _object_key(replaced.json()["photoUrl"])
-    assert storage.objects[new_key][0] == b"second"
+    assert photo_objects[new_key] == b"second"
     wrong = client.put(
         f"/api/v1/pets/{pet_id}/photo", files={"file": ("notes.txt", b"hello", "text/plain")}, headers=headers
     )
     assert wrong.status_code == 415
     assert wrong.json()["code"] == "UNSUPPORTED_FILE_TYPE"
-    assert new_key in storage.objects
+    assert new_key in photo_objects
     monkeypatch.setattr("app.presentation.http.uploads.MAX_PHOTO_BYTES", 8)
     too_big = client.put(
         f"/api/v1/pets/{pet_id}/photo", files={"file": ("big.png", b"x" * 32, "image/png")}, headers=headers
     )
     assert too_big.status_code == 413
     assert too_big.json()["code"] == "FILE_TOO_LARGE"
-    assert new_key in storage.objects
+    assert new_key in photo_objects
 
 
 @pytest.mark.req("5.1.3")
-def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, storage, generator):
+def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, photo_objects, generator):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
     headers = _auth(token)
@@ -224,14 +228,14 @@ def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, stora
     assert generated.status_code == 200
     body = generated.json()
     assert body["avatarSource"] == "photo"
-    assert body["photoUrl"] == uploaded.json()["photoUrl"]
+    assert _object_key(body["photoUrl"]) == _object_key(uploaded.json()["photoUrl"])
     assert body["avatarUrl"] == body["photoUrl"]
-    assert body["generatedAvatarUrl"].startswith(f"/media/pets/{pet_id}/avatar/")
-    assert body["generatedAvatarUrl"].endswith(".png")
+    assert _object_key(body["generatedAvatarUrl"]).startswith("pets/")
+    assert _object_key(body["generatedAvatarUrl"]).endswith(".png")
     assert generator.calls == [(PNG_BYTES, "image/png")]
-    assert storage.objects[_object_key(body["generatedAvatarUrl"])][0] == b"generated-avatar"
+    assert photo_objects[_object_key(body["generatedAvatarUrl"])] == b"generated-avatar"
     fetched = client.get(f"/api/v1/pets/{pet_id}", headers=headers)
-    assert fetched.json()["generatedAvatarUrl"] == body["generatedAvatarUrl"]
+    assert _object_key(fetched.json()["generatedAvatarUrl"]) == _object_key(body["generatedAvatarUrl"])
     assert fetched.json()["avatarSource"] == "photo"
 
 
@@ -258,11 +262,11 @@ def test_select_generated_avatar_and_reject_missing_one(client):
     assert back.status_code == 200
     assert back.json()["avatarSource"] == "photo"
     assert back.json()["avatarUrl"] == back.json()["photoUrl"]
-    assert back.json()["generatedAvatarUrl"] == body["generatedAvatarUrl"]
+    assert _object_key(back.json()["generatedAvatarUrl"]) == _object_key(body["generatedAvatarUrl"])
 
 
 @pytest.mark.req("5.1.3")
-def test_reupload_resets_generated_avatar_and_deletes_old_objects(client, storage):
+def test_reupload_resets_generated_avatar_and_deletes_old_objects(client, photo_objects):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
     headers = _auth(token)
@@ -277,23 +281,62 @@ def test_reupload_resets_generated_avatar_and_deletes_old_objects(client, storag
     assert body["avatarSource"] == "photo"
     assert body["generatedAvatarUrl"] is None
     assert body["avatarUrl"] == body["photoUrl"]
-    assert old_photo not in storage.objects
-    assert old_avatar not in storage.objects
-    assert storage.objects[_object_key(body["photoUrl"])][0] == b"new-photo"
+    assert old_photo not in photo_objects
+    assert old_avatar not in photo_objects
+    assert photo_objects[_object_key(body["photoUrl"])] == b"new-photo"
 
 
 @pytest.mark.req("5.1.3")
-def test_delete_pet_removes_photo_and_avatar(client, storage):
+def test_delete_pet_removes_photo_and_avatar(client, photo_objects):
     _, token = _register(client)
     pet_id = _create_pet(client, token).json()["id"]
     headers = _auth(token)
     _upload_photo(client, pet_id, token)
     client.post(f"/api/v1/pets/{pet_id}/avatar/generate", headers=headers)
-    assert storage.objects
+    assert photo_objects
     deleted = client.delete(f"/api/v1/pets/{pet_id}", headers=headers)
     assert deleted.status_code == 204
-    assert storage.objects == {}
+    assert photo_objects == {}
     assert client.get(f"/api/v1/pets/{pet_id}", headers=headers).status_code == 404
+
+
+@pytest.mark.req("5.1.3")
+async def test_existing_nested_photo_keys_support_reads_generation_and_deletion(
+    client, auth, pet_id, db_session_factory, photo_objects, generator
+):
+    from app.domain.pets.entity import Pet
+    from app.domain.pets.enums import AvatarSource
+
+    photo_key = f"pets/{pet_id}/photo/{uuid.uuid4()}.jpg"
+    avatar_key = f"pets/{pet_id}/avatar/{uuid.uuid4()}.jpeg"
+    photo_objects.update({photo_key: b"existing-photo", avatar_key: b"existing-avatar"})
+    async with db_session_factory() as session:
+        pet = await session.get(Pet, uuid.UUID(pet_id))
+        pet.photo_key = photo_key
+        pet.generated_avatar_key = avatar_key
+        pet.avatar_source = AvatarSource.GENERATED
+        await session.commit()
+
+    base = f"/api/v1/pets/{pet_id}"
+    fetched = client.get(base, headers=auth)
+    assert fetched.status_code == 200, fetched.text
+    body = fetched.json()
+    assert _object_key(body["photoUrl"]) == photo_key
+    assert _object_key(body["generatedAvatarUrl"]) == avatar_key
+    assert body["avatarUrl"] == body["generatedAvatarUrl"]
+    listed = client.get("/api/v1/pets", headers=auth)
+    assert listed.status_code == 200, listed.text
+    assert _object_key(listed.json()["items"][0]["photoUrl"]) == photo_key
+
+    generated = client.post(f"{base}/avatar/generate", headers=auth)
+    assert generated.status_code == 200, generated.text
+    assert generator.calls == [(b"existing-photo", "image/jpeg")]
+    assert avatar_key not in photo_objects
+    assert photo_key in photo_objects
+    assert _object_key(generated.json()["generatedAvatarUrl"]) in photo_objects
+
+    assert client.delete(base, headers=auth).status_code == 204
+    assert photo_objects == {}
 
 
 @pytest.mark.req("5.1.3", "P.ACCESS")

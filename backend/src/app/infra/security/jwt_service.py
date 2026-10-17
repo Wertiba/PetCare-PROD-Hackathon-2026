@@ -6,7 +6,7 @@ import jwt
 from passlib.context import CryptContext
 
 from app.domain.users.errors import InvalidCredentialsError
-from app.infra.config import settings
+from app.infra.config import SecurityConfig
 from app.infra.duration import parse_duration_seconds
 
 ACCESS_TOKEN_TYPE = "access"  # noqa: S105 -- JWT "type" claim discriminator, not a credential
@@ -14,13 +14,13 @@ REFRESH_TOKEN_TYPE = "refresh"  # noqa: S105 -- JWT "type" claim discriminator, 
 
 
 class JWTService:
-    def __init__(self):
+    def __init__(self, config: SecurityConfig):
         self._dummy_password_hash: str | None = None
-        self.pwd_context = CryptContext(schemes=[settings.token.SCHEMA], deprecated="auto")
-        self.secret_key = settings.APP_SECURITY_JWT_SECRET
-        self.algorithm = settings.token.access_token.ALGORITHM
-        self.access_expire_seconds = parse_duration_seconds(settings.APP_SECURITY_ACCESS_TOKEN_EXPIRATION)
-        self.refresh_expire_seconds = parse_duration_seconds(settings.APP_SECURITY_REFRESH_TOKEN_EXPIRATION)
+        self.pwd_context = CryptContext(schemes=[config.password_scheme], deprecated="auto")
+        self.secret_key = config.jwt_secret
+        self.algorithm = config.algorithm
+        self.access_expire_seconds = parse_duration_seconds(config.access_token_expiration)
+        self.refresh_expire_seconds = parse_duration_seconds(config.refresh_token_expiration)
 
     def verify_dummy_password(self, password: str) -> None:
         if self._dummy_password_hash is None:

@@ -1,8 +1,9 @@
 {$DOMAIN} {
 	redir /api /api/ 308
 
-	handle /api/* {
-		reverse_proxy backend:8000
+	handle /media/* {
+		header X-Content-Type-Options nosniff # respect Content-Type, don't guess
+		reverse_proxy rustfs:9000
 	}
 
 	@swagger path /docs /docs/* /openapi.json
@@ -10,7 +11,7 @@
 		reverse_proxy backend:8000
 	}
 
-	handle /media/* {
+	handle /api/* {
 		reverse_proxy backend:8000
 	}
 

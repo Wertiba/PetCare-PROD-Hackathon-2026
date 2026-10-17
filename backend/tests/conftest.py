@@ -1,5 +1,7 @@
 import os
 from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock, Mock
+from types import SimpleNamespace
 
 for _key, _value in {
     "DB_HOST": "localhost",
@@ -11,44 +13,25 @@ for _key, _value in {
     "APP_SECURITY_ACCESS_TOKEN_EXPIRATION": "15m",
     "APP_SECURITY_REFRESH_TOKEN_EXPIRATION": "30d",
     "APP_COOKIE_SECURE": "true",
+    "S3_ENDPOINT_URL": "http://rustfs:9000",
+    "S3_PUBLIC_ENDPOINT_URL": "https://testserver",
+    "S3_ACCESS_KEY": "test-photos",
+    "S3_SECRET_KEY": "test-photos-secret",
 }.items():
     os.environ.setdefault(_key, _value)
 import pytest
+from dishka import Provider, Scope, provide
 from sqlalchemy import event
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-from dishka import Provider, Scope, provide
 from app.application.ports.avatar_generator import AvatarGenerator, GeneratedImage
-from app.application.ports.photos import PhotoStorage
 from app.bootstrap import build_container
-from app.infra.database.db_helper import db_helper
+from app.infra.config import HttpConfig, SecurityConfig
+from app.infra.database.db_helper import DatabaseHelper
 from app.infra.database.mappings import metadata
-from app.main import app
-
-
-class InMemoryPhotoStorage:
-    def __init__(self) -> None:
-        self.objects: dict[str, tuple[bytes, str]] = {}
-
-    def clear(self) -> None:
-        self.objects.clear()
-
-    async def save(self, key: str, content: bytes, content_type: str) -> None:
-        self.objects[key] = (content, content_type)
-
-    async def load(self, key: str) -> bytes:
-        return self.objects[key][0]
-
-    async def delete(self, key: str | None) -> None:
-        if key is None:
-            return
-        self.objects.pop(key, None)
-
-    def url(self, key: str | None) -> str | None:
-        if key is None:
-            return None
-        return f"/media/{key}"
+from app.infra.photos.s3 import create_s3_client
+from app.main import create_app
 
 
 class FakeAvatarGenerator:
@@ -69,22 +52,9 @@ class FakeAvatarGenerator:
         return self.image
 
 
-memory_storage = InMemoryPhotoStorage()
-fake_generator = FakeAvatarGenerator()
-
-
-class _TestOverrides(Provider):
-    @provide(scope=Scope.APP, override=True)
-    def photos(self) -> PhotoStorage:
-        return memory_storage
-
-    @provide(scope=Scope.APP, override=True)
-    def avatars(self) -> AvatarGenerator:
-        return fake_generator
-
-
-# API tests must not touch the network, S3, or the Spirit proxy.
-app.state.dishka_container = build_container(_TestOverrides())
+@pytest.fixture
+def generator():
+    return FakeAvatarGenerator()
 
 
 @pytest.fixture
@@ -106,15 +76,20 @@ async def db_session_factory():
     await engine.dispose()
 
 
-@asynccontextmanager
-async def _client_bound_to(session_factory):
-    original_session_factory = db_helper.session_factory
-    db_helper.session_factory = session_factory
-    try:
-        with TestClient(app, base_url="https://testserver") as test_client:
-            yield test_client
-    finally:
-        db_helper.session_factory = original_session_factory
+@pytest.fixture
+async def client(db_session_factory, catalog, generator):
+    class TestDatabaseProvider(Provider):
+        @provide(scope=Scope.APP, override=True)
+        def database(self) -> DatabaseHelper:
+            return SimpleNamespace(session_factory=db_session_factory)
+
+        @provide(scope=Scope.APP, override=True)
+        def avatars(self) -> AvatarGenerator:
+            return generator
+
+    app = create_app(build_container(TestDatabaseProvider()))
+    with TestClient(app, base_url="https://testserver") as test_client:
+        yield test_client
 
 
 # Ids need hex letters: SQLite gives a UUID column numeric affinity, and all-digit ids collapse into equal floats.
@@ -142,26 +117,44 @@ async def catalog(db_session_factory):
         await session.commit()
 
 
+@pytest.fixture
+def security_config():
+    return SecurityConfig(**os.environ)
+
+
+@pytest.fixture
+def http_config():
+    return HttpConfig(**os.environ)
+
+
+@pytest.fixture
+def photo_objects():
+    return {}
+
+
 @pytest.fixture(autouse=True)
-def _reset_external_fakes():
-    memory_storage.clear()
-    fake_generator.reset()
+def isolated_photo_storage(photo_objects, monkeypatch):
+    @asynccontextmanager
+    async def client_factory(config, *, public=False):
+        if public:
+            async with create_s3_client(config, public=True) as signer:
+                yield signer
+        else:
+            client = Mock()
+            client.put_object = AsyncMock(
+                side_effect=lambda **kwargs: photo_objects.update({kwargs["Key"]: kwargs["Body"]})
+            )
+            async def get_object(**kwargs):
+                body = AsyncMock()
+                body.__aenter__.return_value = body
+                body.read.return_value = photo_objects[kwargs["Key"]]
+                return {"Body": body}
 
+            client.get_object = AsyncMock(side_effect=get_object)
+            client.delete_object = AsyncMock(side_effect=lambda **kwargs: photo_objects.pop(kwargs["Key"], None))
+            yield client
 
-@pytest.fixture
-def storage():
-    return memory_storage
-
-
-@pytest.fixture
-def generator():
-    return fake_generator
-
-
-@pytest.fixture
-async def client(db_session_factory, catalog):
-    async with _client_bound_to(db_session_factory) as test_client:
-        yield test_client
+    monkeypatch.setattr("app.infra.photos.di.create_s3_client", client_factory)
 
 
 def register_user(client, login="user", password="password1", full_name="Test User"):

@@ -7,8 +7,8 @@ pytestmark = pytest.mark.req("P.AUTH")
 
 
 @pytest.fixture
-def jwt_service():
-    return JWTService()
+def jwt_service(security_config):
+    return JWTService(security_config)
 
 
 def test_access_token_has_expected_claims(jwt_service):

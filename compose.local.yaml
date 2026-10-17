@@ -1,0 +1,132 @@
+name: petcare-local
+
+x-backend-image: &backend-image
+  image: petcare-local-backend
+  build:
+    context: ./backend
+
+x-s3-environment: &s3-environment
+  S3_ENDPOINT_URL: http://rustfs:9000
+  S3_PUBLIC_ENDPOINT_URL: http://localhost:${LOCAL_PORT:-8080}
+  S3_BUCKET: media
+  S3_REGION: us-east-1
+  S3_ACCESS_KEY: petcare-local-photos
+  S3_SECRET_KEY: petcare-local-photos-secret
+  S3_PRESIGNED_TTL: ${S3_PRESIGNED_TTL:-604800}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: http://localhost
+    ports:
+      - "127.0.0.1:${LOCAL_PORT:-8080}:80"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  frontend:
+    image: petcare-local-frontend
+    build:
+      context: ./frontend
+    environment:
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "4", "--output", "/dev/null", "http://127.0.0.1:3000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    <<: *backend-image
+    environment:
+      <<: *s3-environment
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: petcare
+      DB_USER: petcare
+      DB_PASSWORD: petcare-local-db
+      APP_SECURITY_JWT_SECRET: petcare-local-jwt-secret-for-development-only
+      APP_COOKIE_SECURE: "false"
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:${LOCAL_PORT:-8080}
+      LLM_PROXY_URL:
+      LLM_PROXY_API_KEY:
+      LLM_AVATAR_MODEL:
+      LLM_IMAGE_TOOL_MODEL:
+      LLM_AVATAR_TIMEOUT:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rustfs-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "--output", "/dev/null", "http://127.0.0.1:8000/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  rustfs:
+    image: rustfs/rustfs:1.0.2
+    environment:
+      RUSTFS_ACCESS_KEY: petcare-local-admin
+      RUSTFS_SECRET_KEY: petcare-local-admin-secret
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_REGION: us-east-1
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_OBS_LOGGER_LEVEL: warn
+    command: ["rustfs", "/data"]
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - rustfs_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "http://127.0.0.1:9000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+  rustfs-init:
+    <<: *backend-image
+    command: ["python", "-m", "app.infra.photos.provision"]
+    environment:
+      <<: *s3-environment
+      RUSTFS_ACCESS_KEY: petcare-local-admin
+      RUSTFS_SECRET_KEY: petcare-local-admin-secret
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    restart: "no"
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: petcare
+      POSTGRES_USER: petcare
+      POSTGRES_PASSWORD: petcare-local-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U petcare -d petcare"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rustfs_data:
+  postgres_data:

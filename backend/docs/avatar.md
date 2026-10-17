@@ -1,6 +1,6 @@
 # Аватар питомца
 
-Бэкенд на ветке `backend/pet-avatar` уже умеет принять фото, нарисовать по нему аватар и отдать выбранную картинку. Фронт и окружение деплоя ещё нужно подключить.
+Бэкенд принимает фото, генерирует по нему аватар и отдаёт выбранную картинку. Обе картинки хранятся в приватном RustFS через aioboto3 и `PhotosGateway`; конфигурации и сервисы предоставляет Dishka.
 
 ## Что делает пользователь
 
@@ -14,10 +14,10 @@
 
 Все методы требуют авторизацию. Чужой питомец — `404`.
 
-`PUT /api/v1/pets/{petId}/photo`  
+`PUT /api/v1/pets/{petId}/photo`
 `multipart/form-data`, поле `file`. jpeg, png или webp, до 5 МБ.
 
-`POST /api/v1/pets/{petId}/avatar/generate`  
+`POST /api/v1/pets/{petId}/avatar/generate`
 Тела нет. Ответ может идти до трёх минут: на фронте нужен долгий таймаут и состояние загрузки. `avatarSource` этот метод не меняет.
 
 `PUT /api/v1/pets/{petId}/avatar`
@@ -48,7 +48,7 @@
 | `502 AVATAR_GENERATION_FAILED` | Spirit не вернул картинку |
 | `503 AVATAR_GENERATION_UNAVAILABLE` | не задан `LLM_PROXY_API_KEY` |
 
-На S3 ссылки подписанные и живут `S3_PRESIGN_EXPIRES` секунд (по умолчанию час). Если картинка перестала открываться, карточку питомца нужно запросить заново.
+Ссылки подписанные и живут `S3_PRESIGNED_TTL` секунд (по умолчанию 604800 — 7 дней). Если картинка перестала открываться, карточку питомца нужно запросить заново.
 
 ## Фронт
 
@@ -60,33 +60,52 @@
 
 ## Что поднять нам
 
-Spirit бакет не выдаёт. Нужен свой S3-совместимый сервис (MinIO или другой) и бакет, например `petcare`. Бэкенд бакет сам не создаёт.
+Корневой Compose запускает RustFS и одноразовый сервис `rustfs-init`, который создаёт
+приватный bucket `media`, пользователя приложения и политику для `media/pets/*`.
+Backend запускается после успешной инициализации. Локального файлового хранилища нет.
 
-В окружение процесса backend, не в репозиторий:
+В CI задайте четыре переменные хранилища:
 
+```text
+RUSTFS_ROOT_ACCESS_KEY=...
+RUSTFS_ROOT_SECRET_KEY=...
+PHOTOS_ACCESS_KEY=...
+PHOTOS_SECRET_KEY=...
 ```
-APP_STORAGE_BACKEND=s3
-S3_ENDPOINT_URL=http://minio:9000
-S3_PUBLIC_ENDPOINT_URL=https://storage.example
-S3_REGION=us-east-1
-S3_BUCKET=petcare
-S3_ACCESS_KEY_ID=...
-S3_SECRET_ACCESS_KEY=...
-S3_PRESIGN_EXPIRES=3600
 
+Compose преобразует `PHOTOS_*` в `S3_ACCESS_KEY` и `S3_SECRET_KEY` для backend.
+Администраторские ключи используются только RustFS и инициализатором.
+Остальные настройки S3 в production уже имеют значения по умолчанию:
+
+```text
+S3_ENDPOINT_URL=http://rustfs:9000
+S3_PUBLIC_ENDPOINT_URL=https://<DOMAIN>
+S3_REGION=us-east-1
+S3_BUCKET=media
+S3_PRESIGNED_TTL=604800
+```
+
+`S3_ENDPOINT_URL` — внутренний origin для backend. `S3_PUBLIC_ENDPOINT_URL` — origin,
+который открывает браузер, без `/media`: имя bucket добавляется к пути автоматически.
+Caddy направляет `/media/*` в RustFS на том же домене приложения.
+
+Для генерации задайте `LLM_PROXY_API_KEY` в защищённых переменных GitLab CI.
+Pipeline и Compose передают его backend. Необязательные настройки:
+
+```text
 LLM_PROXY_URL=https://llm-proxy.spirit.t-education.com
-LLM_PROXY_API_KEY=...
 LLM_AVATAR_MODEL=openai/gpt-5.6-sol
 LLM_IMAGE_TOOL_MODEL=gpt-image-1.5
 LLM_AVATAR_TIMEOUT=180
 ```
 
-`S3_ENDPOINT_URL` — адрес, с которого ходит backend. `S3_PUBLIC_ENDPOINT_URL` — адрес, который открывает браузер. Если они совпадают, второй можно не задавать.
+Ключ LLM берётся в Spirit: тенант → AI → LLM → аккаунт → ключ. Это не пароль GitLab.
+У аккаунта должна быть квота на `openai/gpt-5.6-sol`. Без ключа API возвращает
+`503 AVATAR_GENERATION_UNAVAILABLE`; загрузка фото и выбор уже созданного аватара работают.
 
-Ключ LLM берётся в Spirit: тенант → AI → LLM → аккаунт → ключ. Это не пароль GitLab. У аккаунта должна быть квота на `openai/gpt-5.6-sol`.
+Перед запуском: `alembic upgrade head` (production-контейнер выполняет это автоматически).
+Миграция `0008_pet_avatars` переименовывает `photo_url` в `photo_key`, сохраняет ключи
+существующих S3-объектов и добавляет поля аватара.
 
-Корневой `docker-compose.yaml` эти переменные пока не передаёт в сервис `backend`. Их нужно добавить в окружение сервиса и в защищённые переменные GitLab. Том `backend_media` при `s3` не используется.
-
-Перед запуском: `alembic upgrade head`. Миграция `0008_pet_avatars` переименовывает `photo_url` в `photo_key` и добавляет аватар.
-
-Локально без S3 достаточно `APP_STORAGE_BACKEND=local`: файлы лягут в `backend/media`, ссылки будут вида `/media/pets/...`. Генерация и тогда требует `LLM_PROXY_API_KEY`.
+При запуске без Compose экспортируйте `S3_*` и `LLM_*` из `backend/.env.example`
+в окружение процесса. Python не читает `.env` и не использует dotenv.

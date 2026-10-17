@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Any
-from uuid import uuid4
 
 from app.application.changes import apply_changes
 from app.application.pagination import Page, Pagination
@@ -8,7 +7,7 @@ from app.application.pets.dto import PetAnimalResult, PetBreedResult, PetCreateD
 from app.application.ports.avatar_generator import AvatarGenerator
 from app.application.ports.breed_gateway import BreedGateway
 from app.application.ports.pet_gateway import PetGateway
-from app.application.ports.photos import MAX_PHOTO_BYTES, PhotoStorage, PhotoUpload
+from app.application.ports.photos import MAX_PHOTO_BYTES, PhotosGateway, PhotoUpload
 from app.application.ports.unit_of_work import UnitOfWork
 from app.domain.breeds.entity import Breed
 from app.domain.breeds.errors import RelatedBreedNotFoundError
@@ -54,9 +53,9 @@ class _PetContext:
     uow: UnitOfWork
     pet_gateway: PetGateway
     breed_gateway: BreedGateway
-    photos: PhotoStorage
+    photos: PhotosGateway
 
-    def _to_read_response(self, pet: Pet) -> PetResult:
+    async def _to_read_response(self, pet: Pet) -> PetResult:
         birth_date = pet.birth_date
         breed = animal = None
         if pet.breed is not None:
@@ -64,8 +63,10 @@ class _PetContext:
             if pet.breed.animal is not None:
                 animal = PetAnimalResult(id=pet.breed.animal.id, name=pet.breed.animal.name)
         source = pet.avatar_source if isinstance(pet.avatar_source, AvatarSource) else AvatarSource(pet.avatar_source)
-        photo_url = self.photos.url(pet.photo_key)
-        generated_url = self.photos.url(pet.generated_avatar_key)
+        photo_url = await self.photos.get_presigned_url(pet.photo_key) if pet.photo_key else None
+        generated_url = (
+            await self.photos.get_presigned_url(pet.generated_avatar_key) if pet.generated_avatar_key else None
+        )
         avatar_url = generated_url if source == AvatarSource.GENERATED else photo_url
         return PetResult(
             id=pet.id,
@@ -100,13 +101,13 @@ class ListPets(_PetContext):
     async def __call__(self, user_id: UserId, pagination: Pagination) -> Page[PetResult]:
         pets = await self.pet_gateway.get_by_user_id(user_id, offset=pagination.offset, limit=pagination.limit)
         total = await self.pet_gateway.count_by_user_id(user_id)
-        items = [self._to_read_response(pet) for pet in pets]
+        items = [await self._to_read_response(pet) for pet in pets]
         return Page.build(items=items, total=total, pagination=pagination)
 
 
 class GetPet(_PetContext):
     async def __call__(self, user_id: UserId, pet_id: PetId) -> PetResult:
-        return self._to_read_response(await self._require_pet(user_id, pet_id))
+        return await self._to_read_response(await self._require_pet(user_id, pet_id))
 
 
 class CreatePet(_PetContext):
@@ -114,7 +115,7 @@ class CreatePet(_PetContext):
         breed = await self._require_breed(data.breedId)
         pet = Pet(user_id=user_id, breed_id=breed.id, name=data.name, birth_date=data.birthDate, breed=breed)
         await self.uow.add(pet)
-        result = self._to_read_response(pet)
+        result = await self._to_read_response(pet)
         await self.uow.commit()
         return result
 
@@ -134,7 +135,7 @@ class UpdatePet(_PetContext):
             values["breed"] = breed
         if values:
             apply_changes(pet, values)
-        result = self._to_read_response(pet)
+        result = await self._to_read_response(pet)
         await self.uow.commit()
         return result
 
@@ -159,14 +160,13 @@ class SetPetPhoto(_PetContext):
         pet = await self._require_pet(user_id, pet_id)
         old_photo = pet.photo_key
         old_avatar = pet.generated_avatar_key
-        new_key = f"pets/{pet.id}/photo/{uuid4()}{extension}"
-        await self.photos.save(new_key, upload.content, media_type)
+        new_key = await self.photos.save(upload.content, extension)
         try:
             apply_changes(
                 pet,
                 {"photo_key": new_key, "generated_avatar_key": None, "avatar_source": AvatarSource.PHOTO},
             )
-            result = self._to_read_response(pet)
+            result = await self._to_read_response(pet)
             await self.uow.commit()
         except Exception:
             await self.photos.delete(new_key)
@@ -188,13 +188,12 @@ class GeneratePetAvatar(_PetContext):
             raise PetPhotoRequiredError
         original = await self.photos.load(pet.photo_key)
         generated = await self.avatars.generate(original, content_type_for_key(pet.photo_key))
-        extension = generated.extension if generated.extension.startswith(".") else f".{generated.extension}"
-        new_key = f"pets/{pet.id}/avatar/{uuid4()}{extension}"
-        await self.photos.save(new_key, generated.content, generated.content_type)
+        extension = photo_extension(generated.content_type)
+        new_key = await self.photos.save(generated.content, extension)
         old_avatar = pet.generated_avatar_key
         try:
             apply_changes(pet, {"generated_avatar_key": new_key})
-            result = self._to_read_response(pet)
+            result = await self._to_read_response(pet)
             await self.uow.commit()
         except Exception:
             await self.photos.delete(new_key)
@@ -213,6 +212,6 @@ class SelectPetAvatar(_PetContext):
         elif not pet.photo_key:
             raise PetPhotoRequiredError
         apply_changes(pet, {"avatar_source": source})
-        result = self._to_read_response(pet)
+        result = await self._to_read_response(pet)
         await self.uow.commit()
         return result

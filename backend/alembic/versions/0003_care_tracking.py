@@ -90,9 +90,7 @@ def upgrade() -> None:
         _timestamp("time"),
         _timestamp("created_at"),
         sa.ForeignKeyConstraint(["pet_id"], ["pets.id"], name="fk_states_pet_id_pets", ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["cat_id"], ["categories.id"], name="fk_states_cat_id_categories", ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["cat_id"], ["categories.id"], name="fk_states_cat_id_categories", ondelete="CASCADE"),
     )
     op.create_index("idx_states_pet_id_cat_id_time", "states", ["pet_id", "cat_id", "time"])
 

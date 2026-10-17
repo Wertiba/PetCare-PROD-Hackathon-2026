@@ -1,3 +1,4 @@
+from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -5,13 +6,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.infra.config import settings
-
 
 class DatabaseHelper:
     def __init__(
         self,
-        url: str,
+        url: str | URL,
         echo: bool = False,
         echo_pool: bool = False,
         pool_size: int = 5,
@@ -34,12 +33,3 @@ class DatabaseHelper:
 
     async def dispose(self) -> None:
         await self.engine.dispose()
-
-
-db_helper = DatabaseHelper(
-    url=str(settings.POSTGRES_URL),
-    echo=settings.db.echo,
-    echo_pool=settings.db.echo_pool,
-    pool_size=settings.db.pool_size,
-    max_overflow=settings.db.max_overflow,
-)

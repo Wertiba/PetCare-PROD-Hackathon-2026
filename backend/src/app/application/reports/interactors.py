@@ -8,7 +8,7 @@ from app.application.ports.food_gateway import FoodGateway
 from app.application.ports.note_gateway import NoteGateway
 from app.application.ports.pet_gateway import PetGateway
 from app.application.ports.pet_report import PetReportRenderer
-from app.application.ports.photos import PhotoStorage
+from app.application.ports.photos import PhotosGateway
 from app.application.ports.state_gateway import StateGateway
 from app.application.reports.builder import build_report
 from app.application.reports.dto import PetReportFile
@@ -28,7 +28,7 @@ class ExportPetReport:
     category_gateway: CategoryGateway
     food_gateway: FoodGateway
     note_gateway: NoteGateway
-    photos: PhotoStorage
+    photos: PhotosGateway
     renderer: PetReportRenderer
 
     async def __call__(self, user_id: UserId, pet_id: PetId) -> PetReportFile:

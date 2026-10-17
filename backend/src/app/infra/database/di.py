@@ -5,18 +5,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.ports.database_health import DatabaseHealth
 from app.application.ports.unit_of_work import UnitOfWork
-from app.infra.database.db_helper import DatabaseHelper, db_helper
+from app.infra.config import DatabaseConfig, build_postgres_url
+from app.infra.database.db_helper import DatabaseHelper
 from app.infra.database.health import SqlAlchemyDatabaseHealth
 from app.infra.database.unit_of_work import SqlAlchemyUnitOfWork
 
 
 class DatabaseProvider(Provider):
     @provide(scope=Scope.APP)
-    async def database(self) -> AsyncIterator[DatabaseHelper]:
+    async def database(self, config: DatabaseConfig) -> AsyncIterator[DatabaseHelper]:
+        database = DatabaseHelper(
+            url=build_postgres_url(config),
+            echo=config.echo,
+            echo_pool=config.echo_pool,
+            pool_size=config.pool_size,
+            max_overflow=config.max_overflow,
+        )
         try:
-            yield db_helper
+            yield database
         finally:
-            await db_helper.dispose()
+            await database.dispose()
 
     @provide(scope=Scope.REQUEST)
     async def session(self, database: DatabaseHelper) -> AsyncIterator[AsyncSession]:

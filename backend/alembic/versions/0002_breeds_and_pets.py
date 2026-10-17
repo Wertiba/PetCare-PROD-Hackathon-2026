@@ -97,9 +97,7 @@ def upgrade() -> None:
         sa.column("type", sa.String),
         sa.column("name", sa.String),
     )
-    rows = [
-        {"id": _breed_id(index), "type": "cat", "name": name} for index, name in enumerate(_CAT_BREEDS, start=1)
-    ]
+    rows = [{"id": _breed_id(index), "type": "cat", "name": name} for index, name in enumerate(_CAT_BREEDS, start=1)]
     rows.extend(
         {"id": _breed_id(index), "type": "dog", "name": name} for index, name in enumerate(_DOG_BREEDS, start=101)
     )

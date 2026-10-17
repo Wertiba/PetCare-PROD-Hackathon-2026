@@ -2,6 +2,7 @@
 the way the frontend does, from registration to the final screen state."""
 
 from datetime import UTC, datetime, timedelta
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from conftest import CAT_BREED_ID, CAT_ID
@@ -34,9 +35,7 @@ def barsik(client, owner):
 
 
 @pytest.mark.req("S1", "5.1.1", "5.1.2", "5.1.3", "5.1.4", "P.AUTH")
-def test_scenario_1_owner_adds_a_pet_with_photo(client, owner, tmp_path, monkeypatch):
-    monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
-
+def test_scenario_1_owner_adds_a_pet_with_photo(client, owner, photo_objects):
     # The form offers species, then the breeds of the chosen species.
     animals = client.get("/api/v1/animals", headers=owner).json()["items"]
     assert CAT_ID in [animal["id"] for animal in animals]
@@ -64,7 +63,10 @@ def test_scenario_1_owner_adds_a_pet_with_photo(client, owner, tmp_path, monkeyp
     assert card["breed"]["id"] == CAT_BREED_ID
     assert card["birthDate"] == birth_date
     assert card["ageMonths"] > 0
-    assert card["photoUrl"] == photo.json()["photoUrl"]
+    signed = urlsplit(card["photoUrl"])
+    assert signed.path == urlsplit(photo.json()["photoUrl"]).path
+    assert "X-Amz-Signature" in parse_qs(signed.query)
+    assert photo_objects[signed.path.removeprefix("/media/")] == PNG_BYTES
 
 
 @pytest.mark.req("S1", "5.1.1", "7.1")

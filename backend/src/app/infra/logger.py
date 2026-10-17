@@ -4,8 +4,7 @@ from typing import Any
 
 from loguru import logger
 
-from app.infra.config import BASE_DIR, settings
-from app.infra.singleton import Singleton
+from app.infra.config import LoggingConfig
 
 
 class InterceptHandler(logging.Handler):
@@ -23,11 +22,8 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-class Logger(Singleton):
-    def __init__(self):
-        if getattr(self, "_initialized", False):
-            return
-
+class Logger:
+    def __init__(self, console_config: LoggingConfig):
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
 
@@ -38,22 +34,11 @@ class Logger(Singleton):
 
         logger.add(
             sys.stdout,
-            format=settings.logging.console.FORMAT,
-            level=settings.logging.console.LEVEL,
-            enqueue=settings.logging.console.ENQUEUE,
-            backtrace=settings.logging.console.BACKTRACE,
-            diagnose=settings.logging.console.DIAGNOSE,
-        )
-
-        logger.add(
-            BASE_DIR / settings.logging.file.path,
-            rotation=settings.logging.file.rotation,
-            retention=settings.logging.file.retention,
-            compression=settings.logging.file.compression,
-            level=settings.logging.file.level,
-            enqueue=settings.logging.file.enqueue,
-            backtrace=settings.logging.file.backtrace,
-            diagnose=settings.logging.file.diagnose,
+            format=console_config.format,
+            level=console_config.level,
+            enqueue=console_config.enqueue,
+            backtrace=console_config.backtrace,
+            diagnose=console_config.diagnose,
         )
 
         loggers = ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi", "asyncio", "starlette")
@@ -61,8 +46,6 @@ class Logger(Singleton):
             logging_logger = logging.getLogger(logger_name)
             logging_logger.handlers = []
             logging_logger.propagate = True
-
-        self._initialized = True
 
     @staticmethod
     def get_logger() -> Any:

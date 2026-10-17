@@ -148,7 +148,7 @@ def test_pet_avatar_migration_converts_legacy_photo_url_and_reverts():
     assert "DROP CONSTRAINT ck_pets_avatar_source" in sql
     assert "DROP COLUMN generated_avatar_key" in sql
     assert "DROP COLUMN avatar_source" in sql
-    assert "photo_key LIKE 'pets/%' AND photo_key NOT LIKE 'pets/%/%'" in sql
+    assert "'/media/' || photo_key" not in sql
     assert "RENAME photo_key TO photo_url" in sql
 
 

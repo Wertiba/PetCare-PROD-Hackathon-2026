@@ -85,19 +85,39 @@ async def test_failed_completion_rolls_back_both_events(client, auth, pet_id, db
 
 
 @pytest.mark.req("5.1.3")
-async def test_failed_photo_update_keeps_old_file_and_removes_new_file(
-    client, auth, pet_id, db_session_factory, storage, monkeypatch
+async def test_failed_photo_update_keeps_old_object_and_removes_new_object(
+    client, auth, pet_id, db_session_factory, photo_objects, monkeypatch
 ):
     url = f"/api/v1/pets/{pet_id}/photo"
     first = client.put(url, headers=auth, files={"file": ("pet.png", b"old photo", "image/png")})
     assert first.status_code == 200
-    old_key = first.json()["photoUrl"].removeprefix("/media/")
-    original = dict(storage.objects)
+    original = dict(photo_objects)
+    old_key = next(iter(original))
     monkeypatch.setattr(AsyncSession, "commit", fail_after_flush)
     assert client.put(url, headers=auth, files={"file": ("pet.png", b"new photo", "image/png")}).status_code == 500
-    assert storage.objects == original
+    assert photo_objects == original
     async with db_session_factory() as session:
         assert (await session.get(Pet, UUID(pet_id))).photo_key == old_key
+
+
+async def test_failed_avatar_update_keeps_the_existing_photo_and_avatar(
+    client, auth, pet_id, db_session_factory, photo_objects, monkeypatch
+):
+    base = f"/api/v1/pets/{pet_id}"
+    assert client.put(f"{base}/photo", headers=auth, files={"file": ("pet.png", b"photo", "image/png")}).status_code == 200
+    assert client.post(f"{base}/avatar/generate", headers=auth).status_code == 200
+    assert client.put(f"{base}/avatar", headers=auth, json={"source": "generated"}).status_code == 200
+    async with db_session_factory() as session:
+        pet = await session.get(Pet, UUID(pet_id))
+        old_photo, old_avatar, old_source = pet.photo_key, pet.generated_avatar_key, pet.avatar_source
+    original = dict(photo_objects)
+    monkeypatch.setattr(AsyncSession, "commit", fail_after_flush)
+
+    assert client.post(f"{base}/avatar/generate", headers=auth).status_code == 500
+    assert photo_objects == original
+    async with db_session_factory() as session:
+        pet = await session.get(Pet, UUID(pet_id))
+        assert (pet.photo_key, pet.generated_avatar_key, pet.avatar_source) == (old_photo, old_avatar, old_source)
 
 
 def test_authentication_gateway_and_uow_share_one_session(client, auth, pet_id, monkeypatch):

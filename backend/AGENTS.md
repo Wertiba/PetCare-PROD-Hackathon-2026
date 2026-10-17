@@ -4,6 +4,7 @@
 - Run tests: 'uv run pytest'
 - Lint: 'uv run ruff check .'
 - Format: 'uv run ruff check . --fix; uv run ruff format .'
+- Docker: enter nix develop shell via 'nix develop', it provides docker, docker-compose and colima
 
 ## Architecture
 Clean Architecture as defined by Robert Martin

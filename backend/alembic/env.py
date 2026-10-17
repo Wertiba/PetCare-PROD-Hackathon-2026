@@ -1,20 +1,22 @@
 import asyncio
 from logging.config import fileConfig
-from dotenv import load_dotenv, find_dotenv
 
+from dishka import make_container
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
-from app.infra.config import settings
+from app.infra.config import DatabaseConfig, build_postgres_url
+from app.infra.di import ConfigProvider
 from app.infra.database.mappings import metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-load_dotenv(find_dotenv())
 config = context.config
+with make_container(ConfigProvider()) as dependencies:
+    database_url = build_postgres_url(dependencies.get(DatabaseConfig))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -45,10 +47,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    config.set_main_option("sqlalchemy.url", settings.POSTGRES_URL)
-
     context.configure(
-        url=settings.POSTGRES_URL,
+        url=database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -72,7 +72,7 @@ async def run_async_migrations() -> None:
     """
 
     connectable = create_async_engine(
-        settings.POSTGRES_URL,
+        database_url,
         poolclass=pool.NullPool,
     )
 

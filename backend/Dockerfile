@@ -29,9 +29,7 @@ WORKDIR /app
 COPY --from=builder --chown=10001:10001 /app/.venv /app/.venv
 COPY --from=builder --chown=10001:10001 /app/src ./src
 COPY --chown=10001:10001 alembic ./alembic
-COPY --chown=10001:10001 configs ./configs
 COPY --chown=10001:10001 alembic.ini ./
-RUN mkdir -p logs media && chown -R 10001:10001 logs media
 
 USER 10001:10001
 EXPOSE 8000

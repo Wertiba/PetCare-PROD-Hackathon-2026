@@ -132,8 +132,7 @@ def test_report_is_a_downloadable_pdf(client, demo_owner):
     assert len(re.findall(rb"/Type /Page\b", body)) >= 2
 
 
-def test_report_includes_the_pet_photo(client, auth, pet_id, tmp_path, monkeypatch):
-    monkeypatch.setattr("app.infra.photos.di.get_media_dir", lambda: tmp_path)
+def test_report_includes_the_pet_photo(client, auth, pet_id):
     client.put(f"/api/v1/pets/{pet_id}/photo", files={"file": ("p.png", PNG_BYTES, "image/png")}, headers=auth)
     response = client.get(f"/api/v1/pets/{pet_id}/report", headers=auth)
     assert response.status_code == 200

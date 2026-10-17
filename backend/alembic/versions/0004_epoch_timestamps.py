@@ -38,7 +38,7 @@ def upgrade() -> None:
         "pets",
         "birth_date",
         type_=sa.Double(),
-        postgresql_using='EXTRACT(EPOCH FROM ("birth_date"::timestamp AT TIME ZONE \'UTC\'))',
+        postgresql_using="EXTRACT(EPOCH FROM (\"birth_date\"::timestamp AT TIME ZONE 'UTC'))",
     )
 
 
@@ -47,7 +47,7 @@ def downgrade() -> None:
         "pets",
         "birth_date",
         type_=sa.Date(),
-        postgresql_using='(to_timestamp("birth_date") AT TIME ZONE \'UTC\')::date',
+        postgresql_using="(to_timestamp(\"birth_date\") AT TIME ZONE 'UTC')::date",
     )
     for table, columns in _COLUMNS.items():
         for column in columns:

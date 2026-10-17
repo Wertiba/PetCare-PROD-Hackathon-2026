@@ -14,14 +14,16 @@ from app.application.states.di import StateProvider
 from app.application.users.di import UserProvider
 from app.infra.avatars.di import AvatarProvider
 from app.infra.database.di import DatabaseProvider
+from app.infra.di import ConfigProvider
 from app.infra.gateways.di import GatewayProvider
 from app.infra.photos.di import PhotoProvider
 from app.infra.reports.di import ReportRendererProvider
 from app.infra.security.di import SecurityProvider
 
 
-def build_container(*overrides: Provider) -> AsyncContainer:
+def build_container(*providers: Provider) -> AsyncContainer:
     return make_async_container(
+        ConfigProvider(),
         DatabaseProvider(),
         GatewayProvider(),
         SecurityProvider(),
@@ -40,5 +42,5 @@ def build_container(*overrides: Provider) -> AsyncContainer:
         NoteProvider(),
         FoodProvider(),
         ReportProvider(),
-        *overrides,
+        *providers,
     )

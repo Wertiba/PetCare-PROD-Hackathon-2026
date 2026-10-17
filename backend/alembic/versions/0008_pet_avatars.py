@@ -40,10 +40,7 @@ def downgrade() -> None:
     op.drop_constraint("ck_pets_avatar_source", "pets", type_="check")
     op.drop_column("pets", "avatar_source")
     op.drop_column("pets", "generated_avatar_key")
-    op.execute(
-        "UPDATE pets SET photo_key = '/media/' || photo_key "
-        "WHERE photo_key LIKE 'pets/%' AND photo_key NOT LIKE 'pets/%/%'"
-    )
+    # The S3 gateway also stored raw object keys in photo_url before this migration.
     op.alter_column(
         "pets",
         "photo_key",
