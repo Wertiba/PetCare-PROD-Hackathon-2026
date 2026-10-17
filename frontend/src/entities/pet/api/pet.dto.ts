@@ -3,7 +3,7 @@ import {
   Uid,
 } from '@src/shared/api/global.types';
 
-import { Breed, Pet, PetType } from '../model';
+import { Animal, Breed, Pet } from '../model';
 
 export interface FetchPetsReqDto {
   page: number;
@@ -18,15 +18,29 @@ export interface FetchPetsResDto {
 }
 
 export interface CreatePetReqDto {
-  type: PetType;
   breedId: Uid;
   name: string;
   birthDate: Timestamp;
 }
 
+export interface FetchAnimalsReqDto {
+  page: number;
+  size: number;
+  q: string;
+}
+
+export interface FetchAnimalsResDto {
+  items: Animal[];
+  page: number;
+  size: number;
+  total: number;
+}
+
 export interface FetchBreedsReqDto {
   page: number;
   size: number;
+  animalId: Uid;
+  q: string;
 }
 
 export interface FetchBreedsResDto {
@@ -38,7 +52,6 @@ export interface FetchBreedsResDto {
 
 export interface UpdatePetReqDto {
   name?: string;
-  type?: PetType;
   breedId?: Uid;
   birthDate?: Timestamp;
 }

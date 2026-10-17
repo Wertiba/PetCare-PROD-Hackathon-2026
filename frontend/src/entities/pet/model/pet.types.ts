@@ -3,27 +3,40 @@ import {
   Uid,
 } from '@src/shared/api/global.types';
 
-export type PetType =
-  | 'cat'
-  | 'dog'
-  | 'rodent'
-  | 'bird'
-  | 'fish'
-  | 'reptile'
-  | 'other';
-
 export interface Pet {
   id: Uid;
   userId: Uid;
-  type: PetType;
-  breed: Breed;
   name: string;
-  birthDate: Timestamp;
+  animal: PetAnimal | null;
+  breed: PetBreed | null;
+  birthDate: Timestamp | null;
+  ageMonths: number | null;
+  photoUrl: string | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface PetAnimal {
+  id: Uid;
+  name: string;
+}
+
+export interface PetBreed {
+  id: Uid;
+  name: string;
+}
+
+export interface Animal {
+  id: Uid;
+  name: string;
+  createdBy: Uid | null;
   createdAt: Timestamp;
 }
 
 export interface Breed {
   id: Uid;
-  type: PetType;
+  animalId: Uid;
   name: string;
+  createdBy: Uid | null;
+  createdAt: Timestamp;
 }

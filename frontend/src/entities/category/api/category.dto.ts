@@ -8,6 +8,8 @@ import {
 export interface FetchCategoriesReqDto {
   page: number;
   size: number;
+  q?: string;
+  type?: CategoryType;
 }
 
 export interface FetchCategoriesResDto {

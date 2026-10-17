@@ -1,7 +1,23 @@
+'use client';
+
+import {
+  selectIsSessionRestored,
+  selectUser,
+  useUserStore,
+} from '@src/entities/user';
 import { ActionLink } from '@src/shared/ui';
 import Image from 'next/image';
 
 export default function HeroSection() {
+  const user = useUserStore(selectUser);
+  const isSessionRestored = useUserStore(
+    selectIsSessionRestored,
+  );
+  const actionHref = user ? '/dashboard' : '/register';
+  const actionLabel = user
+    ? 'Перейти к питомцам'
+    : 'Создать аккаунт';
+
   return (
     <section className="relative overflow-hidden bg-[var(--cream)]">
       <div className="mx-auto grid min-h-[680px] w-full max-w-[1440px] grid-cols-1 xl:grid-cols-2">
@@ -24,13 +40,20 @@ export default function HeroSection() {
               ежедневных привычек и всего, что важно не
               забыть.
             </p>
-            <ActionLink
-              href="/register"
-              emphasis="hero"
-              className="sm:ml-auto"
-            >
-              Создать аккаунт
-            </ActionLink>
+            {isSessionRestored ? (
+              <ActionLink
+                href={actionHref}
+                emphasis="hero"
+                className="sm:ml-auto"
+              >
+                {actionLabel}
+              </ActionLink>
+            ) : (
+              <span
+                aria-hidden="true"
+                className="h-14 w-56 animate-pulse bg-[var(--forest)]/10 sm:ml-auto"
+              />
+            )}
           </div>
         </div>
         <div className="relative min-h-[480px] overflow-hidden border-t border-[var(--ink)] bg-[var(--forest)] sm:min-h-[560px] xl:min-h-0 xl:border-l xl:border-t-0">

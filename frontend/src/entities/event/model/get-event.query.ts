@@ -8,7 +8,7 @@ import {
   fetchEvents,
 } from '../api';
 
-export const useGetEventQuery = (
+export const useGetEventsQuery = (
   query: FetchEventsReqDto,
 ) =>
   useQuery({

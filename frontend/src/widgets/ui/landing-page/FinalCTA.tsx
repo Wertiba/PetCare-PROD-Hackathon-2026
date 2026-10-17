@@ -1,7 +1,23 @@
+'use client';
+
+import {
+  selectIsSessionRestored,
+  selectUser,
+  useUserStore,
+} from '@src/entities/user';
 import { careSteps } from '@src/shared/config';
 import { ActionLink } from '@src/shared/ui';
 
 export default function FinalCTA() {
+  const user = useUserStore(selectUser);
+  const isSessionRestored = useUserStore(
+    selectIsSessionRestored,
+  );
+  const actionHref = user ? '/dashboard' : '/register';
+  const actionLabel = user
+    ? 'Перейти к питомцам'
+    : 'Создать аккаунт';
+
   return (
     <section className="overflow-hidden border-t border-[var(--ink)] bg-[var(--cream)] text-[var(--ink)]">
       <div className="mx-auto grid w-full max-w-[1440px] xl:grid-cols-12">
@@ -21,9 +37,16 @@ export default function FinalCTA() {
                 Создайте аккаунт и соберите заботу о питомце
                 в одном спокойном месте.
               </p>
-              <ActionLink href="/register">
-                Создать аккаунт
-              </ActionLink>
+              {isSessionRestored ? (
+                <ActionLink href={actionHref}>
+                  {actionLabel}
+                </ActionLink>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="h-14 w-56 animate-pulse bg-[var(--forest)]/10"
+                />
+              )}
             </div>
           </div>
         </div>

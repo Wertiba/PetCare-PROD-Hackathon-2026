@@ -8,7 +8,7 @@ import {
   fetchCategoryById,
 } from '../api';
 
-export const useGetCategoryQuery = (
+export const useGetCategoriesQuery = (
   query: FetchCategoriesReqDto,
 ) =>
   useQuery({

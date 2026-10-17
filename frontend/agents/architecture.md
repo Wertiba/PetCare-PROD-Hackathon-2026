@@ -10,9 +10,9 @@ app/                    # Next.js App Router — route entry points only
   page.tsx              # Route "/" (landing)
   login/page.tsx        # Route "/login" — AuthShell + features/login LoginForm
   register/page.tsx     # Route "/register" — AuthShell + features/register RegisterForm
-  globals.css           # Tailwind v4 import + re-export of ../ui/globals.css
-ui/                     # Centralized design styles (design tokens, body styles) — replace this folder to re-skin the app
-  globals.css           # :root tokens, @theme inline, body styles; imported by app/globals.css
+  dashboard/page.tsx    # Route "/dashboard" — Dashboard widget
+  create-pet/page.tsx   # Legacy standalone create-pet feature entry
+  globals.css           # Tailwind v4 import and global design tokens
 src/                    # FSD-style layers, path alias @src/*
   app/                  # App-wide setup (non-routing)
     providers/          # query-provider.tsx (TanStack Query client), session-provider.tsx (session restore + 401 sync with user store)
@@ -32,6 +32,7 @@ src/                    # FSD-style layers, path alias @src/*
     ui/Background.tsx   # Plain white fixed layer (#app-background)
     ui/Header.tsx       # Standard top nav bar; exports linkClasses / whiteLinkClasses
     ui/UserMenu.tsx     # Shows user from store, logout action
+    ui/Dashboard.tsx    # Application shell and pet-empty state
   shared/               # Framework-agnostic reusable code
     api/client.ts       # Axios instance for /api/v1: Bearer token injection, snake→camel case conversion, 401 → refresh-token retry, setOnUnauthorized()
     api/query-keys.ts   # Central TanStack Query key registry
@@ -40,6 +41,7 @@ src/                    # FSD-style layers, path alias @src/*
     lib/case-converter.ts
     ui/FormField.tsx    # Reusable labeled input with error display
     ui/SubmitButton.tsx
+    ui/dialog.tsx       # Accessible dialog primitive (focus, Escape, backdrop)
   app|entities|features|widgets|shared → index.ts barrel per slice/segment
 ```
 
@@ -54,9 +56,10 @@ Root config: `next.config.ts` (rewrites `/api/v1/*` → `BACKEND_ORIGIN` :8080, 
 - **Pages are thin**: route files in `app/` only compose feature UI and widgets; all logic lives in `src/` layers.
 - **API**: endpoint functions in `<layer>/api/*.ts` using the shared `api` client; request/response types as `*Dto` interfaces mirroring backend schemas. Server responses are snake_case — the Axios interceptor converts to camelCase automatically.
 - **Server state**: TanStack Query mutations/queries in `<feature>/model/use-*.ts` hooks; query keys registered in `shared/api/query-keys.ts`.
-- **Auth state**: Zustand `useUserStore` (entities layer) holds the current user; access token via `shared/lib/token.ts`; session lifecycle wired in `src/app/providers/session-provider.tsx`.
+- **Auth state**: Zustand `useUserStore` (entities layer) holds the current user and session-restoration state; access token via `shared/lib/token.ts`; session lifecycle wired in `src/app/providers/session-provider.tsx`.
 - **Forms**: React Hook Form + `@hookform/resolvers/zod`; Zod schemas in `<feature>/model/validation.ts`; UI via `shared/ui` FormField/SubmitButton.
 - **Client components**: `"use client"` on files using hooks/browser APIs (all mutations, forms, canvas widgets). Pages/layouts stay server components.
+- **Dashboard composition**: `widgets/ui/Dashboard.tsx` embeds the existing `features/pet/create-pet` form in the shared dialog. The create-pet mutation invalidates the pets query after a confirmed API response.
 - **Styling**: Tailwind utility classes only; design tokens defined in `ui/globals.css` `@theme inline` (imported via `app/globals.css`). Design-specific styles are centralized in `ui/` so they can be swapped as a unit.
 
 ## Where to put new files

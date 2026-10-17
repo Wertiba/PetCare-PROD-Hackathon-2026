@@ -8,7 +8,7 @@ import {
   fetchStates,
 } from '../api';
 
-export const useGetStateQuery = (
+export const useGetStatesQuery = (
   query: FetchStatesReqDto,
 ) =>
   useQuery({

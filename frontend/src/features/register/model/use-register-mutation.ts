@@ -11,13 +11,17 @@ import type { RegisterDto } from '../api/register.dto';
 export function useRegisterMutation() {
   const router = useRouter();
   const setUser = useUserStore((state) => state.setUser);
+  const setSessionRestored = useUserStore(
+    (state) => state.setSessionRestored,
+  );
 
   return useMutation({
     mutationFn: (data: RegisterDto) => register(data),
     onSuccess: (result) => {
       setAccessToken(result.accessToken);
       setUser(result.user);
-      router.push('/');
+      setSessionRestored();
+      router.replace('/dashboard');
     },
   });
 }

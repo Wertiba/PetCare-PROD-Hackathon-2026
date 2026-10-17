@@ -4,6 +4,8 @@ import { Uid } from '@src/shared/api/global.types';
 import type { Pet } from '../model';
 import {
   CreatePetReqDto,
+  FetchAnimalsReqDto,
+  FetchAnimalsResDto,
   FetchBreedsReqDto,
   FetchBreedsResDto,
   FetchPetsReqDto,
@@ -37,6 +39,15 @@ export const fetchBreeds = async (
 ) =>
   (
     await api.get<FetchBreedsResDto>('/breeds', {
+      params: query,
+    })
+  ).data;
+
+export const fetchAnimals = async (
+  query: FetchAnimalsReqDto,
+) =>
+  (
+    await api.get<FetchAnimalsResDto>('/animals', {
       params: query,
     })
   ).data;

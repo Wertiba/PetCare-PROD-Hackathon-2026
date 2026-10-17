@@ -17,4 +17,16 @@ export const queryKeys = {
   states: {
     all: ['states', 'all'],
   },
+  animals: {
+    all: ['animals', 'all'],
+  },
+  breeds: {
+    all: ['breeds', 'all'],
+  },
+  foods: {
+    all: ['foods', 'all'],
+  },
+  notes: {
+    all: ['notes', 'all'],
+  },
 };

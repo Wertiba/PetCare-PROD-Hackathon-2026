@@ -18,7 +18,7 @@ export function DemoLoginButtons() {
       >
         Быстрый вход для проверки
       </p>
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {demoUsers.map((user) => (
           <button
             key={user.login}

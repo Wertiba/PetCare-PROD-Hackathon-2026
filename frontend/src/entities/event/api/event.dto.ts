@@ -3,12 +3,21 @@ import {
   Uid,
 } from '@src/shared/api/global.types';
 
-import { Event, EventPeriod, EventStatus } from '../model';
+import {
+  Event,
+  EventPeriod,
+  EventStatus,
+  EventType,
+} from '../model';
 
 export interface FetchEventsReqDto {
   page: number;
   size: number;
   petId?: Uid;
+  status?: EventStatus;
+  type?: EventType;
+  from?: Timestamp;
+  to?: Timestamp;
 }
 
 export interface FetchEventsResDto {
@@ -21,6 +30,7 @@ export interface FetchEventsResDto {
 export interface CreateEventReqDto {
   petId: Uid;
   name: string;
+  type: EventType;
   status: EventStatus;
   schedule: Timestamp;
   period: EventPeriod;
@@ -28,6 +38,7 @@ export interface CreateEventReqDto {
 
 export interface UpdateEventReqDto {
   name?: string;
+  type?: EventType;
   status?: EventStatus;
   schedule?: Timestamp;
   period?: EventPeriod;

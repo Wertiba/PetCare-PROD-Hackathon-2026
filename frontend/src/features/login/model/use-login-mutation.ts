@@ -10,13 +10,17 @@ import { login } from '../api/login';
 export function useLoginMutation() {
   const router = useRouter();
   const setUser = useUserStore((state) => state.setUser);
+  const setSessionRestored = useUserStore(
+    (state) => state.setSessionRestored,
+  );
 
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
       setAccessToken(data.accessToken);
       setUser(data.user);
-      router.push('/');
+      setSessionRestored();
+      router.replace('/dashboard');
     },
   });
 }

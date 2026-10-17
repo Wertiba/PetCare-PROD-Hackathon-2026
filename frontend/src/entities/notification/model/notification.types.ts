@@ -11,6 +11,8 @@ export type NotificationStatus =
 export interface Notification {
   id: Uid;
   eventId: Uid;
+  petId: Uid;
+  eventName: string;
   type: NotificationType;
   status: NotificationStatus;
   time: Timestamp;

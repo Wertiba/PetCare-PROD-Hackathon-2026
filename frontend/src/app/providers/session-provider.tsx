@@ -21,19 +21,26 @@ export function SessionProvider({
   const clearUser = useUserStore(
     (state) => state.clearUser,
   );
+  const setSessionRestored = useUserStore(
+    (state) => state.setSessionRestored,
+  );
 
   useEffect(() => {
     setOnUnauthorized(clearUser);
 
-    if (!getAccessToken()) return;
+    if (!getAccessToken()) {
+      setSessionRestored();
+      return;
+    }
 
     fetchUser()
       .then(setUser)
       .catch(() => {
         // 401 is already handled by the API client (refresh + cleanup);
         // any other failure just means no session to restore.
-      });
-  }, [setUser, clearUser]);
+      })
+      .finally(setSessionRestored);
+  }, [setUser, clearUser, setSessionRestored]);
 
   return <>{children}</>;
 }

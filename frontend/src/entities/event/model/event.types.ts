@@ -5,6 +5,13 @@ import {
 
 export type EventStatus =
   'planned' | 'skipped' | 'done' | 'cancelled';
+export type EventType =
+  | 'vaccination'
+  | 'parasite_treatment'
+  | 'vet_visit'
+  | 'medication'
+  | 'grooming'
+  | 'other';
 export type EventPeriod =
   | 'none'
   | 'daily'
@@ -18,6 +25,7 @@ export interface Event {
   id: Uid;
   petId: Uid;
   name: string;
+  type: EventType;
   status: EventStatus;
   schedule: Timestamp;
   period: EventPeriod;

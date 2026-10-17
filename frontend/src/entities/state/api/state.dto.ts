@@ -10,6 +10,8 @@ export interface FetchStatesReqDto {
   size: number;
   petId?: Uid;
   catId?: Uid;
+  from?: Timestamp;
+  to?: Timestamp;
 }
 
 export interface FetchStatesResDto {

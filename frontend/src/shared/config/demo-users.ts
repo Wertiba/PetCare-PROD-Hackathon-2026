@@ -1,9 +1,14 @@
 const DEMO_PASSWORD = 'qwerty12345';
 
 export const demoUsers = [
-  { login: 'user1', password: DEMO_PASSWORD },
-  { login: 'user2', password: DEMO_PASSWORD },
-  { login: 'user3', password: DEMO_PASSWORD },
-  { login: 'user4', password: DEMO_PASSWORD },
-  { login: 'user5', password: DEMO_PASSWORD },
+  { login: 'жюри1', password: DEMO_PASSWORD },
+  { login: 'жюри2', password: DEMO_PASSWORD },
+  { login: 'жюри3', password: DEMO_PASSWORD },
+  { login: 'жюри4', password: DEMO_PASSWORD },
+  { login: 'жюри5', password: DEMO_PASSWORD },
+  { login: 'жюри6', password: DEMO_PASSWORD },
+  { login: 'жюри7', password: DEMO_PASSWORD },
+  { login: 'жюри8', password: DEMO_PASSWORD },
+  { login: 'жюри9', password: DEMO_PASSWORD },
+  { login: 'жюри10', password: DEMO_PASSWORD },
 ] as const;

@@ -8,7 +8,7 @@ import {
   fetchNotifications,
 } from '../api';
 
-export const useGetNotificationQuery = (
+export const useGetNotificationsQuery = (
   query: FetchNotificationsReqDto,
 ) =>
   useQuery({
