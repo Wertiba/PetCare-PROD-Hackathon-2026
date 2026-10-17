@@ -4,16 +4,16 @@ export const createPetSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be at most 100 characters long'),
-  animalId: z.string().min(1, 'Animal is required'),
-  breedId: z.string().min(1, 'Breed is required'),
+    .min(1, 'Укажите кличку')
+    .max(100, 'Не больше 100 символов'),
+  animalId: z.string().min(1, 'Выберите вид животного'),
+  breedId: z.string().min(1, 'Выберите породу'),
   birthDate: z
     .string()
-    .min(1, 'Birth date is required')
+    .min(1, 'Укажите дату рождения')
     .refine(
       (value) => new Date(value).getTime() <= Date.now(),
-      'Birth date must not be in the future',
+      'Дата рождения не может быть в будущем',
     ),
 });
 

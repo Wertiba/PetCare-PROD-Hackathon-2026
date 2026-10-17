@@ -441,7 +441,9 @@ export function HealthPanel({ pet }: { pet: Pet }) {
   }
 
   const weightCategory = categories.data?.items.find(
-    (item) => item.name === WEIGHT_CATEGORY_NAME,
+    // Categories are shared, so anyone may add another «Вес»: use the built-in one.
+    (item) =>
+      item.isSystem && item.name === WEIGHT_CATEGORY_NAME,
   );
 
   return (

@@ -7,34 +7,29 @@ const PASSWORD_MAX_LENGTH = 72;
 const FULL_NAME_PATTERN = /^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$/;
 
 export const registerSchema = z.object({
-  login: z
-    .string()
-    .min(6, `Email must be at least 6 characters long`),
+  login: z.string().min(6, 'Логин — не меньше 6 символов'),
   password: z
     .string()
     .min(
       PASSWORD_MIN_LENGTH,
-      `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters`,
+      `Пароль — от ${PASSWORD_MIN_LENGTH} до ${PASSWORD_MAX_LENGTH} символов`,
     )
     .max(
       PASSWORD_MAX_LENGTH,
-      `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters`,
+      `Пароль — от ${PASSWORD_MIN_LENGTH} до ${PASSWORD_MAX_LENGTH} символов`,
     )
     .regex(
       /[A-Za-z]/,
-      'Password must contain at least one letter',
+      'Пароль должен содержать латинскую букву',
     )
-    .regex(
-      /\d/,
-      'Password must contain at least one digit',
-    ),
+    .regex(/\d/, 'Пароль должен содержать цифру'),
   fullName: z
     .string()
     .trim()
-    .min(1, 'Full name is required')
+    .min(1, 'Укажите имя')
     .regex(
       FULL_NAME_PATTERN,
-      'Full name must be 2-200 characters and contain only letters, digits, spaces, underscores or hyphens',
+      'Имя должно содержать от 2 до 200 символов: буквы, цифры, пробелы, «_» или «-».',
     ),
 });
 

@@ -11,18 +11,18 @@ export const EVENT_PERIODS = [
 ] as const;
 
 export const createEventSchema = z.object({
-  petId: z.string().min(1, 'Pet is required'),
+  petId: z.string().min(1, 'Выберите питомца'),
   name: z
     .string()
     .trim()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be at most 100 characters long'),
+    .min(1, 'Укажите название')
+    .max(100, 'Не больше 100 символов'),
   schedule: z
     .string()
-    .min(1, 'Date is required')
+    .min(1, 'Укажите дату')
     .refine(
       (value) => !Number.isNaN(new Date(value).getTime()),
-      'Date is invalid',
+      'Некорректная дата',
     ),
   period: z.enum(EVENT_PERIODS),
 });
