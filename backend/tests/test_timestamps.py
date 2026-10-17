@@ -5,6 +5,7 @@ from pathlib import Path
 from time import time
 
 import pytest
+from conftest import CAT_BREED_ID
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import Double
@@ -54,7 +55,7 @@ def test_birth_timestamp_normalizes_to_utc_midnight(client, auth):
     response = client.post(
         "/api/v1/pets",
         headers=auth,
-        json={"name": "Epoch", "type": "cat", "birthDate": 43200.5},
+        json={"name": "Epoch", "breedId": CAT_BREED_ID, "birthDate": 43200.5},
     )
     assert response.status_code == 201
     assert response.json()["birthDate"] == 0.0
@@ -110,21 +111,21 @@ def test_unsupported_event_timestamps_return_422_without_writes(client, auth, pe
 def test_all_persistent_instant_columns_are_numeric():
     names = {"created_at", "updated_at", "expires_at", "birth_date", "time", "schedule", "done_at"}
     columns = [column for table in metadata.tables.values() for column in table.columns if column.name in names]
-    assert len(columns) == 16
+    assert len(columns) == 22
     assert all(isinstance(column.type, Double) for column in columns)
 
 
 def test_timestamp_migration_has_explicit_utc_and_reversible_conversions():
     upgrade_output = io.StringIO()
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=upgrade_output)
-    command.upgrade(config, "0003_care_tracking:head", sql=True)
+    command.upgrade(config, "0003_care_tracking:0004_epoch_timestamps", sql=True)
     sql = upgrade_output.getvalue()
     assert sql.count("TYPE DOUBLE PRECISION") == 16
     assert sql.count("EXTRACT(EPOCH FROM") == 16
     assert "\"birth_date\"::timestamp AT TIME ZONE 'UTC'" in sql
     downgrade_output = io.StringIO()
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=downgrade_output)
-    command.downgrade(config, "head:0003_care_tracking", sql=True)
+    command.downgrade(config, "0004_epoch_timestamps:0003_care_tracking", sql=True)
     sql = downgrade_output.getvalue()
     assert sql.count("to_timestamp(") == 16
     assert "AT TIME ZONE 'UTC')::date" in sql

@@ -3,15 +3,6 @@
     "user": "User",
     "admin": "Admin"
   },
-  "pets.type": {
-    "cat": "Cat",
-    "dog": "Dog",
-    "rodent": "Rodent",
-    "bird": "Bird",
-    "fish": "Fish",
-    "reptile": "Reptile",
-    "other": "Other"
-  },
   "categories.kind": {
     "sum": "Total for period",
     "avg": "Average for period",

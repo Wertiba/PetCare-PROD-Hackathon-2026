@@ -1,22 +1,16 @@
 {
-  "breeds": {
-    "table": "\nCREATE TABLE breeds (\n\tid UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_breeds_type_name UNIQUE (type, name)\n)\n\n",
-    "indexes": []
-  },
   "users": {
     "table": "\nCREATE TABLE users (\n\tid UUID NOT NULL, \n\tlogin VARCHAR(255) NOT NULL, \n\tpassword VARCHAR(255) NOT NULL, \n\tfull_name VARCHAR(255) NOT NULL, \n\trole VARCHAR(20) NOT NULL, \n\tis_active BOOLEAN NOT NULL, \n\tcreated_by UUID, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (login), \n\tFOREIGN KEY(created_by) REFERENCES users (id)\n)\n\n",
+    "indexes": []
+  },
+  "animals": {
+    "table": "\nCREATE TABLE animals (\n\tid UUID NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tcreated_by UUID, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_animals_name UNIQUE (name), \n\tFOREIGN KEY(created_by) REFERENCES users (id) ON DELETE SET NULL\n)\n\n",
     "indexes": []
   },
   "categories": {
     "table": "\nCREATE TABLE categories (\n\tid UUID NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tkind VARCHAR(20) NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tunit VARCHAR(20) NOT NULL, \n\tcreated_by UUID, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(created_by) REFERENCES users (id) ON DELETE CASCADE\n)\n\n",
     "indexes": [
       "CREATE INDEX idx_categories_created_by ON categories (created_by)"
-    ]
-  },
-  "pets": {
-    "table": "\nCREATE TABLE pets (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tbreed_id UUID, \n\tname VARCHAR(100) NOT NULL, \n\tbirth_date DOUBLE PRECISION, \n\tphoto_url VARCHAR(255), \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, \n\tFOREIGN KEY(breed_id) REFERENCES breeds (id) ON DELETE SET NULL\n)\n\n",
-    "indexes": [
-      "CREATE INDEX idx_pets_user_id ON pets (user_id)"
     ]
   },
   "refresh_tokens": {
@@ -26,11 +20,33 @@
       "CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens (user_id)"
     ]
   },
+  "breeds": {
+    "table": "\nCREATE TABLE breeds (\n\tid UUID NOT NULL, \n\tanimal_id UUID NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tcreated_by UUID, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_breeds_animal_id_name UNIQUE (animal_id, name), \n\tFOREIGN KEY(animal_id) REFERENCES animals (id) ON DELETE CASCADE, \n\tFOREIGN KEY(created_by) REFERENCES users (id) ON DELETE SET NULL\n)\n\n",
+    "indexes": []
+  },
+  "pets": {
+    "table": "\nCREATE TABLE pets (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\tbreed_id UUID, \n\tname VARCHAR(100) NOT NULL, \n\tbirth_date DOUBLE PRECISION, \n\tphoto_url VARCHAR(255), \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, \n\tFOREIGN KEY(breed_id) REFERENCES breeds (id) ON DELETE SET NULL\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_pets_user_id ON pets (user_id)"
+    ]
+  },
   "events": {
     "table": "\nCREATE TABLE events (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\ttype VARCHAR(30) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tschedule DOUBLE PRECISION NOT NULL, \n\tperiod VARCHAR(20) NOT NULL, \n\tdescription VARCHAR(2000), \n\tdone_at DOUBLE PRECISION, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE\n)\n\n",
     "indexes": [
       "CREATE INDEX idx_events_pet_id ON events (pet_id)",
       "CREATE INDEX idx_events_status_schedule ON events (status, schedule)"
+    ]
+  },
+  "food": {
+    "table": "\nCREATE TABLE food (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\tweight INTEGER, \n\tingredients JSONB NOT NULL, \n\tis_approach BOOLEAN, \n\tis_tolerability BOOLEAN, \n\tconsequences VARCHAR(1000), \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_food_pet_id_created_at ON food (pet_id, created_at)"
+    ]
+  },
+  "notes": {
+    "table": "\nCREATE TABLE notes (\n\tid UUID NOT NULL, \n\tpet_id UUID NOT NULL, \n\tcontent VARCHAR(2000) NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tupdated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(pet_id) REFERENCES pets (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_notes_pet_id ON notes (pet_id)"
     ]
   },
   "states": {

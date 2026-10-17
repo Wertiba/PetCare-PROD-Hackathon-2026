@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from time import time
 import uuid
 import pytest
-from conftest import register_user
+from conftest import CAT_BREED_ID, DOG_BREED_ID, register_user
 
 
 def _record(client, headers, pet_id, cat_id, value, time=None, **extra):
@@ -42,21 +42,22 @@ def test_value_must_fit_category_type(client, auth, pet_id, system_categories, c
     assert body["details"] == {"field": "value", "value": value}
 
 
-def test_unknown_or_foreign_pet_and_category(client, system_categories):
+def test_foreign_pet_and_unknown_category(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
-    owner_pet = client.post("/api/v1/pets", json={"name": "Рекс", "type": "dog"}, headers=owner).json()["id"]
+    owner_pet = client.post("/api/v1/pets", json={"name": "Рекс", "breedId": DOG_BREED_ID}, headers=owner).json()["id"]
     owner_category = client.post(
         "/api/v1/categories", json={"name": "Секрет", "kind": "sum", "type": "number"}, headers=owner
     ).json()["id"]
-    stranger_pet = client.post("/api/v1/pets", json={"name": "Мурка", "type": "cat"}, headers=stranger).json()["id"]
+    stranger_pet = client.post(
+        "/api/v1/pets", json={"name": "Мурка", "breedId": CAT_BREED_ID}, headers=stranger
+    ).json()["id"]
     foreign_pet = _record(client, stranger, owner_pet, system_categories["food"], 10)
     assert foreign_pet.status_code == 422
     assert foreign_pet.json()["code"] == "PET_NOT_FOUND"
     assert foreign_pet.json()["details"] == {"field": "petId"}
-    foreign_category = _record(client, stranger, stranger_pet, owner_category, 10)
-    assert foreign_category.status_code == 422
-    assert foreign_category.json()["code"] == "CATEGORY_NOT_FOUND"
+    shared_category = _record(client, stranger, stranger_pet, owner_category, 10)
+    assert shared_category.status_code == 201, "categories are shared between users"
     missing_category = _record(client, stranger, stranger_pet, str(uuid.uuid4()), 10)
     assert missing_category.json()["code"] == "CATEGORY_NOT_FOUND"
 
@@ -64,8 +65,8 @@ def test_unknown_or_foreign_pet_and_category(client, system_categories):
 def test_list_filters_and_isolation(client, system_categories):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
-    pet = client.post("/api/v1/pets", json={"name": "Рекс", "type": "dog"}, headers=owner).json()["id"]
-    other_pet = client.post("/api/v1/pets", json={"name": "Шарик", "type": "dog"}, headers=owner).json()["id"]
+    pet = client.post("/api/v1/pets", json={"name": "Рекс", "breedId": DOG_BREED_ID}, headers=owner).json()["id"]
+    other_pet = client.post("/api/v1/pets", json={"name": "Шарик", "breedId": DOG_BREED_ID}, headers=owner).json()["id"]
     _record(client, owner, pet, system_categories["weight"], 10000, 1788220800.0)
     _record(client, owner, pet, system_categories["weight"], 10500, 1790812800.0)
     _record(client, owner, pet, system_categories["food"], 300, 1790841600.0)

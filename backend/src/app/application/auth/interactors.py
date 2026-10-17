@@ -13,7 +13,12 @@ from app.application.users.dto import UserAndAccessTokenResult, UserData, UserLo
 from app.domain.refresh_tokens.entity import RefreshToken
 from app.domain.users.entity import User
 from app.domain.users.enums import UserRole
-from app.domain.users.errors import InvalidCredentialsError, UserAlreadyExistsError, UserNotActiveError
+from app.domain.users.errors import (
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+    UserNotActiveError,
+    WrongLoginOrPasswordError,
+)
 from app.domain.users.ids import UserId
 
 
@@ -41,9 +46,9 @@ class _AuthContext:
         user = await self.user_gateway.get_by_login(login)
         if user is None:
             self.jwt_service.verify_dummy_password(password)
-            raise InvalidCredentialsError
+            raise WrongLoginOrPasswordError
         if not self.jwt_service.verify_password(password, str(user.password)):
-            raise InvalidCredentialsError
+            raise WrongLoginOrPasswordError
         if not user.is_active:
             raise UserNotActiveError
         return user

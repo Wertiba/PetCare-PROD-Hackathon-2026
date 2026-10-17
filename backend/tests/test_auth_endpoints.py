@@ -42,7 +42,7 @@ def test_email_does_not_replace_login(client, endpoint):
 def test_login_migration_renames_identifier_and_unique_constraint():
     output = io.StringIO()
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
-    command.upgrade(config, "0004_epoch_timestamps:head", sql=True)
+    command.upgrade(config, "0004_epoch_timestamps:0005_user_login", sql=True)
     sql = output.getvalue()
     assert "RENAME email TO login" in sql
     assert "DROP CONSTRAINT uq_users_email" in sql
@@ -50,7 +50,7 @@ def test_login_migration_renames_identifier_and_unique_constraint():
     assert "DROP COLUMN" not in sql
     output = io.StringIO()
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
-    command.downgrade(config, "head:0004_epoch_timestamps", sql=True)
+    command.downgrade(config, "0005_user_login:0004_epoch_timestamps", sql=True)
     sql = output.getvalue()
     assert "RENAME login TO email" in sql
     assert "ADD CONSTRAINT uq_users_email UNIQUE (email)" in sql
@@ -101,8 +101,14 @@ def test_login_with_wrong_password_returns_401(client):
     client.post(
         "/api/v1/auth/register", json={"login": "badpw", "password": "password1", "fullName": "User"}
     )
-    response = client.post("/api/v1/auth/login", json={"login": "badpw", "password": "wrong-password"})
-    assert response.status_code == 401
+    for login, password in (("badpw", "wrong-password"), ("ghost", "password1")):
+        response = client.post("/api/v1/auth/login", json={"login": login, "password": password})
+        assert response.status_code == 401
+        assert response.json()["code"] == "WRONG_LOGIN_OR_PASSWORD"
+        assert response.json()["message"] == "Wrong login or password"
+    bad_token = client.get("/api/v1/users/me", headers={"Authorization": "Bearer nonsense"})
+    assert bad_token.status_code == 401
+    assert bad_token.json()["code"] == "UNAUTHORIZED"
 
 
 def test_refresh_rotates_cookie_and_invalidates_previous_refresh_token(client):

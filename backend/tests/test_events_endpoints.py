@@ -1,6 +1,6 @@
 import uuid
 from datetime import UTC, datetime, timedelta
-from conftest import register_user
+from conftest import CAT_BREED_ID, DOG_BREED_ID, register_user
 from app.infra.metrics import DOMAIN_EVENTS_TOTAL
 
 
@@ -119,7 +119,7 @@ def test_list_filters(client, auth, pet_id):
 def test_isolation_and_unknown_pet(client):
     _, owner = register_user(client, login="owner")
     _, stranger = register_user(client, login="stranger")
-    pet = client.post("/api/v1/pets", json={"name": "Рекс", "type": "dog"}, headers=owner).json()["id"]
+    pet = client.post("/api/v1/pets", json={"name": "Рекс", "breedId": DOG_BREED_ID}, headers=owner).json()["id"]
     event_id = _create(client, owner, pet).json()["id"]
     assert client.get(f"/api/v1/events/{event_id}", headers=stranger).status_code == 404
     assert client.patch(f"/api/v1/events/{event_id}", json={"name": "x"}, headers=stranger).status_code == 404

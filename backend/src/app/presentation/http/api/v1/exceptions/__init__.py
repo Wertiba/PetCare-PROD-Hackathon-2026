@@ -1,7 +1,8 @@
 from .api_exs import (
+    AnimalNotFoundRef,
     BadRequest,
     BreedNotFound,
-    BreedTypeMismatch,
+    CategoryInUse,
     CategoryNotFoundRef,
     Conflict,
     EventNotFoundRef,
@@ -17,14 +18,16 @@ from .api_exs import (
     Unauthorized,
     UnsupportedMedia,
     ValidationFailed,
+    WrongLoginOrPassword,
 )
 from .base import APIException
 
 __all__ = [
     "APIException",
+    "AnimalNotFoundRef",
     "BadRequest",
     "BreedNotFound",
-    "BreedTypeMismatch",
+    "CategoryInUse",
     "CategoryNotFoundRef",
     "Conflict",
     "EventNotFoundRef",
@@ -40,4 +43,5 @@ __all__ = [
     "Unauthorized",
     "UnsupportedMedia",
     "ValidationFailed",
+    "WrongLoginOrPassword",
 ]

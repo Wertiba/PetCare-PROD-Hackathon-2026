@@ -23,5 +23,9 @@ class InvalidCredentialsError(EntityError):
     pass
 
 
+class WrongLoginOrPasswordError(InvalidCredentialsError):
+    """Login failed; kept apart from a bad token so the client can tell the user what is wrong."""
+
+
 class UserNotActiveError(EntityError):
     pass

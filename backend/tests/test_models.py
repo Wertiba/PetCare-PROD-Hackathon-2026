@@ -10,12 +10,15 @@ def test_tables_have_expected_columns():
     assert set(inspector.get_table_names()) == {
         "users",
         "refresh_tokens",
+        "animals",
         "breeds",
         "pets",
         "categories",
         "states",
         "events",
         "notifications",
+        "notes",
+        "food",
     }
     user_columns = {c["name"] for c in inspector.get_columns("users")}
     assert user_columns == {
@@ -32,12 +35,12 @@ def test_tables_have_expected_columns():
     token_columns = {c["name"] for c in inspector.get_columns("refresh_tokens")}
     assert token_columns == {"id", "user_id", "hashed_token", "expires_at", "created_at"}
     breed_columns = {c["name"] for c in inspector.get_columns("breeds")}
-    assert breed_columns == {"id", "type", "name"}
+    assert breed_columns == {"id", "animal_id", "name", "created_by", "created_at"}
+    assert {c["name"] for c in inspector.get_columns("animals")} == {"id", "name", "created_by", "created_at"}
     pet_columns = {c["name"] for c in inspector.get_columns("pets")}
     assert pet_columns == {
         "id",
         "user_id",
-        "type",
         "breed_id",
         "name",
         "birth_date",
@@ -83,6 +86,25 @@ def test_tables_have_expected_columns():
         "status",
         "time",
         "created_at",
+    }
+    assert {c["name"] for c in inspector.get_columns("notes")} == {
+        "id",
+        "pet_id",
+        "content",
+        "created_at",
+        "updated_at",
+    }
+    assert {c["name"] for c in inspector.get_columns("food")} == {
+        "id",
+        "pet_id",
+        "name",
+        "weight",
+        "ingredients",
+        "is_approach",
+        "is_tolerability",
+        "consequences",
+        "created_at",
+        "updated_at",
     }
 
 

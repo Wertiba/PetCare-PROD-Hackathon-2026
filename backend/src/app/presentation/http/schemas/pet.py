@@ -3,11 +3,16 @@ from typing import Annotated
 
 from pydantic import Field, field_validator
 
+from app.domain.animals.ids import AnimalId
 from app.domain.breeds.ids import BreedId
-from app.domain.pets.enums import PetType
 from app.domain.pets.ids import PetId
 from app.domain.users.ids import UserId
 from app.presentation.http.schemas.base import PyModel
+
+
+class PetAnimalReadResponse(PyModel):
+    id: AnimalId
+    name: str
 
 
 class PetBreedReadResponse(PyModel):
@@ -23,6 +28,13 @@ class _PetNameBirthValidation(PyModel):
             raise ValueError("name cannot be null")
         if isinstance(value, str):
             return value.strip()
+        return value
+
+    @field_validator("breedId", mode="before", check_fields=False)
+    @classmethod
+    def breed_not_null(cls, value: object) -> object:
+        if value is None:
+            raise ValueError("breedId cannot be null")
         return value
 
     @field_validator("birthDate", check_fields=False)
@@ -41,14 +53,12 @@ class _PetNameBirthValidation(PyModel):
 
 class PetCreateBody(_PetNameBirthValidation):
     name: Annotated[str, Field(min_length=1, max_length=100)]
-    type: PetType
-    breedId: BreedId | None = None
+    breedId: BreedId = Field(description="The pet's animal is the breed's animal")
     birthDate: float | None = Field(None, description="Birth date as Unix seconds at UTC midnight.")
 
 
 class PetUpdateBody(_PetNameBirthValidation):
     name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
-    type: PetType | None = None
     breedId: BreedId | None = None
     birthDate: float | None = Field(None, description="Birth date as Unix seconds at UTC midnight.")
 
@@ -57,8 +67,8 @@ class PetReadResponse(PyModel):
     id: PetId
     userId: UserId
     name: str
-    type: PetType
-    breed: PetBreedReadResponse | None
+    animal: PetAnimalReadResponse | None = Field(description="null only if an admin deleted the pet's breed")
+    breed: PetBreedReadResponse | None = Field(description="null only if an admin deleted the pet's breed")
     birthDate: float | None = Field(description="Birth date as Unix seconds at UTC midnight.")
     ageMonths: int | None
     photoUrl: str | None

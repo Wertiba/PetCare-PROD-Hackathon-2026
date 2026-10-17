@@ -53,8 +53,33 @@ async def _client_bound_to(session_factory):
         db_helper.session_factory = original_session_factory
 
 
+# Ids need hex letters: SQLite gives a UUID column numeric affinity, and all-digit ids collapse into equal floats.
+CAT_ID = "c0000000-0000-4000-a000-00000000000a"
+DOG_ID = "d0000000-0000-4000-a000-00000000000b"
+CAT_BREED_ID = "c0000000-0000-4000-8000-0000000000c1"
+DOG_BREED_ID = "d0000000-0000-4000-8000-0000000000d1"
+
+
 @pytest.fixture
-async def client(db_session_factory):
+async def catalog(db_session_factory):
+    """Animals and breeds the migration seeds in Postgres, trimmed to what tests need."""
+    import uuid
+    from app.infra.database.mappings import Animal, Breed
+
+    async with db_session_factory() as session:
+        session.add_all([Animal(id=uuid.UUID(CAT_ID), name="Кошка"), Animal(id=uuid.UUID(DOG_ID), name="Собака")])
+        await session.flush()
+        session.add_all(
+            [
+                Breed(id=uuid.UUID(CAT_BREED_ID), animal_id=uuid.UUID(CAT_ID), name="Британская короткошерстная"),
+                Breed(id=uuid.UUID(DOG_BREED_ID), animal_id=uuid.UUID(DOG_ID), name="Лабрадор-ретривер"),
+            ]
+        )
+        await session.commit()
+
+
+@pytest.fixture
+async def client(db_session_factory, catalog):
     async with _client_bound_to(db_session_factory) as test_client:
         yield test_client
 
@@ -66,6 +91,25 @@ def register_user(client, login="user", password="password1", full_name="Test Us
     return (body["user"]["id"], {"Authorization": f"Bearer {body['accessToken']}"})
 
 
+async def make_admin(db_session_factory, user_id: str) -> None:
+    import uuid
+    from sqlalchemy import update
+    from app.domain.users.enums import UserRole
+    from app.infra.database.mappings import users
+
+    async with db_session_factory() as session:
+        await session.execute(update(users).where(users.c.id == uuid.UUID(user_id)).values(role=UserRole.ADMIN))
+        await session.commit()
+
+
+@pytest.fixture
+async def admin(client, db_session_factory):
+    """Headers of a registered user promoted to admin."""
+    user_id, headers = register_user(client, login="admin")
+    await make_admin(db_session_factory, user_id)
+    return headers
+
+
 @pytest.fixture
 def auth(client):
     """Headers of a freshly registered user."""
@@ -75,7 +119,7 @@ def auth(client):
 
 @pytest.fixture
 def pet_id(client, auth):
-    response = client.post("/api/v1/pets", json={"name": "Барсик", "type": "cat"}, headers=auth)
+    response = client.post("/api/v1/pets", json={"name": "Барсик", "breedId": CAT_BREED_ID}, headers=auth)
     assert response.status_code == 201, response.text
     return response.json()["id"]
 

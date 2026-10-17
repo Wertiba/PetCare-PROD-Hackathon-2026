@@ -2,20 +2,23 @@ import uuid
 from enum import Enum
 from time import time
 
-from sqlalchemy import Boolean, Column, Double, ForeignKey, Index, Integer, String, Table, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Column, Double, ForeignKey, Index, Integer, String, Table, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import registry, relationship
 
+from app.domain.animals.entity import Animal
 from app.domain.breeds.entity import Breed
 from app.domain.categories.entity import Category
 from app.domain.categories.enums import CategoryKind, CategoryType, CategoryUnit
 from app.domain.events.entity import Event
 from app.domain.events.enums import EventPeriod, EventStatus, EventType
+from app.domain.foods.entity import Food
+from app.domain.notes.entity import Note
 from app.domain.notifications.entity import Notification
 from app.domain.notifications.enums import NotificationStatus, NotificationType
 from app.domain.pets.entity import Pet
-from app.domain.pets.enums import PetType
 from app.domain.refresh_tokens.entity import RefreshToken
 from app.domain.states.entity import State
 from app.domain.users.entity import User
@@ -36,7 +39,6 @@ def str_enum(enum_cls: type[Enum], name: str, length: int = 20) -> SAEnum:
     )
 
 
-PET_TYPE_ENUM = str_enum(PetType, "pet_type")
 users = Table(
     "users",
     metadata,
@@ -60,20 +62,30 @@ users = Table(
     Column("created_at", Double(), nullable=False, default=lambda: time()),
     Column("updated_at", Double(), nullable=False, default=lambda: time()),
 )
+animals = Table(
+    "animals",
+    metadata,
+    Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
+    Column("name", String(100), nullable=False),
+    Column("created_by", PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+    Column("created_at", Double(), nullable=False, default=lambda: time()),
+    UniqueConstraint("name", name="uq_animals_name"),
+)
 breeds = Table(
     "breeds",
     metadata,
     Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-    Column("type", PET_TYPE_ENUM, nullable=False),
+    Column("animal_id", PGUUID(as_uuid=True), ForeignKey("animals.id", ondelete="CASCADE"), nullable=False),
     Column("name", String(100), nullable=False),
-    UniqueConstraint("type", "name", name="uq_breeds_type_name"),
+    Column("created_by", PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+    Column("created_at", Double(), nullable=False, default=lambda: time()),
+    UniqueConstraint("animal_id", "name", name="uq_breeds_animal_id_name"),
 )
 pets = Table(
     "pets",
     metadata,
     Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
     Column("user_id", PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-    Column("type", PET_TYPE_ENUM, nullable=False),
     Column("breed_id", PGUUID(as_uuid=True), ForeignKey("breeds.id", ondelete="SET NULL"), nullable=True),
     Column("name", String(100), nullable=False),
     Column("birth_date", Double, nullable=True),
@@ -135,6 +147,31 @@ notifications = Table(
     Index("idx_notifications_event_id", "event_id"),
     Index("idx_notifications_status_time", "status", "time"),
 )
+notes = Table(
+    "notes",
+    metadata,
+    Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
+    Column("pet_id", PGUUID(as_uuid=True), ForeignKey("pets.id", ondelete="CASCADE"), nullable=False),
+    Column("content", String(2000), nullable=False),
+    Column("created_at", Double(), nullable=False, default=lambda: time()),
+    Column("updated_at", Double(), nullable=False, default=lambda: time()),
+    Index("idx_notes_pet_id", "pet_id"),
+)
+food = Table(
+    "food",
+    metadata,
+    Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
+    Column("pet_id", PGUUID(as_uuid=True), ForeignKey("pets.id", ondelete="CASCADE"), nullable=False),
+    Column("name", String(255), nullable=False),
+    Column("weight", Integer, nullable=True),
+    Column("ingredients", JSON().with_variant(JSONB(), "postgresql"), nullable=False, default=list),
+    Column("is_approach", Boolean, nullable=True),
+    Column("is_tolerability", Boolean, nullable=True),
+    Column("consequences", String(1000), nullable=True),
+    Column("created_at", Double(), nullable=False, default=lambda: time()),
+    Column("updated_at", Double(), nullable=False, default=lambda: time()),
+    Index("idx_food_pet_id_created_at", "pet_id", "created_at"),
+)
 refresh_tokens = Table(
     "refresh_tokens",
     metadata,
@@ -153,7 +190,10 @@ def start_mappers() -> None:
     if list(mapper_registry.mappers):
         return
     mapper_registry.map_imperatively(User, users)
-    mapper_registry.map_imperatively(Breed, breeds)
+    mapper_registry.map_imperatively(Animal, animals)
+    mapper_registry.map_imperatively(
+        Breed, breeds, properties={"animal": relationship(Animal, lazy="selectin", viewonly=True)}
+    )
     mapper_registry.map_imperatively(
         Pet, pets, properties={"breed": relationship(Breed, lazy="selectin", viewonly=True)}
     )
@@ -163,6 +203,8 @@ def start_mappers() -> None:
     mapper_registry.map_imperatively(
         Notification, notifications, properties={"event": relationship(Event, lazy="selectin")}
     )
+    mapper_registry.map_imperatively(Note, notes)
+    mapper_registry.map_imperatively(Food, food)
     mapper_registry.map_imperatively(RefreshToken, refresh_tokens, properties={"user": relationship(User)})
 
 

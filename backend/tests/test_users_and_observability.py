@@ -16,12 +16,6 @@ def test_me_returns_and_updates_profile(client, auth):
     assert client.get("/api/v1/users/me").status_code == 401
 
 
-def test_fish_is_a_valid_pet_type(client, auth):
-    response = client.post("/api/v1/pets", json={"name": "Немо", "type": "fish"}, headers=auth)
-    assert response.status_code == 201
-    assert response.json()["userId"]
-
-
 def test_metrics_endpoint_exposes_request_and_domain_counters(client, auth, pet_id):
     client.get(f"/api/v1/pets/{pet_id}", headers=auth)
     response = client.get("/metrics")

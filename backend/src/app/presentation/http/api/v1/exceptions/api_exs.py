@@ -15,6 +15,12 @@ class Unauthorized(APIException):
     message = "The token is missing or invalid"
 
 
+class WrongLoginOrPassword(APIException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    code = "WRONG_LOGIN_OR_PASSWORD"
+    message = "Wrong login or password"
+
+
 class Forbidden(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     code = "FORBIDDEN"
@@ -63,10 +69,10 @@ class BreedNotFound(APIException):
     message = "Breed not found"
 
 
-class BreedTypeMismatch(APIException):
+class AnimalNotFoundRef(APIException):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
-    code = "BREED_TYPE_MISMATCH"
-    message = "Breed type does not match pet type"
+    code = "ANIMAL_NOT_FOUND"
+    message = "Animal not found"
 
 
 class Conflict(APIException):
@@ -109,3 +115,9 @@ class EventNotPlanned(APIException):
     status_code = status.HTTP_409_CONFLICT
     code = "EVENT_NOT_PLANNED"
     message = "Only a planned event can be completed"
+
+
+class CategoryInUse(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    code = "CATEGORY_IN_USE"
+    message = "Other users record states in this category"

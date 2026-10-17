@@ -3,9 +3,10 @@ from fastapi import APIRouter, Request, Response, status
 
 from app.application.auth.interactors import LoginUser, Logout, RefreshTokens, RegisterUser
 from app.application.users.dto import UserLoginData, UserRegisterData
-from app.domain.users.errors import InvalidCredentialsError
+from app.domain.users.errors import InvalidCredentialsError, WrongLoginOrPasswordError
 from app.infra.metrics import track
 from app.presentation.http.api.v1.utils.cookies import REFRESH_COOKIE_NAME, delete_refresh_cookie, set_refresh_cookie
+from app.presentation.http.schemas.responses import ErrorResponse
 from app.presentation.http.schemas.token import AccessTokenResponse
 from app.presentation.http.schemas.user import UserAndAccessTokenResponse, UserLoginBody, UserRegisterBody
 
@@ -22,13 +23,20 @@ async def register(
     return UserAndAccessTokenResponse.model_validate(result, from_attributes=True)
 
 
-@router.post("/login", response_model=UserAndAccessTokenResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/login",
+    response_model=UserAndAccessTokenResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse, "description": "WRONG_LOGIN_OR_PASSWORD"},
+    },
+)
 async def login(
     interactor: FromDishka[LoginUser], user_data: UserLoginBody, response: Response
 ) -> UserAndAccessTokenResponse:
     try:
         result, refresh_token, max_age = await interactor(UserLoginData(**user_data.model_dump()))
-    except InvalidCredentialsError:
+    except WrongLoginOrPasswordError:
         track("user", "login_failed")
         raise
     track("user", "logged_in")

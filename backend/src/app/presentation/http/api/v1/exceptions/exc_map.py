@@ -1,11 +1,15 @@
-from app.domain.breeds.errors import BreedNotFoundError, BreedTypeMismatchError
+from app.domain.animals.errors import AnimalNotFoundError, RelatedAnimalNotFoundError
+from app.domain.breeds.errors import BreedNotFoundError, RelatedBreedNotFoundError
 from app.domain.categories.errors import (
+    CategoryInUseError,
     CategoryNotFoundError,
     RelatedCategoryNotFoundError,
     SystemCategoryReadOnlyError,
 )
 from app.domain.errors import UnprocessableEntityError
 from app.domain.events.errors import EventNotFoundError, EventNotPlannedError, RelatedEventNotFoundError
+from app.domain.foods.errors import FoodNotFoundError
+from app.domain.notes.errors import NoteNotFoundError
 from app.domain.notifications.errors import NotificationNotFoundError
 from app.domain.pets.errors import (
     FileTooLargeError,
@@ -21,10 +25,12 @@ from app.domain.users.errors import (
     UserAlreadyExistsError,
     UserNotActiveError,
     UserNotFoundError,
+    WrongLoginOrPasswordError,
 )
 from app.presentation.http.api.v1.exceptions.api_exs import (
+    AnimalNotFoundRef,
     BreedNotFound,
-    BreedTypeMismatch,
+    CategoryInUse,
     CategoryNotFoundRef,
     EventNotFoundRef,
     EventNotPlanned,
@@ -39,6 +45,7 @@ from app.presentation.http.api.v1.exceptions.api_exs import (
     Unauthorized,
     UnsupportedMedia,
     ValidationFailed,
+    WrongLoginOrPassword,
 )
 
 DOMAIN_TO_API: dict[type, callable] = {
@@ -47,6 +54,10 @@ DOMAIN_TO_API: dict[type, callable] = {
         message="User not found",
     ),
     ForbiddenError: lambda path, exc=None: Forbidden(
+        path=path,
+    ),
+    # Before InvalidCredentialsError: the first isinstance match wins.
+    WrongLoginOrPasswordError: lambda path, exc=None: WrongLoginOrPassword(
         path=path,
     ),
     InvalidCredentialsError: lambda path, exc=None: Unauthorized(
@@ -69,11 +80,19 @@ DOMAIN_TO_API: dict[type, callable] = {
         path=path,
         message="Pet not found",
     ),
-    BreedNotFoundError: lambda path, exc=None: BreedNotFound(
+    AnimalNotFoundError: lambda path, exc=None: NotFound(
         path=path,
-        details={"field": "breedId"},
+        message="Animal not found",
     ),
-    BreedTypeMismatchError: lambda path, exc=None: BreedTypeMismatch(
+    RelatedAnimalNotFoundError: lambda path, exc=None: AnimalNotFoundRef(
+        path=path,
+        details={"field": "animalId"},
+    ),
+    BreedNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="Breed not found",
+    ),
+    RelatedBreedNotFoundError: lambda path, exc=None: BreedNotFound(
         path=path,
         details={"field": "breedId"},
     ),
@@ -96,6 +115,9 @@ DOMAIN_TO_API: dict[type, callable] = {
         details={"field": "catId"},
     ),
     SystemCategoryReadOnlyError: lambda path, exc=None: SystemCategoryReadOnly(
+        path=path,
+    ),
+    CategoryInUseError: lambda path, exc=None: CategoryInUse(
         path=path,
     ),
     StateNotFoundError: lambda path, exc=None: NotFound(
@@ -121,5 +143,13 @@ DOMAIN_TO_API: dict[type, callable] = {
     NotificationNotFoundError: lambda path, exc=None: NotFound(
         path=path,
         message="Notification not found",
+    ),
+    NoteNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="Note not found",
+    ),
+    FoodNotFoundError: lambda path, exc=None: NotFound(
+        path=path,
+        message="Food not found",
     ),
 }

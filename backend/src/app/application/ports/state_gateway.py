@@ -36,3 +36,7 @@ class StateGateway(Protocol):
     async def aggregate(
         self, pet_id: PetId, cat_id: CategoryId, kind: CategoryKind, from_: float | None, to: float | None
     ) -> tuple[float | None, int]: ...
+
+    async def count_by_category_of_others(self, cat_id: CategoryId, user_id: UserId) -> int:
+        """States in the category recorded for pets that do not belong to the user."""
+        ...

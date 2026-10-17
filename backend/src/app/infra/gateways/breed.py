@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exceptions import ApplicationError
 from app.application.ports.breed_gateway import BreedGateway
+from app.domain.animals.ids import AnimalId
 from app.domain.breeds.entity import Breed
 from app.domain.breeds.ids import BreedId
-from app.domain.pets.enums import PetType
 
 
 class SqlAlchemyBreedGateway(BreedGateway):
@@ -22,18 +22,19 @@ class SqlAlchemyBreedGateway(BreedGateway):
             raise ApplicationError("Database error") from exc
 
     async def get_all(
-        self, offset: int, limit: int, *, type_: PetType | None = None, name: str | None = None
+        self, offset: int, limit: int, *, animal_id: AnimalId | None = None, name: str | None = None
     ) -> list[Breed]:
-        stmt = self._apply_criteria(select(Breed), type_=type_, name=name)
-        stmt = stmt.order_by(Breed.name).offset(offset).limit(limit)
+        # Seeded breeds (created_by IS NULL) go first: they are the defaults offered on pet registration.
+        stmt = self._apply_criteria(select(Breed), animal_id=animal_id, name=name)
+        stmt = stmt.order_by(Breed.created_by.is_not(None), Breed.name).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
         except SQLAlchemyError as e:
             raise ApplicationError("Database error") from e
 
-    async def count(self, *, type_: PetType | None = None, name: str | None = None) -> int:
-        stmt = self._apply_criteria(select(func.count()).select_from(Breed), type_=type_, name=name)
+    async def count(self, *, animal_id: AnimalId | None = None, name: str | None = None) -> int:
+        stmt = self._apply_criteria(select(func.count()).select_from(Breed), animal_id=animal_id, name=name)
         try:
             result = await self.session.execute(stmt)
             return result.scalar_one()
@@ -41,9 +42,9 @@ class SqlAlchemyBreedGateway(BreedGateway):
             raise ApplicationError("Database error") from e
 
     @staticmethod
-    def _apply_criteria(stmt: Select, *, type_: PetType | None = None, name: str | None = None) -> Select:
-        if type_ is not None:
-            stmt = stmt.where(Breed.type == type_)
+    def _apply_criteria(stmt: Select, *, animal_id: AnimalId | None = None, name: str | None = None) -> Select:
+        if animal_id is not None:
+            stmt = stmt.where(Breed.animal_id == animal_id)
         if name:
             stmt = stmt.where(Breed.name.ilike(f"%{name}%"))
         return stmt

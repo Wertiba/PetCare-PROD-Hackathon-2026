@@ -3,15 +3,15 @@ from typing import Any
 
 from app.application.changes import apply_changes
 from app.application.pagination import Page, Pagination
-from app.application.pets.dto import PetBreedResult, PetCreateData, PetResult, PetUpdateData
+from app.application.pets.dto import PetAnimalResult, PetBreedResult, PetCreateData, PetResult, PetUpdateData
 from app.application.ports.breed_gateway import BreedGateway
 from app.application.ports.pet_gateway import PetGateway
 from app.application.ports.photos import MAX_PHOTO_BYTES, PhotoStorage, PhotoUpload
 from app.application.ports.unit_of_work import UnitOfWork
-from app.domain.breeds.errors import BreedNotFoundError, BreedTypeMismatchError
+from app.domain.breeds.entity import Breed
+from app.domain.breeds.errors import RelatedBreedNotFoundError
 from app.domain.breeds.ids import BreedId
 from app.domain.pets.entity import Pet
-from app.domain.pets.enums import PetType
 from app.domain.pets.errors import FileTooLargeError, PetNotFoundError, UnsupportedFileTypeError
 from app.domain.pets.ids import PetId
 from app.domain.pets.rules import age_months
@@ -27,14 +27,16 @@ class _PetContext:
     @staticmethod
     def _to_read_response(pet: Pet) -> PetResult:
         birth_date = pet.birth_date
-        breed = None
+        breed = animal = None
         if pet.breed is not None:
             breed = PetBreedResult(id=pet.breed.id, name=pet.breed.name)
+            if pet.breed.animal is not None:
+                animal = PetAnimalResult(id=pet.breed.animal.id, name=pet.breed.animal.name)
         return PetResult(
             id=pet.id,
             userId=pet.user_id,
             name=pet.name,
-            type=pet.type,
+            animal=animal,
             breed=breed,
             birthDate=birth_date,
             ageMonths=age_months(birth_date),
@@ -43,12 +45,10 @@ class _PetContext:
             updatedAt=pet.updated_at,
         )
 
-    async def _require_breed(self, breed_id: BreedId, pet_type: PetType):
+    async def _require_breed(self, breed_id: BreedId) -> Breed:
         breed = await self.breed_gateway.get_by_id(breed_id)
         if breed is None:
-            raise BreedNotFoundError
-        if breed.type != pet_type:
-            raise BreedTypeMismatchError
+            raise RelatedBreedNotFoundError
         return breed
 
 
@@ -70,17 +70,8 @@ class GetPet(_PetContext):
 
 class CreatePet(_PetContext):
     async def __call__(self, user_id: UserId, data: PetCreateData) -> PetResult:
-        breed = None
-        if data.breedId is not None:
-            breed = await self._require_breed(data.breedId, data.type)
-        pet = Pet(
-            user_id=user_id,
-            type=data.type,
-            breed_id=data.breedId,
-            name=data.name,
-            birth_date=data.birthDate,
-            breed=breed,
-        )
+        breed = await self._require_breed(data.breedId)
+        pet = Pet(user_id=user_id, breed_id=breed.id, name=data.name, birth_date=data.birthDate, breed=breed)
         await self.uow.add(pet)
         result = self._to_read_response(pet)
         await self.uow.commit()
@@ -93,33 +84,18 @@ class UpdatePet(_PetContext):
         if pet is None:
             raise PetNotFoundError
         provided = data.changes
-        new_type = provided["type"] if "type" in provided else pet.type
         values: dict[str, Any] = {}
         if "name" in provided:
             values["name"] = provided["name"]
-        if "type" in provided:
-            values["type"] = new_type
         if "birthDate" in provided:
             values["birth_date"] = provided["birthDate"]
         if "breedId" in provided:
-            breed_id = provided["breedId"]
-            if breed_id is not None:
-                breed = await self._require_breed(breed_id, new_type)
-                pet.breed = breed
-            values["breed_id"] = breed_id
-            if breed_id is None:
-                pet.breed = None
-        elif "type" in provided and pet.breed_id is not None:
-            existing = pet.breed
-            if existing is None or existing.type != new_type:
-                values["breed_id"] = None
-                pet.breed = None
-        if not values:
-            result = self._to_read_response(pet)
-            await self.uow.commit()
-            return result
-        updated = apply_changes(pet, values)
-        result = self._to_read_response(updated)
+            breed = await self._require_breed(provided["breedId"])
+            values["breed_id"] = breed.id
+            values["breed"] = breed
+        if values:
+            apply_changes(pet, values)
+        result = self._to_read_response(pet)
         await self.uow.commit()
         return result
 

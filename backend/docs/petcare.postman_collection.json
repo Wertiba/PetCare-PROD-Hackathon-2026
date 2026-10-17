@@ -1,0 +1,2053 @@
+{
+  "info": {
+    "name": "PetCare API",
+    "description": "Generated from docs/openapi.json.\n\n1. Auth → Login (жюри1 / qwerty12345) or Register: saves accessToken.\n2. Animals → list, Breeds → list: save animalId and breedId.\n3. Pets → Create Pet saves petId; every POST saves the id of what it created.\nAdmin-only requests (create/update/delete animals and breeds) need a user with role ADMIN.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "petId",
+      "value": ""
+    },
+    {
+      "key": "animalId",
+      "value": ""
+    },
+    {
+      "key": "breedId",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "stateId",
+      "value": ""
+    },
+    {
+      "key": "eventId",
+      "value": ""
+    },
+    {
+      "key": "notificationId",
+      "value": ""
+    },
+    {
+      "key": "noteId",
+      "value": ""
+    },
+    {
+      "key": "foodId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "description": "Register",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"user{{$timestamp}}\",\n  \"password\": \"qwerty12345\",\n  \"fullName\": \"Тестовый пользователь\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "Login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"жюри1\",\n  \"password\": \"qwerty12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ],
+              "query": []
+            },
+            "description": "Refresh"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Get Me"
+          }
+        },
+        {
+          "name": "Update Me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Update Me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Жюри 1\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Animals",
+      "item": [
+        {
+          "name": "List Animals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/animals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "animals"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Substring of the animal name",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Seeded animals first, then the ones admins added."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const items = pm.response.json().items || [];",
+                  "if (items.length && !pm.collectionVariables.get('animalId')) {",
+                  "  pm.collectionVariables.set('animalId', items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Animal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/animals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "animals"
+              ],
+              "query": []
+            },
+            "description": "Create Animal",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Хомяк\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('animalId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Animal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/animals/{{animalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "animals",
+                "{{animalId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Animal"
+          }
+        },
+        {
+          "name": "Update Animal",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/animals/{{animalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "animals",
+                "{{animalId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Animal",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Грызун\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Breeds",
+      "item": [
+        {
+          "name": "Get Breeds",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/breeds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "breeds"
+              ],
+              "query": [
+                {
+                  "key": "animalId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Substring of the breed name",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Seeded breeds first, then the ones admins added."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const items = pm.response.json().items || [];",
+                  "if (items.length && !pm.collectionVariables.get('breedId')) {",
+                  "  pm.collectionVariables.set('breedId', items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Breed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/breeds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "breeds"
+              ],
+              "query": []
+            },
+            "description": "Create Breed",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"animalId\": \"{{animalId}}\",\n  \"name\": \"Джунгарский\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('breedId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Breed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/breeds/{{breedId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "breeds",
+                "{{breedId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Breed"
+          }
+        },
+        {
+          "name": "Update Breed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/breeds/{{breedId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "breeds",
+                "{{breedId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Breed",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Джунгарский хомячок\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pets",
+      "item": [
+        {
+          "name": "List Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List Pets"
+          }
+        },
+        {
+          "name": "Create Pet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets"
+              ],
+              "query": []
+            },
+            "description": "Create Pet",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Барсик\",\n  \"breedId\": \"{{breedId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('petId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Pet",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Pet"
+          }
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Pet",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Барсик Второй\",\n  \"birthDate\": 1579046400\n}"
+            }
+          }
+        },
+        {
+          "name": "Upload Photo",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/photo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "photo"
+              ],
+              "query": []
+            },
+            "description": "Upload Photo",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "jpeg, png or webp up to 5 MB"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Substring of the category name",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Categories are shared by all users: built-in ones first, then the ones users created."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const items = pm.response.json().items || [];",
+                  "if (items.length && !pm.collectionVariables.get('categoryId')) {",
+                  "  pm.collectionVariables.set('categoryId', items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ],
+              "query": []
+            },
+            "description": "Create Category",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Прогулки в парке\",\n  \"kind\": \"count\",\n  \"type\": \"check\",\n  \"unit\": \"none\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('categoryId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Category"
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Category",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Прогулки у реки\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "States",
+      "item": [
+        {
+          "name": "List States",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/states",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "states"
+              ],
+              "query": [
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "catId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "Inclusive lower bound of `time`",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "Inclusive upper bound of `time`",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Newest first."
+          }
+        },
+        {
+          "name": "Create State",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/states",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "states"
+              ],
+              "query": []
+            },
+            "description": "Create State",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"catId\": \"{{categoryId}}\",\n  \"value\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('stateId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Summarize States",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/states/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "states",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "petId",
+                  "value": "{{petId}}",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "catId",
+                  "value": "{{categoryId}}",
+                  "description": "",
+                  "disabled": false
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "Inclusive lower bound of `time`",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "Inclusive upper bound of `time`",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Aggregate of one category for one pet over a period, computed by the category `kind`."
+          }
+        },
+        {
+          "name": "Get State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/states/{{stateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "states",
+                "{{stateId}}"
+              ],
+              "query": []
+            },
+            "description": "Get State"
+          }
+        },
+        {
+          "name": "Update State",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/states/{{stateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "states",
+                "{{stateId}}"
+              ],
+              "query": []
+            },
+            "description": "Update State",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 0,\n  \"note\": \"Передумали\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "Inclusive lower bound of `schedule`",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "Inclusive upper bound of `schedule`",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "All events, latest schedule first. Health map: filter by `petId` and `type`."
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events"
+              ],
+              "query": []
+            },
+            "description": "Create Event",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"name\": \"Прививка от бешенства\",\n  \"type\": \"vaccination\",\n  \"schedule\": 1798761600,\n  \"period\": \"yearly\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('eventId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Upcoming Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "upcoming"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "",
+                  "description": "How far ahead to look",
+                  "disabled": true
+                },
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Planned events due within `days`, overdue ones included, nearest first."
+          }
+        },
+        {
+          "name": "Get Event",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{eventId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Event"
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{eventId}}"
+              ],
+              "query": []
+            },
+            "description": "Setting `status` from planned to done plans the next occurrence of a repeating event.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Взять ветпаспорт\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Complete Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{eventId}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": "Mark done and, for a repeating event, plan the next one. Returns both.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "due",
+                  "value": "",
+                  "description": "Only pending notifications whose time has come",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Latest first. `due=true` gives what should be shown to the user right now."
+          }
+        },
+        {
+          "name": "Create Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": []
+            },
+            "description": "Create Notification",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('notificationId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Notification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notificationId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Notification"
+          }
+        },
+        {
+          "name": "Update Notification",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notificationId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Notification",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"read\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notes",
+      "item": [
+        {
+          "name": "List Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Substring of the note text",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Newest first."
+          }
+        },
+        {
+          "name": "Create Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notes"
+              ],
+              "query": []
+            },
+            "description": "Create Note",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"content\": \"Боится пылесоса\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('noteId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Note",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{noteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notes",
+                "{{noteId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Note"
+          }
+        },
+        {
+          "name": "Update Note",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{noteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notes",
+                "{{noteId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Note",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Уже не боится пылесоса\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Foods",
+      "item": [
+        {
+          "name": "List Foods",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/foods",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "foods"
+              ],
+              "query": [
+                {
+                  "key": "petId",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "isApproach",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "isTolerability",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Feeding journal, newest first."
+          }
+        },
+        {
+          "name": "Create Food",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/foods",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "foods"
+              ],
+              "query": []
+            },
+            "description": "Create Food",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"name\": \"Royal Canin Sterilised\",\n  \"weight\": 50,\n  \"ingredients\": [\n    \"Курица\",\n    \"Рис\"\n  ],\n  \"isApproach\": true,\n  \"isTolerability\": null,\n  \"consequences\": null\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('foodId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Food",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/foods/{{foodId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "foods",
+                "{{foodId}}"
+              ],
+              "query": []
+            },
+            "description": "Get Food"
+          }
+        },
+        {
+          "name": "Update Food",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/foods/{{foodId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "foods",
+                "{{foodId}}"
+              ],
+              "query": []
+            },
+            "description": "Update Food",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isTolerability\": false,\n  \"consequences\": \"Рвота через час после еды\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Find Suspect Ingredients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/foods/{{foodId}}/suspects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "foods",
+                "{{foodId}}",
+                "suspects"
+              ],
+              "query": []
+            },
+            "description": "For a food the pet reacted badly to: its ingredients that none of the pet's earlier tolerated foods\n(isTolerability=true, fed before this one) contained. Without such foods every ingredient is a suspect."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/liveness",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "liveness"
+              ],
+              "query": []
+            },
+            "description": "Liveness",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/readiness",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "readiness"
+              ],
+              "query": []
+            },
+            "description": "Readiness",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Delete Food",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/foods/{{foodId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "foods",
+                "{{foodId}}"
+              ],
+              "query": []
+            },
+            "description": "Delete Food"
+          }
+        },
+        {
+          "name": "Delete Note",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{noteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notes",
+                "{{noteId}}"
+              ],
+              "query": []
+            },
+            "description": "Delete Note"
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notificationId}}"
+              ],
+              "query": []
+            },
+            "description": "Delete Notification"
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{eventId}}"
+              ],
+              "query": []
+            },
+            "description": "Delete Event"
+          }
+        },
+        {
+          "name": "Delete State",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/states/{{stateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "states",
+                "{{stateId}}"
+              ],
+              "query": []
+            },
+            "description": "Delete State"
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ],
+              "query": []
+            },
+            "description": "Deletes the author's states in the category too. Refused with 409 while other users record states in it."
+          }
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}"
+              ],
+              "query": []
+            },
+            "description": "Delete Pet"
+          }
+        },
+        {
+          "name": "Delete Breed",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/breeds/{{breedId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "breeds",
+                "{{breedId}}"
+              ],
+              "query": []
+            },
+            "description": "Pets of the breed stay, without a breed."
+          }
+        },
+        {
+          "name": "Delete Animal",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/animals/{{animalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "animals",
+                "{{animalId}}"
+              ],
+              "query": []
+            },
+            "description": "Deletes the animal's breeds too; pets of those breeds stay, without a breed."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ],
+              "query": []
+            },
+            "description": "Logout"
+          }
+        }
+      ]
+    }
+  ]
+}

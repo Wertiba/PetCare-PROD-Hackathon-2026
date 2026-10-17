@@ -118,6 +118,16 @@
               }
             }
           },
+          "401": {
+            "description": "WRONG_LOGIN_OR_PASSWORD",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -226,28 +236,350 @@
         }
       }
     },
+    "/api/v1/animals": {
+      "get": {
+        "tags": [
+          "Animals"
+        ],
+        "summary": "List Animals",
+        "description": "Seeded animals first, then the ones admins added.",
+        "operationId": "list_animals_api_v1_animals_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Substring of the animal name",
+              "title": "Q"
+            },
+            "description": "Substring of the animal name"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AnimalReadResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Animals"
+        ],
+        "summary": "Create Animal",
+        "operationId": "create_animal_api_v1_animals_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimalCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalReadResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only an admin can do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Animal with this name exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/animals/{animal_id}": {
+      "get": {
+        "tags": [
+          "Animals"
+        ],
+        "summary": "Get Animal",
+        "operationId": "get_animal_api_v1_animals__animal_id__get",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AnimalId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Animals"
+        ],
+        "summary": "Update Animal",
+        "operationId": "update_animal_api_v1_animals__animal_id__patch",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AnimalId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimalUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only an admin can do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Animal with this name exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Animals"
+        ],
+        "summary": "Delete Animal",
+        "description": "Deletes the animal's breeds too; pets of those breeds stay, without a breed.",
+        "operationId": "delete_animal_api_v1_animals__animal_id__delete",
+        "parameters": [
+          {
+            "name": "animal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AnimalId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Animal not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only an admin can do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/breeds": {
       "get": {
         "tags": [
           "Breeds"
         ],
         "summary": "Get Breeds",
+        "description": "Seeded breeds first, then the ones admins added.",
         "operationId": "get_breeds_api_v1_breeds_get",
         "parameters": [
           {
-            "name": "type",
+            "name": "animalId",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/PetType"
+                  "$ref": "#/components/schemas/AnimalId"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "title": "Type"
+              "title": "Animalid"
             }
           },
           {
@@ -263,8 +595,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Substring of the breed name",
               "title": "Q"
-            }
+            },
+            "description": "Substring of the breed name"
           },
           {
             "name": "page",
@@ -301,6 +635,248 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Page_BreedReadResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Breeds"
+        ],
+        "summary": "Create Breed",
+        "operationId": "create_breed_api_v1_breeds_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreedCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreedReadResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only an admin can do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The animal has a breed with this name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Animal not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/breeds/{breed_id}": {
+      "get": {
+        "tags": [
+          "Breeds"
+        ],
+        "summary": "Get Breed",
+        "operationId": "get_breed_api_v1_breeds__breed_id__get",
+        "parameters": [
+          {
+            "name": "breed_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/BreedId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreedReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Breed not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Breeds"
+        ],
+        "summary": "Update Breed",
+        "operationId": "update_breed_api_v1_breeds__breed_id__patch",
+        "parameters": [
+          {
+            "name": "breed_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/BreedId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreedUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreedReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Breed not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only an admin can do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The animal has a breed with this name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Animal not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Breeds"
+        ],
+        "summary": "Delete Breed",
+        "description": "Pets of the breed stay, without a breed.",
+        "operationId": "delete_breed_api_v1_breeds__breed_id__delete",
+        "parameters": [
+          {
+            "name": "breed_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/BreedId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Breed not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only an admin can do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -405,7 +981,7 @@
             }
           },
           "422": {
-            "description": "Breed is missing or does not match",
+            "description": "Breed not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -515,7 +1091,7 @@
             }
           },
           "422": {
-            "description": "Breed is missing or does not match",
+            "description": "Breed not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -656,7 +1232,7 @@
           "Categories"
         ],
         "summary": "List Categories",
-        "description": "Built-in categories first, then the user's own.",
+        "description": "Categories are shared by all users: built-in ones first, then the ones users created.",
         "operationId": "list_categories_api_v1_categories_get",
         "parameters": [
           {
@@ -882,7 +1458,17 @@
             }
           },
           "403": {
-            "description": "Built-in category is read-only",
+            "description": "Only the author or an admin can change a category; built-in ones only an admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Other users record states in it",
             "content": {
               "application/json": {
                 "schema": {
@@ -908,7 +1494,7 @@
           "Categories"
         ],
         "summary": "Delete Category",
-        "description": "Deleting a category also deletes all states recorded in it.",
+        "description": "Deletes the author's states in the category too. Refused with 409 while other users record states in it.",
         "operationId": "delete_category_api_v1_categories__category_id__delete",
         "parameters": [
           {
@@ -935,7 +1521,17 @@
             }
           },
           "403": {
-            "description": "Built-in category is read-only",
+            "description": "Only the author or an admin can change a category; built-in ones only an admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Other users record states in it",
             "content": {
               "application/json": {
                 "schema": {
@@ -2181,6 +2777,644 @@
           }
         }
       }
+    },
+    "/api/v1/notes": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List Notes",
+        "description": "Newest first.",
+        "operationId": "list_notes_api_v1_notes_get",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PetId"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Petid"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Substring of the note text",
+              "title": "Q"
+            },
+            "description": "Substring of the note text"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NoteReadResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create Note",
+        "operationId": "create_note_api_v1_notes_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notes/{note_id}": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Get Note",
+        "operationId": "get_note_api_v1_notes__note_id__get",
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/NoteId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Update Note",
+        "operationId": "update_note_api_v1_notes__note_id__patch",
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/NoteId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete Note",
+        "operationId": "delete_note_api_v1_notes__note_id__delete",
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/NoteId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/foods": {
+      "get": {
+        "tags": [
+          "Foods"
+        ],
+        "summary": "List Foods",
+        "description": "Feeding journal, newest first.",
+        "operationId": "list_foods_api_v1_foods_get",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PetId"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Petid"
+            }
+          },
+          {
+            "name": "isApproach",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Isapproach"
+            }
+          },
+          {
+            "name": "isTolerability",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Istolerability"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Page number",
+              "default": 0,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Page size"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_FoodReadResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Foods"
+        ],
+        "summary": "Create Food",
+        "operationId": "create_food_api_v1_foods_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/foods/{food_id}": {
+      "get": {
+        "tags": [
+          "Foods"
+        ],
+        "summary": "Get Food",
+        "operationId": "get_food_api_v1_foods__food_id__get",
+        "parameters": [
+          {
+            "name": "food_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FoodId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Food not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Foods"
+        ],
+        "summary": "Update Food",
+        "operationId": "update_food_api_v1_foods__food_id__patch",
+        "parameters": [
+          {
+            "name": "food_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FoodId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Food not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Foods"
+        ],
+        "summary": "Delete Food",
+        "operationId": "delete_food_api_v1_foods__food_id__delete",
+        "parameters": [
+          {
+            "name": "food_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FoodId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Food not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/foods/{food_id}/suspects": {
+      "get": {
+        "tags": [
+          "Foods"
+        ],
+        "summary": "Find Suspect Ingredients",
+        "description": "For a food the pet reacted badly to: its ingredients that none of the pet's earlier tolerated foods\n(isTolerability=true, fed before this one) contained. Without such foods every ingredient is a suspect.",
+        "operationId": "find_suspect_ingredients_api_v1_foods__food_id__suspects_get",
+        "parameters": [
+          {
+            "name": "food_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FoodId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodSuspectsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Food not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2203,6 +3437,79 @@
         ],
         "title": "AccessTokenResponse"
       },
+      "AnimalCreateBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AnimalCreateBody"
+      },
+      "AnimalId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "AnimalReadResponse": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/AnimalId"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null for animals seeded by the migration"
+          },
+          "createdAt": {
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "createdBy",
+          "createdAt"
+        ],
+        "title": "AnimalReadResponse"
+      },
+      "AnimalUpdateBody": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "AnimalUpdateBody"
+      },
       "Body_upload_photo_api_v1_pets__pet_id__photo_put": {
         "properties": {
           "file": {
@@ -2217,6 +3524,25 @@
         ],
         "title": "Body_upload_photo_api_v1_pets__pet_id__photo_put"
       },
+      "BreedCreateBody": {
+        "properties": {
+          "animalId": {
+            "$ref": "#/components/schemas/AnimalId"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "animalId",
+          "name"
+        ],
+        "title": "BreedCreateBody"
+      },
       "BreedId": {
         "type": "string",
         "format": "uuid"
@@ -2226,21 +3552,68 @@
           "id": {
             "$ref": "#/components/schemas/BreedId"
           },
-          "type": {
-            "$ref": "#/components/schemas/PetType"
+          "animalId": {
+            "$ref": "#/components/schemas/AnimalId"
           },
           "name": {
             "type": "string",
             "title": "Name"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null for breeds seeded by the migration"
+          },
+          "createdAt": {
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         },
         "type": "object",
         "required": [
           "id",
-          "type",
-          "name"
+          "animalId",
+          "name",
+          "createdBy",
+          "createdAt"
         ],
         "title": "BreedReadResponse"
+      },
+      "BreedUpdateBody": {
+        "properties": {
+          "animalId": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnimalId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "BreedUpdateBody"
       },
       "CategoryCreateBody": {
         "properties": {
@@ -2753,6 +4126,298 @@
         "type": "object",
         "title": "EventUpdateBody"
       },
+      "FoodCreateBody": {
+        "properties": {
+          "petId": {
+            "$ref": "#/components/schemas/PetId"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight",
+            "description": "Portion in grams"
+          },
+          "ingredients": {
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Ingredients",
+            "description": "Composition; trimmed, blanks and case-insensitive duplicates are dropped",
+            "default": []
+          },
+          "isApproach": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isapproach",
+            "description": "Liked by the pet; null when not assessed yet"
+          },
+          "isTolerability": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Istolerability",
+            "description": "Tolerated well, no bad reaction; null when not assessed yet"
+          },
+          "consequences": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consequences",
+            "description": "Reaction after feeding, e.g. GI upset or allergy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "petId",
+          "name"
+        ],
+        "title": "FoodCreateBody"
+      },
+      "FoodId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "FoodReadResponse": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/FoodId"
+          },
+          "petId": {
+            "$ref": "#/components/schemas/PetId"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          },
+          "ingredients": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ingredients"
+          },
+          "isApproach": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isapproach",
+            "description": "Liked by the pet; null when not assessed yet"
+          },
+          "isTolerability": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Istolerability",
+            "description": "Tolerated well, no bad reaction; null when not assessed yet"
+          },
+          "consequences": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consequences"
+          },
+          "createdAt": {
+            "type": "number",
+            "title": "Createdat",
+            "description": "Feeding time. Unix seconds in UTC; fractional seconds are supported."
+          },
+          "updatedAt": {
+            "type": "number",
+            "title": "Updatedat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "petId",
+          "name",
+          "weight",
+          "ingredients",
+          "isApproach",
+          "isTolerability",
+          "consequences",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "FoodReadResponse"
+      },
+      "FoodSuspectsResponse": {
+        "properties": {
+          "foodId": {
+            "$ref": "#/components/schemas/FoodId"
+          },
+          "petId": {
+            "$ref": "#/components/schemas/PetId"
+          },
+          "suspects": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suspects",
+            "description": "Ingredients of this food that none of the pet's earlier tolerated foods contained"
+          },
+          "comparedFoods": {
+            "type": "integer",
+            "title": "Comparedfoods",
+            "description": "How many earlier tolerated foods were compared against"
+          }
+        },
+        "type": "object",
+        "required": [
+          "foodId",
+          "petId",
+          "suspects",
+          "comparedFoods"
+        ],
+        "title": "FoodSuspectsResponse"
+      },
+      "FoodUpdateBody": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight",
+            "description": "Portion in grams"
+          },
+          "ingredients": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "type": "array",
+                "maxItems": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredients",
+            "description": "Composition; trimmed, blanks and case-insensitive duplicates are dropped"
+          },
+          "isApproach": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isapproach",
+            "description": "Liked by the pet; null when not assessed yet"
+          },
+          "isTolerability": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Istolerability",
+            "description": "Tolerated well, no bad reaction; null when not assessed yet"
+          },
+          "consequences": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consequences",
+            "description": "Reaction after feeding, e.g. GI upset or allergy"
+          }
+        },
+        "type": "object",
+        "title": "FoodUpdateBody"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2765,6 +4430,81 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "NoteCreateBody": {
+        "properties": {
+          "petId": {
+            "$ref": "#/components/schemas/PetId"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "petId",
+          "content"
+        ],
+        "title": "NoteCreateBody"
+      },
+      "NoteId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "NoteReadResponse": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/NoteId"
+          },
+          "petId": {
+            "$ref": "#/components/schemas/PetId"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "createdAt": {
+            "type": "number",
+            "title": "Createdat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
+          },
+          "updatedAt": {
+            "type": "number",
+            "title": "Updatedat",
+            "description": "Unix seconds in UTC; fractional seconds are supported."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "petId",
+          "content",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "NoteReadResponse"
+      },
+      "NoteUpdateBody": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "title": "NoteUpdateBody"
       },
       "NotificationCreateBody": {
         "properties": {
@@ -2904,6 +4644,37 @@
         "type": "object",
         "title": "NotificationUpdateBody"
       },
+      "Page_AnimalReadResponse_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnimalReadResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ],
+        "title": "Page[AnimalReadResponse]"
+      },
       "Page_BreedReadResponse_": {
         "properties": {
           "items": {
@@ -2996,6 +4767,68 @@
           "total"
         ],
         "title": "Page[EventReadResponse]"
+      },
+      "Page_FoodReadResponse_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FoodReadResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ],
+        "title": "Page[FoodReadResponse]"
+      },
+      "Page_NoteReadResponse_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NoteReadResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ],
+        "title": "Page[NoteReadResponse]"
       },
       "Page_NotificationReadResponse_": {
         "properties": {
@@ -3090,6 +4923,23 @@
         ],
         "title": "Page[StateReadResponse]"
       },
+      "PetAnimalReadResponse": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/AnimalId"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PetAnimalReadResponse"
+      },
       "PetBreedReadResponse": {
         "properties": {
           "id": {
@@ -3115,18 +4965,9 @@
             "minLength": 1,
             "title": "Name"
           },
-          "type": {
-            "$ref": "#/components/schemas/PetType"
-          },
           "breedId": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/BreedId"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/BreedId",
+            "description": "The pet's animal is the breed's animal"
           },
           "birthDate": {
             "anyOf": [
@@ -3144,7 +4985,7 @@
         "type": "object",
         "required": [
           "name",
-          "type"
+          "breedId"
         ],
         "title": "PetCreateBody"
       },
@@ -3164,8 +5005,16 @@
             "type": "string",
             "title": "Name"
           },
-          "type": {
-            "$ref": "#/components/schemas/PetType"
+          "animal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PetAnimalReadResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null only if an admin deleted the pet's breed"
           },
           "breed": {
             "anyOf": [
@@ -3175,7 +5024,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "null only if an admin deleted the pet's breed"
           },
           "birthDate": {
             "anyOf": [
@@ -3227,7 +5077,7 @@
           "id",
           "userId",
           "name",
-          "type",
+          "animal",
           "breed",
           "birthDate",
           "ageMonths",
@@ -3236,19 +5086,6 @@
           "updatedAt"
         ],
         "title": "PetReadResponse"
-      },
-      "PetType": {
-        "type": "string",
-        "enum": [
-          "cat",
-          "dog",
-          "rodent",
-          "bird",
-          "fish",
-          "reptile",
-          "other"
-        ],
-        "title": "PetType"
       },
       "PetUpdateBody": {
         "properties": {
@@ -3264,16 +5101,6 @@
               }
             ],
             "title": "Name"
-          },
-          "type": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PetType"
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "breedId": {
             "anyOf": [

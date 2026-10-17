@@ -1,6 +1,7 @@
 import uuid
 from datetime import UTC, date, datetime
 import pytest
+from conftest import CAT_BREED_ID, CAT_ID, DOG_BREED_ID, DOG_ID
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
 
@@ -16,26 +17,8 @@ def _auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
-async def sample_breeds(db_session_factory):
-    from app.domain.pets.enums import PetType
-    from app.infra.database.mappings import Breed
-
-    ids = {"british": uuid.uuid4(), "abyssinian": uuid.uuid4(), "labrador": uuid.uuid4()}
-    async with db_session_factory() as session:
-        session.add_all(
-            [
-                Breed(id=ids["british"], type=PetType.CAT, name="Британская короткошерстная"),
-                Breed(id=ids["abyssinian"], type=PetType.CAT, name="Абиссинская"),
-                Breed(id=ids["labrador"], type=PetType.DOG, name="Лабрадор-ретривер"),
-            ]
-        )
-        await session.commit()
-    return ids
-
-
 def _create_pet(client, token, **overrides):
-    payload = {"name": "Барсик", "type": "cat"}
+    payload = {"name": "Барсик", "breedId": CAT_BREED_ID}
     payload.update(overrides)
     return client.post("/api/v1/pets", json=payload, headers=_auth(token))
 
@@ -46,8 +29,8 @@ def test_create_minimal_pet(client):
     assert response.status_code == 201
     body = response.json()
     assert body["name"] == "Барсик"
-    assert body["type"] == "cat"
-    assert body["breed"] is None
+    assert body["animal"] == {"id": CAT_ID, "name": "Кошка"}
+    assert body["breed"] == {"id": CAT_BREED_ID, "name": "Британская короткошерстная"}
     assert body["birthDate"] is None
     assert body["ageMonths"] is None
     assert body["photoUrl"] is None
@@ -126,55 +109,43 @@ def test_other_users_pet_is_not_found(client):
     assert still_there.json()["name"] == "Барсик"
 
 
-def test_breed_type_mismatch_and_unknown_breed(client, sample_breeds):
+def test_breed_is_required_and_must_exist(client):
     _, token = _register(client)
-    mismatch = _create_pet(client, token, breedId=str(sample_breeds["labrador"]))
-    assert mismatch.status_code == 422
-    body = mismatch.json()
-    assert body["code"] == "BREED_TYPE_MISMATCH"
-    assert body["details"]["field"] == "breedId"
     missing = _create_pet(client, token, breedId=str(uuid.uuid4()))
     assert missing.status_code == 422
     assert missing.json()["code"] == "BREED_NOT_FOUND"
     assert missing.json()["details"]["field"] == "breedId"
+    response = client.post("/api/v1/pets", json={"name": "Барсик"}, headers=_auth(token))
+    assert response.status_code == 422
+    assert "breedId" in [err["field"] for err in response.json()["fieldErrors"]]
 
 
-def test_breed_search_filters_by_type_and_name(client, sample_breeds):
+def test_patch_changes_breed_and_animal_and_clears_birth_date(client):
     _, token = _register(client)
-    response = client.get("/api/v1/breeds", params={"type": "cat", "q": "Брит"}, headers=_auth(token))
-    assert response.status_code == 200
-    body = response.json()
-    assert body["total"] == 1
-    assert body["items"][0]["name"] == "Британская короткошерстная"
-    assert body["items"][0]["type"] == "cat"
-    cats = client.get("/api/v1/breeds", params={"type": "cat"}, headers=_auth(token))
-    assert [item["name"] for item in cats.json()["items"]] == ["Абиссинская", "Британская короткошерстная"]
-
-
-def test_patch_clears_breed_and_birth_date_with_null(client, sample_breeds):
-    _, token = _register(client)
-    created = _create_pet(client, token, breedId=str(sample_breeds["british"]), birthDate=1579046400.0)
-    assert created.status_code == 201
+    created = _create_pet(client, token, birthDate=1579046400.0)
     pet_id = created.json()["id"]
-    assert created.json()["breed"]["id"] == str(sample_breeds["british"])
-    response = client.patch(f"/api/v1/pets/{pet_id}", json={"breedId": None, "birthDate": None}, headers=_auth(token))
+    response = client.patch(
+        f"/api/v1/pets/{pet_id}", json={"breedId": DOG_BREED_ID, "birthDate": None}, headers=_auth(token)
+    )
     assert response.status_code == 200
     body = response.json()
-    assert body["breed"] is None
+    assert body["breed"]["id"] == DOG_BREED_ID
+    assert body["animal"] == {"id": DOG_ID, "name": "Собака"}
     assert body["birthDate"] is None
     assert body["ageMonths"] is None
     assert body["name"] == "Барсик"
-    assert body["type"] == "cat"
+    null_breed = client.patch(f"/api/v1/pets/{pet_id}", json={"breedId": None}, headers=_auth(token))
+    assert null_breed.status_code == 422
 
 
-def test_patch_type_change_clears_mismatched_breed(client, sample_breeds):
+def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
     _, token = _register(client)
-    created = _create_pet(client, token, breedId=str(sample_breeds["british"]))
-    pet_id = created.json()["id"]
-    response = client.patch(f"/api/v1/pets/{pet_id}", json={"type": "dog"}, headers=_auth(token))
-    assert response.status_code == 200
-    assert response.json()["type"] == "dog"
-    assert response.json()["breed"] is None
+    breed = client.post("/api/v1/breeds", json={"animalId": CAT_ID, "name": "Сфинкс"}, headers=admin).json()
+    pet_id = _create_pet(client, token, breedId=breed["id"]).json()["id"]
+    assert client.delete(f"/api/v1/breeds/{breed['id']}", headers=admin).status_code == 204
+    body = client.get(f"/api/v1/pets/{pet_id}", headers=_auth(token)).json()
+    assert body["breed"] is None
+    assert body["animal"] is None
 
 
 def test_photo_upload_wrong_type_and_too_large(client, tmp_path, monkeypatch):

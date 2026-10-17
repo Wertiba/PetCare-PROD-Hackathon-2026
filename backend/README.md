@@ -68,9 +68,15 @@ uv run python -m app.run
 
 Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обновить access: `POST /api/v1/auth/refresh`. Выйти: `POST /api/v1/auth/logout`.
 
+## Postman
+
+Коллекция: `docs/petcare.postman_collection.json` (Import в Postman). `baseUrl` по умолчанию `http://localhost:8080`.
+Порядок: Auth → Login (`жюри1` / `qwerty12345`) сохраняет токен, каждый POST сохраняет id созданного объекта, удаления собраны в папке Cleanup в конце.
+После изменений API: `uv run python scripts/build_postman_collection.py`.
+
 ## Методы
 
-Все списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`. Все моменты времени — числовые Unix seconds в UTC, например `1770000000.125`: в теле запроса, query-параметрах и ответах. Это относится к `createdAt`, `updatedAt`, `schedule`, `doneAt`, `nextSchedule`, `time`, `from`, `to`, `birthDate` и `timestamp` в ошибках. `birthDate` нормализуется к полуночи UTC. ISO-строки дат больше не принимаются. Продолжительности (`expiresIn`, `days`, `ageMonths`) сохраняют свои единицы. Используются обычные `float` и стандартные модули Python `time`, `datetime`, `calendar`. Чужие и несуществующие объекты отвечают `404`. Ссылка в теле запроса на чужой/несуществующий объект (`petId`, `catId`, `eventId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
+Все списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`. Все моменты времени — числовые Unix seconds в UTC, например `1770000000.125`: в теле запроса, query-параметрах и ответах. Это относится к `createdAt`, `updatedAt`, `schedule`, `doneAt`, `nextSchedule`, `time`, `from`, `to`, `birthDate` и `timestamp` в ошибках. `birthDate` нормализуется к полуночи UTC. ISO-строки дат больше не принимаются. Продолжительности (`expiresIn`, `days`, `ageMonths`) сохраняют свои единицы. Используются обычные `float` и стандартные модули Python `time`, `datetime`, `calendar`. Чужие и несуществующие объекты отвечают `404`. Ссылка в теле запроса на чужой/несуществующий объект (`petId`, `catId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
 
 | Метод | Путь | Что делает |
 |---|---|---|
@@ -78,12 +84,15 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET | `/metrics` | Метрики Prometheus |
 | POST | `/api/v1/auth/register`, `/login`, `/refresh`, `/logout` | Авторизация |
 | GET / PATCH | `/api/v1/users/me` | Профиль, смена `fullName` |
-| GET | `/api/v1/breeds?type=&q=` | Породы |
-| GET / POST | `/api/v1/pets` | Свои питомцы / создать (`name`, `type`) |
-| GET / PATCH / DELETE | `/api/v1/pets/{petId}` | Карточка. Удаление каскадно удаляет события, замеры, уведомления |
+| GET / POST | `/api/v1/animals?q=` | Виды животных. Создавать, менять и удалять может только админ (`403 FORBIDDEN`) |
+| GET / PATCH / DELETE | `/api/v1/animals/{id}` | Вид. Удаление удаляет его породы, питомцы остаются без породы |
+| GET / POST | `/api/v1/breeds?animalId=&q=` | Породы. Сначала стартовые из миграции. Запись только админу |
+| GET / PATCH / DELETE | `/api/v1/breeds/{id}` | Порода. Удаление оставляет питомцев без породы |
+| GET / POST | `/api/v1/pets` | Свои питомцы / создать (`name`, `breedId`, `birthDate?`). Вид берётся из породы |
+| GET / PATCH / DELETE | `/api/v1/pets/{petId}` | Карточка с `animal` и `breed`. Удаление каскадно удаляет события, замеры, уведомления, заметки, корма |
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ |
-| GET / POST | `/api/v1/categories?type=&q=` | Встроенные + свои категории / создать свою |
-| GET / PATCH / DELETE | `/api/v1/categories/{id}` | Встроенные менять нельзя — `403 SYSTEM_CATEGORY_READ_ONLY` |
+| GET / POST | `/api/v1/categories?type=&q=` | Общие для всех категории: встроенные, затем созданные пользователями / создать |
+| GET / PATCH / DELETE | `/api/v1/categories/{id}` | Менять может автор или админ (иначе `403`, для встроенных `SYSTEM_CATEGORY_READ_ONLY`). Пока категорией пользуются другие, нельзя удалить её или сменить `kind`/`type`: `409 CATEGORY_IN_USE` |
 | GET / POST | `/api/v1/states?petId=&catId=&from=&to=` | Замеры (вес, корм, реакции...) |
 | GET | `/api/v1/states/summary?petId=&catId=&from=&to=` | Агрегат за период по `kind` категории: sum, avg, last, count, min, max |
 | GET / PATCH / DELETE | `/api/v1/states/{id}` | Замер |
@@ -93,8 +102,17 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | POST | `/api/v1/events/{id}/complete` | Отметить выполненным, тело `{doneAt?}`. Для повторяющегося создаёт следующее |
 | GET / POST | `/api/v1/notifications?eventId=&petId=&status=&due=` | Уведомления. `due=true` — pending, время которых наступило |
 | GET / PATCH / DELETE | `/api/v1/notifications/{id}` | Уведомление (например, `{"status": "read"}`) |
+| GET / POST | `/api/v1/notes?petId=&q=` | Текстовые заметки в карточке питомца, новые сначала |
+| GET / PATCH / DELETE | `/api/v1/notes/{id}` | Заметка |
+| GET / POST | `/api/v1/foods?petId=&isApproach=&isTolerability=` | Журнал кормлений: `name`, `weight` (г), `ingredients`, `isApproach` (понравилось), `isTolerability` (подошло), `consequences` (реакция) |
+| GET / PATCH / DELETE | `/api/v1/foods/{id}` | Кормление |
+| GET | `/api/v1/foods/{id}/suspects` | Ингредиенты этого корма, которых не было ни в одном ранее съеденном корме с `isTolerability=true` |
 
 ### Правила предметной области
+
+- **Аккаунты жюри** `жюри1`…`жюри10` с паролем `qwerty12345` создаёт миграция `0007` (для кнопок быстрого входа на фронте).
+- **Админ** — пользователь с `role = 'ADMIN'`. Через API роль не выдаётся: `UPDATE users SET role = 'ADMIN' WHERE login = '...'`.
+- **Подозрительные ингредиенты.** Сравнение без учёта регистра и лишних пробелов. Если у питомца ещё не было подошедших кормов, подозрительны все ингредиенты. Ингредиенты при сохранении очищаются от пустых строк и повторов.
 
 - **Значение замера** проверяется по типу категории: `check` — 0 или 1, `scale` — от 1 до 5, `number` — не меньше 0. Иначе `422 INVALID_VALUE`.
 - **Повторяющиеся события** (`period`: daily, weekly, monthly, quarterly, half_year, yearly). В ответе есть `nextSchedule`. Когда запланированное событие отмечают выполненным (через `/complete` или `PATCH status=done`), сервис создаёт следующее. Дата считается от более поздней из двух: плановой или фактической (`doneAt`). Прививку, сделанную на два месяца позже плана, в следующий раз нужно делать через год от фактической даты.

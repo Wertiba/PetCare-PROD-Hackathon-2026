@@ -44,8 +44,8 @@ class _StateContext:
         if await self.pet_gateway.get_by_id(pet_id, user_id=user_id) is None:
             raise RelatedPetNotFoundError
 
-    async def _require_category(self, user_id: UserId, cat_id: CategoryId) -> Category:
-        category = await self.category_gateway.get_by_id(cat_id, user_id=user_id)
+    async def _require_category(self, cat_id: CategoryId) -> Category:
+        category = await self.category_gateway.get_by_id(cat_id)
         if category is None:
             raise RelatedCategoryNotFoundError
         return category
@@ -84,7 +84,7 @@ class GetState(_StateContext):
 class CreateState(_StateContext):
     async def __call__(self, user_id: UserId, data: StateCreateData) -> StateResult:
         await self._require_pet(user_id, data.petId)
-        category = await self._require_category(user_id, data.catId)
+        category = await self._require_category(data.catId)
         validate_state_value(category.type, data.value)
         state = State(
             pet_id=data.petId,
@@ -136,7 +136,7 @@ class SummarizeStates(_StateContext):
     ) -> StateSummaryResult:
         """Aggregate a pet's states of one category the way the category kind says (sum, avg, last...)."""
         await self._require_pet(user_id, pet_id)
-        category = await self._require_category(user_id, cat_id)
+        category = await self._require_category(cat_id)
         value, count = await self.state_gateway.aggregate(pet_id, cat_id, category.kind, from_, to)
         return StateSummaryResult(
             petId=pet_id,

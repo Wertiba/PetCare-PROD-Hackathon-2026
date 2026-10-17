@@ -11,3 +11,7 @@ class RelatedCategoryNotFoundError(EntityError):
 
 class SystemCategoryReadOnlyError(EntityError):
     pass
+
+
+class CategoryInUseError(EntityError):
+    """Other users already record states in the category, so it cannot be deleted or reinterpreted."""

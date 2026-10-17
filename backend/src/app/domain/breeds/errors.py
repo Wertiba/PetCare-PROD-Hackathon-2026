@@ -5,5 +5,5 @@ class BreedNotFoundError(EntityError):
     pass
 
 
-class BreedTypeMismatchError(EntityError):
-    pass
+class RelatedBreedNotFoundError(EntityError):
+    """breedId in a request body points to nothing."""

@@ -16,9 +16,7 @@ from app.presentation.http.uploads import read_photo
 
 router = APIRouter(prefix="/pets", tags=["Pets"], route_class=DishkaRoute)
 _NOT_FOUND = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Pet not found"}}
-_UNPROCESSABLE = {
-    status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "Breed is missing or does not match"}
-}
+_UNPROCESSABLE = {status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "Breed not found"}}
 
 
 @router.get("", response_model=Page[PetReadResponse], status_code=status.HTTP_200_OK)

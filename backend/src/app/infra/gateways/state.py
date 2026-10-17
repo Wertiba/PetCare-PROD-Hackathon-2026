@@ -103,6 +103,19 @@ class SqlAlchemyStateGateway(StateGateway):
         except SQLAlchemyError as e:
             raise ApplicationError("Database error") from e
 
+    async def count_by_category_of_others(self, cat_id: CategoryId, user_id: UserId) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(State)
+            .join(Pet, Pet.id == State.pet_id)
+            .where(State.cat_id == cat_id, Pet.user_id != user_id)
+        )
+        try:
+            result = await self.session.execute(stmt)
+            return result.scalar_one()
+        except SQLAlchemyError as e:
+            raise ApplicationError("Database error") from e
+
     @staticmethod
     def _owned(stmt: Select, user_id: UserId) -> Select:
         return stmt.join(Pet, Pet.id == State.pet_id).where(Pet.user_id == user_id)
