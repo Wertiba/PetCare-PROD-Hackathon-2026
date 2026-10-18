@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
-# Refresh docs/coverage.md: which requirements the tests cover and how much code they run.
+# Write reports/coverage.md: which requirements the tests cover and how much code they run.
 # Run from backend/: sh scripts/coverage_report.sh
 set -eu
+mkdir -p reports
 requirements=$(mktemp)
 trap 'rm -f "$requirements"' EXIT
 uv run python -m pytest -q --cov --req-report="$requirements"
@@ -19,4 +20,4 @@ uv run python -m pytest -q --cov --req-report="$requirements"
   echo "Строки и ветвления по модулям; файлы со 100 % покрытием не показаны."
   echo
   uv run coverage report --format=markdown --skip-covered
-} > docs/coverage.md
+} > reports/coverage.md

@@ -1,4 +1,4 @@
-# PetCare — архитектура бэкенда
+# PetCare — техническая спецификация
 
 Документ описывает систему в том виде, в каком она лежит в репозитории и работает на стенде. Всё, что здесь сказано, проверяется кодом, тестами или пайплайном; ссылки ведут на конкретные файлы.
 
@@ -14,6 +14,9 @@
 8. [Тестирование и покрытие](#8-тестирование-и-покрытие)
 9. [CI/CD и эксплуатация](#9-cicd-и-эксплуатация)
 10. [Ограничения и развитие](#10-ограничения-и-развитие)
+11. [Подробные контракты подсистем](#11-подробные-контракты-подсистем)
+
+Рядом лежат: [`presentation.pdf`](presentation.pdf) — презентация, [`openapi.json`](openapi.json) — контракт API (Swagger UI на `/docs`), [`db-schema.png`](db-schema.png) — схема БД, [`petcare.postman_collection.json`](petcare.postman_collection.json) — коллекция Postman.
 
 ---
 
@@ -25,13 +28,13 @@
 
 ### 1.2 Функциональные требования и их реализация
 
-Нумерация совпадает с разделом 5 «Задания PetCare». Колонка «Тесты» показывает, сколько автотестов проверяют пункт; полный отчёт лежит в [`coverage.md`](coverage.md).
+Нумерация совпадает с разделом 5 «Задания PetCare». Колонка «Тесты» показывает, сколько автотестов проверяют пункт; полный отчёт со списком тестов строит `sh scripts/coverage_report.sh` (раздел 8).
 
 | № | Требование | Реализация в API | Статус |
 |---|---|---|---|
 | 5.1.1 | Создание карточки питомца | `POST /pets`: обязательны только `name` и `breedId` | ✅ |
 | 5.1.2 | Имя, вид, порода, дата рождения | Вид следует из породы (`GET /animals` → `GET /breeds?animalId=`), `birthDate` необязательна, в ответе есть `ageMonths` | ✅ |
-| 5.1.3 | Фотография | `PUT /pets/{id}/photo` (jpeg, png, webp, до 5 МБ), раздача через `/media/...` | ✅ |
+| 5.1.3 | Фотография | Прямая загрузка в RustFS по подписанной ссылке или `PUT /pets/{id}/photo` (jpeg, png, webp, до 5 МБ); по фото можно сгенерировать аватар (раздел 11.1) | ✅ |
 | 5.1.4 | Список питомцев | `GET /pets`: только свои питомцы, новые сверху | ✅ |
 | 5.2.1 | История вакцинаций с датами | `events` с `type=vaccination`: `schedule` (план), `doneAt` (факт), `status` | ✅ |
 | 5.2.2 | История обработок от паразитов | `events` с `type=parasite_treatment` | ✅ |
@@ -49,7 +52,7 @@
 | 5.4.4 | Длительность и регулярность приёма | Регулярность — через `period`; длительности курса (дата окончания, число приёмов) нет | ⚠️ частично |
 | 5.4.5 | Формирование напоминаний | `notifications`, привязанные к событию; `due=true` — наступившие | ✅ |
 | 5.4.6 | Список ближайших событий | `GET /events/upcoming?days=`: просроченные помечены `isOverdue` | ✅ |
-| 5.4.7 | Push или виджет | Каналы описаны в модели (`app`, `web_push`, `telegram`), отправки пока нет | ❌ в работе |
+| 5.4.7 | Push или виджет | Web Push (VAPID): подписки браузера, фоновая рассылка наступивших напоминаний, проверочное сообщение (раздел 11.3). Экспорт событий в календарь телефона — `GET /events/calendar.ics` (раздел 11.2) | ✅ |
 | доп. | Экспорт истории питомца в PDF | `GET /pets/{id}/report`: сводка вместо журнала — ближайшие и просроченные процедуры, история прививок и обработок, график ухода по месяцам, график веса, самочувствие, переносимость кормов с подозрительными ингредиентами, заключения врачей. Удобно отдать ветеринару или новому хозяину | ✅ |
 
 ### 1.3 Нефункциональные требования
@@ -60,7 +63,7 @@
 | Безопасность | Пароли хешируются argon2. Access JWT (15 мин) и refresh (30 дн.) передаются в HttpOnly + Secure cookie с SameSite=Lax; refresh ротируется. Bearer-заголовок access JWT поддерживается и имеет приоритет перед cookie. В БД хранится только SHA-256 refresh-токена. Чужие объекты отвечают `404`, а не `403`, чтобы не раскрывать, что объект существует |
 | Целостность данных | Одна транзакция на пользовательскую операцию (Unit of Work); каскадное удаление по внешним ключам |
 | Наблюдаемость | `X-Trace-Id` в каждом ответе и строке лога, access-лог, метрики Prometheus на `/metrics`, проверки `/health/liveness` и `/health/readiness` |
-| Простота проверки | Swagger на `/docs`, Postman-коллекция, демо-аккаунты `жюри1`…`жюри10` с готовой историей (у каждого свои питомцы, просроченные и ближайшие процедуры, год замеров и кормлений), деплой одной кнопкой из пайплайна |
+| Простота проверки | Swagger на `/docs`, Postman-коллекция, демо-аккаунты `жюри1`…`жюри10` с готовой историей и админ (`ADMIN_LOGIN`) (у каждого свои питомцы, просроченные и ближайшие процедуры, год замеров и кормлений), деплой одной кнопкой из пайплайна |
 | Мобильные клиенты | API не зависит от клиента: время передаётся числом Unix seconds, ответы — JSON, пагинация единая |
 
 ### 1.4 Вне рамок
@@ -119,10 +122,10 @@
 
 - **Почему.** Пункт 5.3.5 требует личной базы того, что подходит. Сохраняя состав, сервис отвечает на вопрос владельца «что именно не подошло»: ингредиенты корма, вызвавшего реакцию, минус всё, что встречалось в ранее подошедших кормах. Это простое правило без AI, оно в рамках ограничений задания.
 
-### ADR-10. Фото на томе, раздача через `/media`
+### ADR-10. Фото в RustFS (S3), раздача по подписанным ссылкам
 
-- **Почему.** Это самый простой надёжный вариант для одного сервера: Docker volume `backend_media` и статическая раздача. Принимаются только `image/jpeg`, `image/png` и `image/webp` (по `Content-Type`), размер ограничен 5 МБ; файл получает случайное имя. Если запись в БД не удалась, новый файл удаляется, а старый остаётся.
-- **Цена.** Горизонтально масштабировать без общего хранилища нельзя. Следующий шаг — S3-совместимое хранилище за портом `PhotoStorage`.
+- **Почему.** Объектное хранилище не привязывает фото к контейнеру бэкенда и позволяет браузеру загружать файл напрямую, минуя API. RustFS — S3-совместимый сервер, который поднимается в том же Compose. Bucket `media` приватный: бэкенд выдаёт подписанные ссылки на чтение (7 дней) и на загрузку (15 минут), а Caddy проксирует `/media/*` на RustFS на том же домене, поэтому CORS не нужен. Бэкенд ходит в хранилище под отдельным пользователем с правами только на `media/pets/*`.
+- **Цена.** Один узел RustFS: нужен бэкап тома `rustfs_data`. Неподтверждённые прямые загрузки остаются в bucket, их очистки пока нет.
 
 ### ADR-11. Деплой: GitLab CI → образы → docker compose на ВМ за Caddy
 
@@ -130,7 +133,7 @@
 
 ### ADR-12. Тесты на SQLite в памяти и контроль Postgres-схемы снимком
 
-- **Почему.** 200+ тестов проходят примерно за 30 секунд без внешних сервисов, поэтому их запускают локально и в CI без Docker. Внешние ключи в SQLite включены, чтобы каскады работали как в Postgres. Расхождения диалектов закрыты отдельными тестами: DDL Postgres сравнивается с сохранённым снимком (`tests/fixtures/schema.json`), SQL миграций проверяется вперёд и назад.
+- **Почему.** 340+ тестов проходят примерно за минуту без внешних сервисов, поэтому их запускают локально и в CI без Docker. Внешние ключи в SQLite включены, чтобы каскады работали как в Postgres. Расхождения диалектов закрыты отдельными тестами: DDL Postgres сравнивается с сохранённым снимком (`tests/fixtures/schema.json`), SQL миграций проверяется вперёд и назад.
 
 ### ADR-13. Отчёт о питомце: сводка, а не выгрузка журнала
 
@@ -188,19 +191,26 @@ flowchart TB
         frontend["<b>Frontend</b><br/>Next.js 16, React 19<br/>:3000"]
         backend["<b>Backend API</b><br/>Python 3.13, FastAPI, uvicorn<br/>:8000"]
         db[("<b>PostgreSQL 17</b><br/>volume postgres_data")]
-        media[("<b>Фото питомцев</b><br/>volume backend_media")]
+        media[("<b>RustFS</b><br/>S3, bucket media<br/>volume rustfs_data")]
+        init["<b>rustfs-init</b><br/>bucket и пользователь<br/>приложения, разово"]
     end
+    llm["Spirit LLM Proxy<br/><i>генерация аватара</i>"]
+    push["Push-службы браузеров<br/><i>FCM, Mozilla, Apple...</i>"]
 
     user -- "HTTPS" --> caddy
     caddy -- "/ (всё остальное)" --> frontend
-    caddy -- "/api/*, /docs, /openapi.json, /media/*" --> backend
+    caddy -- "/api/*, /docs, /openapi.json" --> backend
+    caddy -- "/media/* (подписанные ссылки)" --> media
     frontend -. "запросы браузера к /api через Caddy" .-> caddy
     backend -- "asyncpg, SQL" --> db
-    backend -- "чтение и запись файлов" --> media
+    backend -- "S3 API: загрузка, удаление, подпись ссылок" --> media
+    init -. "при старте" .-> media
+    backend -- "HTTPS" --> llm
+    backend -- "Web Push" --> push
 
     classDef container fill:#438dd5,stroke:#2e6295,color:#fff
     classDef store fill:#438dd5,stroke:#2e6295,color:#fff
-    class caddy,frontend,backend container
+    class caddy,frontend,backend,init container
     class db,media store
 ```
 
@@ -208,8 +218,10 @@ flowchart TB
 |---|---|---|---|
 | `caddy` | `caddy:2-alpine` | admin API `:2019/config/` | `caddy_data` (сертификаты) |
 | `frontend` | `$FRONTEND_IMAGE` | `GET :3000` | — |
-| `backend` | `$BACKEND_IMAGE` | `GET /health/readiness` (проверяет БД) | `backend_media` |
+| `backend` | `$BACKEND_IMAGE` | `GET /health/readiness` (проверяет БД) | — |
 | `postgres` | `postgres:17-alpine` | `pg_isready` | `postgres_data` |
+| `rustfs` | `rustfs/rustfs:1.0.2` | `GET :9000/health/ready` | `rustfs_data` (фото и аватары) |
+| `rustfs-init` | `$BACKEND_IMAGE` | завершается после настройки | — |
 
 ### 3.3 Уровень 3 — компоненты бэкенда
 
@@ -227,7 +239,7 @@ flowchart TB
 
     subgraph application["application"]
         interactors["Интеракторы<br/>по одному на операцию:<br/>CreatePet, CompleteEvent,<br/>FindSuspectIngredients, ..."]
-        ports["Порты<br/>*Gateway, UnitOfWork,<br/>TokenService, PhotoStorage,<br/>DatabaseHealth"]
+        ports["Порты<br/>*Gateway, UnitOfWork,<br/>TokenService, PhotosGateway,<br/>AvatarGenerator, WebPushSender,<br/>DatabaseHealth"]
     end
 
     subgraph domain["domain"]
@@ -239,7 +251,7 @@ flowchart TB
         gateways["SQLAlchemy-шлюзы"]
         uow["SqlAlchemyUnitOfWork"]
         jwt["JwtService<br/>JWT, argon2"]
-        photos["LocalPhotoStorage"]
+        photos["S3PhotosGateway (RustFS)"]
         mappings["Императивный маппинг<br/>таблицы ↔ dataclass"]
         obs["Logger (loguru),<br/>метрики Prometheus"]
     end
@@ -323,6 +335,8 @@ erDiagram
     pets ||--o{ notes : "заметки, заключения"
     categories ||--o{ states : "что измеряем"
     events ||--o{ notifications : "напоминания"
+    users ||--o| notification_settings : "каналы"
+    users ||--o{ web_push_subscriptions : "браузеры"
 
     users {
         uuid id PK
@@ -359,6 +373,18 @@ erDiagram
         enum type "app | web_push | telegram"
         enum status "pending | sent | read | failed"
         float time
+        float delivered_at "nullable, Web Push"
+    }
+    notification_settings {
+        uuid user_id PK
+        bool web_push_enabled
+    }
+    web_push_subscriptions {
+        uuid id PK
+        uuid user_id FK
+        string endpoint UK
+        string p256dh
+        string auth
     }
     categories {
         uuid id PK
@@ -393,12 +419,14 @@ erDiagram
     }
     animals {
         uuid id PK
-        string name
+        string name UK
+        uuid created_by FK "админ"
     }
     breeds {
         uuid id PK
         uuid animal_id FK
         string name
+        uuid created_by FK "админ"
     }
     refresh_tokens {
         uuid id PK
@@ -408,7 +436,7 @@ erDiagram
     }
 ```
 
-Все моменты времени (`created_at`, `updated_at`, `schedule`, `done_at`, `time`, ...) хранятся как `DOUBLE PRECISION` — Unix seconds UTC. При удалении питомца каскадно удаляются его события, замеры, кормления, заметки и уведомления. Миграции лежат в [`alembic/versions`](../alembic/versions):
+Все моменты времени (`created_at`, `updated_at`, `schedule`, `done_at`, `time`, ...) хранятся как `DOUBLE PRECISION` — Unix seconds UTC. При удалении питомца каскадно удаляются его события, замеры, кормления, заметки и уведомления. Схема в картинке — [`db-schema.png`](db-schema.png). Миграции лежат в [`alembic/versions`](../alembic/versions):
 
 | Миграция | Что делает |
 |---|---|
@@ -421,6 +449,8 @@ erDiagram
 | `0007_jury_users` | Демо-аккаунты `жюри1`…`жюри10` (пароль `qwerty12345`) |
 | `0008_pet_avatars` | `pets.photo_url` → `photo_key`, сгенерированный аватар и выбор `avatar_source` |
 | `0008_states_category_id` | `states.cat_id` → `category_id` вместе с внешним ключом и индексом, данные сохраняются |
+| `0010_notification_delivery` | `notifications.delivered_at`, настройки каналов и подписки Web Push |
+| `0011_seed_admin` | Админ из `ADMIN_LOGIN` / `ADMIN_PASSWORD`; стартовые виды и породы принадлежат ему |
 | `0009_jury_demo_data` | Демо-история для `жюри1`…`жюри10`: у каждого 2–3 своих питомца с прививками, обработками, визитами, лекарствами, замерами, кормами, заметками и напоминаниями |
 
 ---
@@ -468,6 +498,8 @@ erDiagram
 | POST 🔒 | `/pets` | Создать `{name, breedId, birthDate?}` | 5.1.1, 5.1.2 |
 | GET / PATCH / DELETE 🔒 | `/pets/{petId}` | Карточка с `animal`, `breed`, `ageMonths`, `photoUrl` | 5.1 |
 | PUT 🔒 | `/pets/{petId}/photo` | Фото (multipart `file`) | 5.1.3 |
+| POST 🔒 | `/pets/{petId}/photo/upload-url`, `/pets/{petId}/photo/confirm` | Прямая загрузка фото в хранилище (раздел 11.1) | 5.1.3 |
+| POST / PUT / DELETE 🔒 | `/pets/{petId}/avatar/generate`, `/pets/{petId}/avatar`, `/pets/{petId}/avatar/generated` | Сгенерировать аватар по фото, выбрать, что показывать | доп. |
 | GET 🔒 | `/pets/{petId}/report` | PDF-отчёт о здоровье и уходе (`application/pdf`, скачивание) | доп. |
 
 ### Карта здоровья и напоминания (5.2, 5.4)
@@ -477,10 +509,12 @@ erDiagram
 | GET 🔒 | `/events?petId=&type=&status=&from=&to=` | История и план: прививки, обработки, визиты, лекарства | 5.2.1–5.2.3 |
 | POST 🔒 | `/events` | Событие `{petId, name, type, schedule, period, status, description}` | 5.2, 5.4.1 |
 | GET 🔒 | `/events/upcoming?days=30&petId=` | Ближайшие, включая просроченные (`isOverdue`) | 5.4.6 |
+| GET 🔒 | `/events/calendar.ics?petId=&alarmMinutes=&until=` | Файл для календаря телефона (раздел 11.2) | 5.4.7 |
 | GET / PATCH / DELETE 🔒 | `/events/{id}` | Событие; `PATCH status=done` планирует следующее | 5.4.1 |
 | POST 🔒 | `/events/{id}/complete` | Выполнено `{doneAt?}` → `{event, nextEvent}` | 5.4.1, 5.4.2 |
 | GET 🔒 | `/notifications?eventId=&petId=&status=&due=` | Напоминания; `due=true` — время наступило | 5.4.5 |
 | POST / PATCH / DELETE 🔒 | `/notifications`, `/notifications/{id}` | Создать (по умолчанию на время события), отметить `read` | 5.4.5 |
+| GET / PATCH / POST / DELETE 🔒 | `/notifications/settings`, `/notifications/web-push/*`, `/notifications/test` | Канал Web Push: настройки, ключ VAPID, подписки, проверка (раздел 11.3) | 5.4.7 |
 | GET / POST / PATCH / DELETE 🔒 | `/notes?petId=&q=`, `/notes/{id}` | Заметки и заключения | 5.2.4 |
 
 ### Параметры и питание (5.2.5, 5.3)
@@ -502,44 +536,40 @@ erDiagram
 
 ```text
 petcare/
+├── README.md                    # с чего начать
 ├── .gitlab-ci.yml               # пайплайн: lint → test → build → deploy
-├── docker-compose.yaml          # стенд: caddy + frontend + backend + postgres
-├── docker-compose.local.yaml    # локально: backend + postgres
-├── .env.example                 # переменные стенда: DOMAIN, образы, секреты
-├── deploy/Caddyfile             # TLS и маршрутизация /api, /docs, /media
+├── docker-compose.yaml          # стенд: caddy, frontend, backend, postgres, rustfs
+├── compose.local.yaml           # то же локально, сборка из исходников
+├── .env.example                 # переменные стенда
+├── deploy/                      # Caddyfile и README про деплой
 ├── frontend/                    # Next.js 16 (App Router), TanStack Query, Zustand
 └── backend/
     ├── Dockerfile               # multi-stage, uv; при старте — alembic upgrade head
     ├── pyproject.toml, uv.lock  # зависимости (зафиксированы)
     ├── ruff.toml, pytest.ini, .coveragerc
-    ├── configs/config.yaml      # порт, логирование, JWT, пул БД
-    ├── alembic/versions/        # миграции 0001–0009
-    ├── scripts/
-    │   ├── build_postman_collection.py   # Postman из openapi.json
-    │   └── coverage_report.sh            # обновить отчёты покрытия в docs/
-    ├── docs/                    # документы сдачи
-    │   ├── architecture.md      # этот документ
-    │   ├── openapi.json         # контракт API
-    │   ├── petcare.postman_collection.json
-    │   └── coverage.md          # покрытие тестами: требования и код
+    ├── alembic/versions/        # миграции 0001–0011
+    ├── scripts/                 # Postman из openapi.json, отчёт покрытия, ключи VAPID
+    ├── docs/                    # документы сдачи: спецификация, презентация,
+    │                            # openapi.json, схема БД, коллекция Postman
     ├── tests/                   # 340+ тестов по папкам уровней, см. раздел 8
     └── src/app/
-        ├── main.py              # ASGI-приложение: middleware, роутеры, /media
+        ├── main.py              # ASGI-приложение: middleware, роутеры, lifespan
         ├── bootstrap.py         # сборка Dishka-контейнера
         ├── run.py               # локальный запуск uvicorn
         ├── domain/<entity>/     # entity.py, enums.py, rules.py, errors.py, ids.py
-        │                        # users, pets, animals, breeds, events, notifications,
-        │                        # categories, states, foods, notes, refresh_tokens
         ├── application/
         │   ├── <entity>/        # interactors.py, dto.py, di.py
-        │   ├── reports/         # свёртка истории питомца в отчёт (builder.py), ExportPetReport
-        │   ├── ports/           # интерфейсы шлюзов, UoW, токенов, фото, отчёта, health
-        │   └── exceptions.py, pagination.py, changes.py
+        │   ├── reports/         # свёртка истории питомца в отчёт, ExportPetReport
+        │   ├── notifications/   # рассылка наступивших напоминаний
+        │   └── ports/           # интерфейсы шлюзов, UoW, токенов, фото, отчёта, push
         ├── infra/
-        │   ├── database/        # engine, маппинг, UoW, health, DI
+        │   ├── database/        # engine, маппинг, UoW, health
         │   ├── gateways/        # SQLAlchemy-реализации портов чтения
         │   ├── security/        # JWT, argon2
-        │   ├── photos/          # файловое хранилище фото
+        │   ├── photos/          # RustFS (S3): загрузка, подписанные ссылки, инициализация
+        │   ├── avatars/         # генерация аватара через Spirit LLM Proxy
+        │   ├── webpush/         # отправка Web Push (VAPID)
+        │   ├── notifications/   # фоновый цикл рассылки
         │   ├── reports/         # PDF на ReportLab, шрифты Inter
         │   └── config.py, logger.py, metrics.py
         └── presentation/http/
@@ -565,7 +595,7 @@ petcare/
 
 ### 7.1 Стенд для проверки
 
-Стенд разворачивается пайплайном из `main` (см. раздел 9). Что доступно:
+Стенд разворачивается пайплайном из `main` (см. раздел 9).
 
 | Что | Где |
 |---|---|
@@ -573,45 +603,20 @@ petcare/
 | Swagger UI | `https://<домен>/docs` |
 | API | `https://<домен>/api/v1/...` |
 | Демо-аккаунты | `жюри1` … `жюри10`, пароль `qwerty12345`. У каждого свои питомцы с историей: например, `жюри1` — кот Барсик (аллергия на рыбу, просроченная прививка) и овчарка Рекс (курс хондропротектора), `жюри2` — котёнок Мурка, рыбка Голди и корги Тоша |
+| Админ | `admin` / `admin12345` (по умолчанию, задаётся `ADMIN_LOGIN` / `ADMIN_PASSWORD`): справочники видов, пород и категорий |
 | PDF-отчёт | `GET /api/v1/pets/{id}/report` — в Swagger кнопка **Download file** |
 
-Быстрая проверка в Swagger: `POST /auth/login` → скопировать `accessToken` → **Authorize** → вызывать методы. В Postman: импортировать [`petcare.postman_collection.json`](petcare.postman_collection.json), выставить `baseUrl`, запустить папки по порядку — токен и id созданных объектов сохраняются автоматически.
+На странице входа есть кнопки быстрого входа за каждого жюри и за админа. Проверка в Swagger: `POST /auth/login` → скопировать `accessToken` → **Authorize** → вызывать методы. В Postman: импортировать [`petcare.postman_collection.json`](petcare.postman_collection.json), выставить `baseUrl`, запустить папки по порядку — токен и id созданных объектов сохраняются автоматически.
 
-### 7.2 Локально в Docker (рекомендуется)
+### 7.2 Локально
 
-Нужен только Docker.
-
-```bash
-docker compose -f docker-compose.local.yaml up --build
-```
-
-API доступно на `http://localhost:8000`, Swagger — на `http://localhost:8000/docs`. Миграции и демо-аккаунты применяются при старте контейнера.
-
-### 7.3 Локально без Docker
-
-Нужны Python 3.13, [uv](https://docs.astral.sh/uv/) и PostgreSQL с базой `petcare`.
+Весь стенд одной командой из корня репозитория (нужен только Docker):
 
 ```bash
-cd backend
-uv sync
-cp .env.example .env          # доступ к БД, APP_SECURITY_JWT_SECRET, APP_COOKIE_SECURE=false
-uv run alembic upgrade head
-uv run python -m app.run      # http://localhost:8080, Swagger — /docs
+docker compose -f compose.local.yaml up --build -d --wait   # http://localhost:8080
 ```
 
-### 7.4 Переменные окружения
-
-| Переменная | Назначение | Пример |
-|---|---|---|
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Подключение к PostgreSQL | `postgres`, `5432`, `petcare` |
-| `APP_SECURITY_JWT_SECRET` | Ключ подписи JWT | 32+ случайных символа |
-| `APP_SECURITY_ACCESS_TOKEN_EXPIRATION` | Время жизни access | `15m` |
-| `APP_SECURITY_REFRESH_TOKEN_EXPIRATION` | Время жизни refresh | `30d` |
-| `APP_COOKIE_SECURE` | Флаг `Secure` у cookie; `false` для локального HTTP | `true` |
-| `APP_CORS_ALLOWED_ORIGINS` | Разрешённые origin через запятую | `https://petcare.example` |
-| `APP_MEDIA_DIR` | Каталог фото; пусто — `backend/media` | — |
-
-Для стенда (корневой `.env`): `DOMAIN`, `FRONTEND_IMAGE`, `BACKEND_IMAGE`, `DB_PASSWORD`, `APP_SECURITY_JWT_SECRET`.
+Бэкенд без Docker и все переменные окружения описаны в [`backend/README.md`](../README.md) и [`deploy/README.md`](../../deploy/README.md); справочник переменных — [`backend/.env.example`](../.env.example).
 
 ---
 
@@ -626,7 +631,7 @@ uv run pytest                               # все тесты + сводка �
 uv run pytest -m integration                # только сквозные пользовательские сценарии
 uv run pytest --cov                         # + покрытие кода в терминале
 uv run ruff check .                         # линтер
-sh scripts/coverage_report.sh               # обновить docs/coverage.md
+sh scripts/coverage_report.sh               # отчёт покрытия в reports/coverage.md
 ```
 
 ### 8.2 Уровни тестов
@@ -647,7 +652,7 @@ sh scripts/coverage_report.sh               # обновить docs/coverage.md
 
 Каждый тест помечен пунктами задания, которые он проверяет: `@pytest.mark.req("5.4.1", ...)`. Плагин `tests/req_coverage.py` собирает результаты и в конце прогона печатает таблицу «требование → число тестов → статус». С флагом `--req-report=PATH` он пишет ту же таблицу в Markdown со списком тестов по каждому пункту. Неизвестный id роняет сбор тестов, поэтому каталог требований и тесты не расходятся.
 
-Текущий снимок — раздел «Требования» в [`coverage.md`](coverage.md): покрыты 33 из 35 пунктов. Без тестов остаются ровно те пункты, которые ещё не реализованы (5.4.3, 5.4.4, см. раздел 10).
+Текущий снимок (раздел «Требования» отчёта `scripts/coverage_report.sh`): покрыты 33 из 35 пунктов. Без тестов остаются ровно те пункты, которые ещё не реализованы (5.4.3, 5.4.4, см. раздел 10).
 
 ### 8.4 Покрытие кода
 
@@ -661,7 +666,7 @@ sh scripts/coverage_report.sh               # обновить docs/coverage.md
 | `infra` | 85.9 % |
 | **Всего (строки + ветвления)** | **94 %** |
 
-По модулям — раздел «Код» в [`coverage.md`](coverage.md); построчный HTML-отчёт — в артефакте CI. Непокрытые строки `infra` — в основном код, который тесты подменяют: создание бакета и пользователя RustFS при старте (`photos/provision.py`), фоновый цикл рассылки уведомлений (`notifications/worker.py`; сама рассылка покрыта через `DispatchDueNotifications`), а также ветки `except SQLAlchemyError` отдельных методов шлюзов; общий путь «ошибка БД → `500 INTERNAL_ERROR`» проверен для каждого шлюза в `test_database_outage_returns_uniform_500`.
+По модулям — раздел «Код» того же отчёта; построчный HTML-отчёт — в артефакте CI. Непокрытые строки `infra` — в основном код, который тесты подменяют: создание бакета и пользователя RustFS при старте (`photos/provision.py`), фоновый цикл рассылки уведомлений (`notifications/worker.py`; сама рассылка покрыта через `DispatchDueNotifications`), а также ветки `except SQLAlchemyError` отдельных методов шлюзов; общий путь «ошибка БД → `500 INTERNAL_ERROR`» проверен для каждого шлюза в `test_database_outage_returns_uniform_500`.
 
 ### 8.5 Отчёты в CI
 
@@ -690,18 +695,18 @@ flowchart LR
         b2["build-frontend"]
     end
     build --> deploy["deploy-production<br/>только main"]
-    deploy --> vm["ВМ: compose pull → up -d<br/>→ caddy reload"]
+    deploy --> vm["ВМ: compose pull →<br/>up -d --force-recreate --wait"]
 ```
 
 - Бэкенд-задачи запускаются, когда изменены `backend/**` или `.gitlab-ci.yml`, а в `main` — всегда. Образ собирается только после зелёных линта и тестов.
-- `deploy-production` копирует на ВМ `docker-compose.yaml`, `Caddyfile` и `.env`, собранный из защищённых переменных GitLab, затем выполняет `docker compose pull && up -d`. `resource_group: production` исключает параллельные деплои.
+- `deploy-production` копирует на ВМ `docker-compose.yaml`, `Caddyfile` и `.env`, собранный из защищённых переменных GitLab, затем выполняет `docker compose pull` и `docker compose up -d --force-recreate --wait`. Подробности — в [`deploy/README.md`](../../deploy/README.md). `resource_group: production` исключает параллельные деплои.
 - Миграции применяются при старте нового контейнера бэкенда, до запуска uvicorn: если миграция упала, API не стартует, а healthcheck это покажет.
 
 **Наблюдаемость**
 
 | Сигнал | Где |
 |---|---|
-| Логи | stdout контейнера (`docker compose logs backend`) и `logs/petcare.log` с ротацией 10 МБ / 10 дней; в каждой строке `trace_id` |
+| Логи | stdout контейнера (`docker compose logs backend`); в каждой строке `trace_id` |
 | Трассировка запроса | `X-Trace-Id` (передан клиентом или сгенерирован) возвращается в заголовке и в теле ошибки |
 | Метрики | `/metrics`: `petcare_http_requests_total{method,path,status}`, `petcare_http_request_duration_seconds`, `petcare_http_requests_in_progress`, `petcare_domain_events_total{entity,action}` |
 | Здоровье | `/health/liveness`, `/health/readiness` |
@@ -716,7 +721,345 @@ flowchart LR
 |---|---|---|
 | Курс препарата (5.4.4) | Только регулярность через `period` | Поля курса: дата окончания или число приёмов, кратность в день; завершение курса прекращает автопланирование |
 | Назначения из заключения (5.4.3) | `medication` не связан с визитом | Ссылка `sourceEventId` на `vet_visit`; в ответе визита — список назначений |
-| Push-уведомления (5.4.7) | Модель уведомлений есть, отправки нет | Web Push (VAPID): подписки устройства, фоновая отправка наступивших `pending` |
+| Каналы уведомлений | Только Web Push | Telegram; виджет на рабочем столе |
 | Автонапоминания | Уведомления создаются клиентом | Генерация при планировании события (за N дней, настраивается пользователем) |
 | Периоды по умолчанию | `period` указывает пользователь | Подстановка по типу: прививка — раз в год, обработка — раз в квартал |
-| Фото | Локальный том | S3-совместимое хранилище за портом `PhotoStorage` |
+| Хранилище фото | Один узел RustFS, неподтверждённые загрузки не чистятся | Периодическая очистка сирот, реплицируемое хранилище |
+
+---
+
+## 11. Подробные контракты подсистем
+
+Разделы для фронтенда и интеграций: как устроены фото и аватар, экспорт в календарь телефона и Web Push. Полные схемы запросов и ответов — в [`openapi.json`](openapi.json).
+
+### 11.1 Фото и аватар питомца
+
+Бэкенд принимает фото, генерирует по нему аватар и отдаёт выбранную картинку. Обе картинки хранятся в приватном RustFS через aioboto3 и `PhotosGateway`; конфигурации и сервисы предоставляет Dishka.
+
+#### Что делает пользователь
+
+1. Загружает фото питомца.
+2. Может попросить стилизованный аватар. Его рисуют по этому фото, не из текста.
+3. Выбирает, что показывать: загруженное фото или аватар.
+
+Пока выбор не сделан, показывается фото. Новая загрузка фото удаляет старый аватар и снова ставит показ на фото.
+
+#### API
+
+Все методы требуют авторизацию. Чужой питомец — `404`.
+
+`PUT /api/v1/pets/{petId}/photo`
+`multipart/form-data`, поле `file`. jpeg, png или webp, до 5 МБ.
+
+`POST /api/v1/pets/{petId}/avatar/generate`
+Тела нет. Ответ может идти до трёх минут: на фронте нужен долгий таймаут и состояние загрузки. `avatarSource` этот метод не меняет.
+
+`PUT /api/v1/pets/{petId}/avatar`
+
+```json
+{ "source": "photo" }
+```
+
+или `"generated"`.
+
+В карточке питомца (`GET /api/v1/pets` и `GET /api/v1/pets/{petId}`):
+
+| Поле | Смысл |
+|---|---|
+| `photoUrl` | оригинал или `null` |
+| `generatedAvatarUrl` | аватар или `null` |
+| `avatarSource` | `photo` или `generated` |
+| `avatarUrl` | что показывать в интерфейсе |
+
+Ошибки:
+
+| Код | Когда |
+|---|---|
+| `422 PET_PHOTO_REQUIRED` | генерация или выбор фото, а фото нет |
+| `422 GENERATED_AVATAR_MISSING` | выбрали аватар, а его ещё не генерировали |
+| `413` | файл больше 5 МБ |
+| `415` | не jpeg/png/webp |
+| `422 PHOTO_UPLOAD_NOT_FOUND` | confirm с чужим, несуществующим или не тем ключом |
+| `502 AVATAR_GENERATION_FAILED` | Spirit не вернул картинку |
+| `503 AVATAR_GENERATION_UNAVAILABLE` | не задан `LLM_PROXY_API_KEY` |
+
+Ссылки подписанные и живут `S3_PRESIGNED_TTL` секунд (по умолчанию 604800 — 7 дней). Если картинка перестала открываться, карточку питомца нужно запросить заново.
+
+#### Прямая загрузка
+
+Браузер кладёт файл сразу в хранилище по подписанной ссылке. Байты через backend не проходят. Пока нет confirm, карточка питомца не меняется.
+
+1. `POST /api/v1/pets/{petId}/photo/upload-url`
+
+```json
+{ "contentType": "image/jpeg", "size": 12345 }
+```
+
+`contentType` — `image/jpeg`, `image/png` или `image/webp`. `size` — байты, от 1 до 5 МБ. В ответе `key`, `uploadUrl`, `method` (`PUT`), `headers`, `expiresAt` и `maxBytes`.
+
+2. Браузер отправляет файл на `uploadUrl`. `Content-Type` должен совпасть с `headers`: этот заголовок входит в подпись.
+
+```js
+await fetch(uploadUrl, { method: "PUT", headers, body: file })
+```
+
+Ссылка живёт 15 минут (`S3_UPLOAD_TTL`, по умолчанию 900).
+
+3. `POST /api/v1/pets/{petId}/photo/confirm` с телом `{"key": "<key из шага 1>"}`. В ответе питомец: новое фото, `avatarSource` снова `photo`, старый сгенерированный аватар сброшен.
+
+4. Дальше, как раньше: `POST .../avatar/generate`, затем `PUT .../avatar`.
+
+Пропустить фото или аватар — просто не вызывать эти методы.
+
+`DELETE /api/v1/pets/{petId}/photo` удаляет фото и аватар, собранный из него. `DELETE /api/v1/pets/{petId}/avatar/generated` удаляет только аватар и, если он был выбран, возвращает показ на фото. Повторный вызов ничего не удаляет.
+
+`PUT /api/v1/pets/{petId}/photo` остаётся запасным путём: файл идёт через backend.
+
+В production загрузка идёт на тот же домен (`https://<DOMAIN>/media/...`), отдельный CORS не нужен. Локально RustFS часто на другом порту: тогда браузеру нужен CORS на хранилище, либо используйте multipart `PUT /photo`.
+
+Неподтверждённые загрузки остаются в bucket как сироты. Очистки пока нет.
+
+#### Фронт
+
+1. Форма загрузки берёт ссылку из раздела «Прямая загрузка». `PUT .../photo` — запасной путь, не base64.
+2. После ответа показывает `photoUrl` и, если есть, `generatedAvatarUrl`.
+3. Кнопка «Сделать аватар» вызывает `POST .../avatar/generate` и ждёт ответ.
+4. Две кнопки выбора вызывают `PUT .../avatar`.
+5. В списках и виджете картинка берётся из `avatarUrl`.
+
+### 11.2 Календарь телефона (`.ics`)
+
+`GET /api/v1/events/calendar.ics` отдаёт один файл iCalendar. Пользователь сохраняет его и импортирует в календарь телефона: Google, Apple или любой другой, который открывает `.ics`.
+
+Ответ — текст, не JSON. Схема в [`openapi.json`](openapi.json) описывает только заголовки и код ответа.
+
+#### Запрос
+
+```
+GET /api/v1/events/calendar.ics?petId=&alarmMinutes=1440&until=
+Cookie: accessToken=<access JWT>      # или Authorization: Bearer <accessToken>
+```
+
+| Параметр | Смысл |
+|---|---|
+| `petId` | необязательный UUID. Оставляет события одного питомца. Без него — все питомцы пользователя |
+| `alarmMinutes` | за сколько минут до события поставить напоминание. По умолчанию `1440` (сутки). От `0` до `10080` (неделя). `0` — без напоминания |
+| `until` | конец ряда повторов и верхняя граница `schedule`. Unix seconds в UTC; дробные секунды допустимы. Если не передан — момент запроса плюс 365 дней. Должен быть больше текущего времени и не дальше чем на 1826 дней (5 лет). Иначе `422` и `fieldErrors` по полю `until` |
+
+В файл попадают только события со статусом `planned`, включая просроченные, у которых `schedule` не позже `until`. Событие с `schedule` позже `until` не попадает — ни разовое, ни повторяющееся. Выполненные, пропущенные и отменённые не попадают. Чужие события не попадают. Сортировка по `schedule` по возрастанию, не больше 1000 записей уже после этого отбора: если их больше, в файл идут самые поздние.
+
+Пустой список всё равно отвечает `200` и валидным календарём без событий.
+
+#### Ответ
+
+`200`
+
+| Заголовок | Значение |
+|---|---|
+| `Content-Type` | `text/calendar; charset=utf-8` |
+| `Content-Disposition` | `attachment; filename="petcare.ics"`. С `petId`: `filename="petcare-<petId>.ics"` |
+
+Каждое событие в файле:
+
+| Поле | Откуда |
+|---|---|
+| `SUMMARY` | `{имя питомца}: {название события}` |
+| `DESCRIPTION` | тип по-русски. Если у события есть описание — пустая строка и оно |
+| `CATEGORIES` | тот же русский тип |
+| `DTSTART` | `schedule` в UTC, доли секунды отбрасываются |
+| `DTEND` | час после начала |
+| `UID` | `{id события}@petcare` |
+| `RRULE` | правило повтора с концом `UNTIL`, см. таблицу. У `period=none` правила нет |
+| `VALARM` | `TRIGGER:-PT{alarmMinutes}M`. Нет, если `alarmMinutes=0` |
+
+Тип в файле:
+
+| `type` | Подпись |
+|---|---|
+| `vaccination` | Прививка |
+| `parasite_treatment` | Обработка от паразитов |
+| `vet_visit` | Визит к ветеринару |
+| `medication` | Лекарство |
+| `grooming` | Груминг |
+| `other` | Другое |
+
+Повтор:
+
+| `period` | `RRULE` |
+|---|---|
+| `daily` | `FREQ=DAILY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `weekly` | `FREQ=WEEKLY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `monthly` | `FREQ=MONTHLY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `quarterly` | `FREQ=MONTHLY;INTERVAL=3;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `half_year` | `FREQ=MONTHLY;INTERVAL=6;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `yearly` | `FREQ=YEARLY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `none` | строки нет |
+
+`UNTIL` — это `until` запроса в UTC, доли секунды отбрасываются. `DTSTART` тоже в UTC, поэтому `UNTIL` пишется с `Z`. Ряд обрывается на этой дате: телефон не растягивает его дальше.
+
+Пример одного события (строки в файле заканчиваются `\r\n`):
+
+```text
+BEGIN:VEVENT
+UID:11111111-1111-4111-8111-111111111111@petcare
+DTSTAMP:20261101T100000Z
+DTSTART:20261101T100000Z
+DTEND:20261101T110000Z
+SUMMARY:Барсик: Прививка от бешенства
+DESCRIPTION:Прививка\n\nНобивак
+CATEGORIES:Прививка
+RRULE:FREQ=YEARLY;UNTIL=20271101T100000Z
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Барсик: Прививка от бешенства
+TRIGGER:-PT1440M
+END:VALARM
+END:VEVENT
+```
+
+#### Ошибки
+
+Формат как у остальных методов: `{code, message, traceId, timestamp, path, details?}`.
+
+| Статус | Когда |
+|---|---|
+| `401 UNAUTHORIZED` | нет или плохой токен |
+| `404 NOT_FOUND` | `petId` не существует или принадлежит другому пользователю. Сообщение «Pet not found», как у карточки питомца. Это не `422 PET_NOT_FOUND`: тот код бывает у `petId` в теле запроса |
+| `422` | `alarmMinutes` вне `0…10080`, `until` не число, не больше текущего времени или дальше 1826 дней, или `petId` не UUID. В теле `fieldErrors` |
+
+#### Фронт
+
+Файл нельзя разобрать как JSON. Запрос с cookie авторизации, тело сохранить как blob.
+
+Передайте `until` — конец периода, который выбрал пользователь, — как Unix seconds. Например, конец месяца или года на экране календаря. Без параметра повторы оборвутся через 365 дней от запроса.
+
+```ts
+const until = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+const response = await fetch(`/api/v1/events/calendar.ics?until=${until}`, {
+  credentials: "include",
+});
+const blob = await response.blob();
+const url = URL.createObjectURL(blob);
+const link = document.createElement("a");
+link.href = url;
+link.download = "petcare.ics";
+link.click();
+URL.revokeObjectURL(url);
+```
+
+Имя файла можно взять из `Content-Disposition`, если передан `petId`.
+
+Повторный импорт после новых событий может задвоить повторы. Когда событие отмечают выполненным, сервер создаёт следующее отдельной записью, а старый файл уже содержит `RRULE` до своего `UNTIL` на ту же серию. Перед повторным скачиванием лучше сказать пользователю удалить прежний импорт PetCare.
+
+### 11.3 Внешние напоминания (Web Push)
+
+Бэкенд по-прежнему хранит уведомления и отдаёт `GET /api/v1/notifications?due=true` для тостов в приложении. Поле `status` значит то же, что раньше: фронт сам переводит его в `read`. Отдельное поле `deliveredAt` значит, что хотя бы одно устройство приняло пуш, либо все оставшиеся подписки отозваны. Пока оно пустое и время наступило, фоновый цикл пытается отправить напоминание.
+
+Пока пользователь не включил Web Push, снаружи ничего не уходит, а список `due=true` работает как раньше.
+
+#### Что делает пользователь
+
+1. Открывает настройки уведомлений.
+2. Включает Web Push. Сайт запрашивает разрешение и отправляет подписку браузера.
+3. Кнопка «Проверить» вызывает `POST /notifications/test` и показывает, ответил ли канал.
+
+#### API
+
+Все методы ниже требуют авторизацию. Их пути объявлены раньше `/{notificationId}`, чтобы слово `settings` не считалось идентификатором.
+
+`GET /api/v1/notifications/settings`
+
+```json
+{
+  "webPushEnabled": false,
+  "webPushAvailable": true
+}
+```
+
+`webPushAvailable` — заданы ли ключи VAPID.
+
+`PATCH /api/v1/notifications/settings` принимает `webPushEnabled`.
+
+| Код | Когда |
+|---|---|
+| `503 WEB_PUSH_NOT_CONFIGURED` | включают Web Push или просят публичный ключ, а VAPID не задан |
+
+`GET /api/v1/notifications/web-push/public-key` → `{ "publicKey": "<base64url>" }`.
+
+`POST /api/v1/notifications/web-push/subscriptions` — объект `PushSubscription` из браузера:
+
+```json
+{
+  "endpoint": "https://push.example.com/...",
+  "expirationTime": null,
+  "keys": { "p256dh": "...", "auth": "..." }
+}
+```
+
+Повтор с тем же `endpoint` обновляет ключи и владельца. `expirationTime` принимается и не хранится. `endpoint` — только `https`, не длиннее 2048 символов; хост должен совпадать с суффиксом из `WEB_PUSH_ALLOWED_HOSTS` или быть его поддоменом, иначе `422`. `p256dh` и `auth` не длиннее 255 символов.
+
+`DELETE /api/v1/notifications/web-push/subscriptions` — `endpoint` в query или в JSON. Чужая и отсутствующая подписка не удаляются, ответ всё равно `204`.
+
+`POST /api/v1/notifications/test` сразу шлёт проверку, если Web Push включён:
+
+```json
+{
+  "channels": [
+    { "channel": "web_push", "ok": false, "error": "no_subscriptions" }
+  ]
+}
+```
+
+Пустой `channels` — канал выключен. `no_subscriptions` — Web Push включён, а подписок нет. `not_configured` — ключи VAPID не заданы. `delivery_failed` — ни одно устройство не приняло пуш. `partial_failure` — хотя бы одно устройство приняло пуш, другое нет; `ok` при этом `true`. `subscription_gone` — служба пуша ответила 404 или 410, подписка удалена.
+
+В карточке уведомления добавилось необязательное `deliveredAt`: хотя бы одно устройство приняло пуш, либо все оставшиеся подписки отозваны. `status` этот цикл не меняет.
+
+#### Фронт
+
+Тосты не трогать: опрос `due=true` и `PATCH` статуса остаются.
+
+Настройки:
+
+1. `GET /notifications/settings`.
+2. Если `webPushAvailable` ложь, кнопку Web Push не показывать.
+3. Тумблер вызывает `PATCH /notifications/settings` с `webPushEnabled`.
+
+Web Push, в уже зарегистрированном service worker:
+
+1. `GET /notifications/web-push/public-key`.
+2. `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey })`. Ключ из ответа — base64url; его нужно перевести в `Uint8Array` перед subscribe.
+3. `POST /notifications/web-push/subscriptions` с `subscription.toJSON()`.
+4. При выходе или отказе — `DELETE` с тем же `endpoint`.
+
+Service worker на событии `push` читает JSON `{ title, body, notificationId, eventId, petId, url }`. `url` сейчас всегда `"/"`. У проверочного сообщения идентификаторы равны `null`. Показ через `registration.showNotification(title, { body, data })`. По клику открывать `data.url`.
+
+Ответ пуша 404 или 410 значит, что браузер отозвал подписку. Бэкенд удаляет её сам. Имеет смысл подписаться заново при следующем заходе.
+
+#### Что происходит на сервере
+
+Раз в `NOTIFICATIONS_DISPATCH_INTERVAL` секунд (по умолчанию 15) выбираются записи со `status=pending`, временем не позже текущего и не старше `NOTIFICATIONS_MAX_LATENESS` секунд (по умолчанию сутки), у которых пустой `deliveredAt`, владелец питомца включил Web Push и есть хотя бы одна подписка. Если ключи VAPID не заданы, запись не захватывается. Иначе она атомарно помечается `deliveredAt=now` условием `delivered_at IS NULL`. Второй процесс видит, что строка уже занята, и не шлёт её снова. Если ни одно устройство не приняло пуш и хотя бы одно ответило ошибкой, кроме 404 и 410, метка снимается: следующий проход повторяет отправку, пока напоминание не старше `NOTIFICATIONS_MAX_LATENESS`. Если приняло хотя бы одно устройство или все оставшиеся подписки отозваны, метка остаётся. Ошибка одной подписки или одной записи пишется в лог и не останавливает цикл. Рассылка может работать на каждом процессе: захват строки не даёт послать дважды. Поле `type` диспетчер не использует: внешняя доставка определяется настройками пользователя.
+
+Web Push получает `title` «Напоминание: <событие>», `body` с именем питомца и временем в UTC, плюс идентификаторы и `url`.
+
+Ключи VAPID:
+
+```bash
+uv run python scripts/generate_vapid_keys.py
+```
+
+Переменные окружения (их значения для стенда — в [`deploy/README.md`](../../deploy/README.md)):
+
+```text
+NOTIFICATIONS_WORKER_ENABLED=true
+NOTIFICATIONS_DISPATCH_INTERVAL=15
+NOTIFICATIONS_MAX_LATENESS=86400
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:admin@example.com
+WEB_PUSH_ALLOWED_HOSTS=fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com
+WEB_PUSH_TIMEOUT=10
+```
+
+`VAPID_SUBJECT`, если задан, начинается с `mailto:` или `https://`. `WEB_PUSH_ALLOWED_HOSTS` — суффиксы хостов push-служб через запятую: подходит сам хост или его поддомен. `WEB_PUSH_TIMEOUT` — секунды на один запрос к push-службе (по умолчанию 10).
+
+Без VAPID методы Web Push отвечают `503`, настройки открываются с `webPushAvailable=false`. Перед запуском: `alembic upgrade head`. Миграция `0010_notification_delivery` добавляет `delivered_at`, таблицу настроек и таблицу подписок.
