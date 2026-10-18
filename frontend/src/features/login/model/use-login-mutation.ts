@@ -1,7 +1,6 @@
 'use client';
 
 import { useUserStore } from '@src/entities/user';
-import { setAccessToken } from '@src/shared/lib';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -17,7 +16,6 @@ export function useLoginMutation() {
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      setAccessToken(data.accessToken);
       setUser(data.user);
       setSessionRestored();
       router.replace(

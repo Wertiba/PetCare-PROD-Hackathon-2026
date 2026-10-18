@@ -1,7 +1,6 @@
 'use client';
 
 import { useUserStore } from '@src/entities/user';
-import { setAccessToken } from '@src/shared/lib';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -18,7 +17,6 @@ export function useRegisterMutation() {
   return useMutation({
     mutationFn: (data: RegisterDto) => register(data),
     onSuccess: (result) => {
-      setAccessToken(result.accessToken);
       setUser(result.user);
       setSessionRestored();
       router.replace('/dashboard');

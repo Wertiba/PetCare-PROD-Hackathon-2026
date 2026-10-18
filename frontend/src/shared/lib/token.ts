@@ -1,14 +1,13 @@
-const ACCESS_TOKEN_KEY = 'accessToken';
+const LEGACY_ACCESS_TOKEN_KEY = 'accessToken';
 
-export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
-}
-
-export function setAccessToken(token: string): void {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
-}
-
-export function clearAccessToken(): void {
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+/**
+ * The access token now lives only in the httpOnly `accessToken` cookie set by
+ * the backend. Older sessions kept a copy in localStorage: remove it.
+ */
+export function removeLegacyAccessToken(): void {
+  try {
+    window.localStorage.removeItem(LEGACY_ACCESS_TOKEN_KEY);
+  } catch {
+    // Storage may be unavailable (private mode, blocked site data).
+  }
 }
