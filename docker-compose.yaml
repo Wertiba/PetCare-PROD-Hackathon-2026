@@ -82,6 +82,14 @@ services:
       LLM_AVATAR_MODEL:
       LLM_IMAGE_TOOL_MODEL:
       LLM_AVATAR_TIMEOUT:
+      NOTIFICATIONS_WORKER_ENABLED:
+      NOTIFICATIONS_DISPATCH_INTERVAL:
+      NOTIFICATIONS_MAX_LATENESS:
+      VAPID_PUBLIC_KEY:
+      VAPID_PRIVATE_KEY:
+      VAPID_SUBJECT:
+      WEB_PUSH_ALLOWED_HOSTS:
+      WEB_PUSH_TIMEOUT:
     depends_on:
       postgres:
         condition: service_healthy
