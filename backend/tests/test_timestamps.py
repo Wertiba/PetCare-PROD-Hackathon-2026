@@ -71,6 +71,7 @@ def test_iso_dates_are_rejected_and_error_timestamps_are_numeric(client, auth, p
     assert response.status_code == 422
     assert before <= response.json()["timestamp"] <= time()
     assert client.get("/api/v1/events", headers=auth, params={"from": "2026-01-01"}).status_code == 422
+    client.cookies.clear()
     assert isinstance(client.get("/api/v1/users/me").json()["timestamp"], float)
 
 

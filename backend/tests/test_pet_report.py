@@ -143,6 +143,7 @@ def test_report_includes_the_pet_photo(client, auth, pet_id):
 def test_report_of_someone_elses_pet_is_not_found(client, pet_id):
     _, stranger = register_user(client, login="stranger")
     assert client.get(f"/api/v1/pets/{pet_id}/report", headers=stranger).status_code == 404
+    client.cookies.clear()
     assert client.get(f"/api/v1/pets/{pet_id}/report").status_code == 401
 
 

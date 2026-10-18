@@ -85,6 +85,7 @@ async def ready(db_session_factory, catalog, generator):
 
 
 def test_settings_when_web_push_is_not_configured(client, auth):
+    client.cookies.clear()
     assert client.get("/api/v1/notifications/settings").status_code == 401
     settings = client.get("/api/v1/notifications/settings", headers=auth)
     assert settings.status_code == 200, settings.text

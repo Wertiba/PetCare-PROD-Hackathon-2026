@@ -22,6 +22,7 @@ def _issue(client, pet_id, token, content_type="image/jpeg", size=len(JPEG_BYTES
 
 @pytest.mark.req("P.ACCESS")
 def test_direct_photo_endpoints_require_a_token(client, pet_id):
+    client.cookies.clear()
     body = {"contentType": "image/jpeg", "size": 10}
     assert client.post(f"/api/v1/pets/{pet_id}/photo/upload-url", json=body).status_code == 401
     assert client.post(f"/api/v1/pets/{pet_id}/photo/confirm", json={"key": "pets/x"}).status_code == 401

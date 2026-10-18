@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from app.presentation.http.schemas.base import PyModel
 
 
@@ -7,5 +9,11 @@ class Token(PyModel):
 
 
 class AccessTokenResponse(PyModel):
-    accessToken: str
+    accessToken: str = Field(
+        deprecated=True,
+        description=(
+            "Deprecated: retained in the response body for backward compatibility and will be removed in a future "
+            "API version. Use the HttpOnly accessToken cookie instead. No removal date has been scheduled."
+        ),
+    )
     expiresIn: int

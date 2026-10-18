@@ -6,7 +6,13 @@ from app.application.users.dto import UserLoginData, UserRegisterData
 from app.domain.users.errors import InvalidCredentialsError, WrongLoginOrPasswordError
 from app.infra.config import HttpConfig
 from app.infra.metrics import track
-from app.presentation.http.api.v1.utils.cookies import REFRESH_COOKIE_NAME, delete_refresh_cookie, set_refresh_cookie
+from app.presentation.http.api.v1.utils.cookies import (
+    REFRESH_COOKIE_NAME,
+    delete_access_cookie,
+    delete_refresh_cookie,
+    set_access_cookie,
+    set_refresh_cookie,
+)
 from app.presentation.http.schemas.responses import ErrorResponse
 from app.presentation.http.schemas.token import AccessTokenResponse
 from app.presentation.http.schemas.user import UserAndAccessTokenResponse, UserLoginBody, UserRegisterBody
@@ -23,6 +29,7 @@ async def register(
 ) -> UserAndAccessTokenResponse:
     result, refresh_token, max_age = await interactor(UserRegisterData(**user_data.model_dump()))
     track("user", "registered")
+    set_access_cookie(response, result.accessToken, max_age_seconds=result.expiresIn, config=config)
     set_refresh_cookie(response, refresh_token, max_age_seconds=max_age, config=config)
     return UserAndAccessTokenResponse.model_validate(result, from_attributes=True)
 
@@ -44,6 +51,7 @@ async def login(
         track("user", "login_failed")
         raise
     track("user", "logged_in")
+    set_access_cookie(response, result.accessToken, max_age_seconds=result.expiresIn, config=config)
     set_refresh_cookie(response, refresh_token, max_age_seconds=max_age, config=config)
     return UserAndAccessTokenResponse.model_validate(result, from_attributes=True)
 
@@ -56,6 +64,7 @@ async def refresh(
     if not raw_refresh_token:
         raise InvalidCredentialsError
     result, new_refresh_token, max_age = await interactor(raw_refresh_token)
+    set_access_cookie(response, result.accessToken, max_age_seconds=result.expiresIn, config=config)
     set_refresh_cookie(response, new_refresh_token, max_age_seconds=max_age, config=config)
     return AccessTokenResponse.model_validate(result, from_attributes=True)
 
@@ -68,4 +77,5 @@ async def logout(
     if not raw_refresh_token:
         raise InvalidCredentialsError
     await interactor(raw_refresh_token)
+    delete_access_cookie(response, config=config)
     delete_refresh_cookie(response, config=config)

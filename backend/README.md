@@ -50,7 +50,7 @@ uv sync
 Перед запуском экспортируйте переменные подключения к БД, `APP_SECURITY_JWT_SECRET`
 и `S3_*` в окружение процесса. `backend/.env.example` — справочник переменных,
 он не загружается автоматически. Для локального HTTP задайте
-`APP_COOKIE_SECURE=false`, иначе браузер не сохранит refresh-cookie.
+`APP_COOKIE_SECURE=false`, иначе браузер не сохранит cookie токенов.
 
 Все конфигурации — обычные Pydantic `BaseModel` с полями и значениями по умолчанию.
 Каждое поле содержит явный `Field(alias="ИМЯ_ПЕРЕМЕННОЙ")`. Модели создаются
@@ -91,9 +91,11 @@ uv run python -m app.run
 
 ## Авторизация
 
-`POST /api/v1/auth/register` принимает `login`, `password`, `fullName`; `POST /api/v1/auth/login` — `login` и `password`. Логин — непустая строка до 255 символов, уникальная с учётом регистра. Пользователь в ответах содержит `login`. Дублирующий логин возвращает `409 LOGIN_ALREADY_EXISTS`. Оба метода возвращают `accessToken`. Его передают заголовком `Authorization: Bearer <token>`.
+`POST /api/v1/auth/register` принимает `login`, `password`, `fullName`; `POST /api/v1/auth/login` — `login` и `password`. Логин — непустая строка до 255 символов, уникальная с учётом регистра. Пользователь в ответах содержит `login`. Дублирующий логин возвращает `409 LOGIN_ALREADY_EXISTS`.
 
-Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обновить access: `POST /api/v1/auth/refresh`. Выйти: `POST /api/v1/auth/logout`.
+Регистрация, вход и `POST /api/v1/auth/refresh` устанавливают HttpOnly-cookie `accessToken` и `refreshToken` с `SameSite=Lax`, `Path=/` и флагом `Secure` из `APP_COOKIE_SECURE`. Срок жизни access-cookie равен `expiresIn`, refresh-cookie — сроку refresh-токена. Защищённые методы принимают access-cookie; заголовок `Authorization: Bearer <token>` по-прежнему поддерживается и имеет приоритет, если передан. Некорректный заголовок не заменяется cookie. `POST /api/v1/auth/logout` отзывает refresh-токен и удаляет обе cookie.
+
+Тела ответов сохранены: `accessToken`, `expiresIn` и `user` (для регистрации и входа). Поле `accessToken` помечено `deprecated` в OpenAPI/Swagger с предупреждением об удалении из тела в будущей версии API; дата удаления пока не назначена. Новый frontend должен использовать cookie и включать `credentials: "include"` для запросов с другого разрешённого origin. Предупреждение находится в документации API, автоматически в консоли браузера оно не появляется.
 
 ## Postman
 
