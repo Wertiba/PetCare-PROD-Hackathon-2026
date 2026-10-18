@@ -1,3 +1,4 @@
+from time import time
 from typing import Annotated
 
 from pydantic import AfterValidator, Field, field_validator
@@ -55,11 +56,23 @@ class EventUpdateBody(_EventTextValidation):
         return value
 
 
+# Room for a client clock running ahead; a day keeps any time zone mix-up of "today" acceptable.
+_DONE_AT_SKEW = 24 * 60 * 60
+
+
 class EventCompleteBody(PyModel):
     doneAt: Annotated[float, AfterValidator(validate_timestamp)] | None = Field(
         None,
-        description="Actual completion time in fractional Unix seconds (UTC); defaults to now.",
+        description="Actual completion time in fractional Unix seconds (UTC); defaults to now. Not in the future.",
     )
+
+    @field_validator("doneAt")
+    @classmethod
+    def done_not_in_future(cls, value: float | None) -> float | None:
+        # A future completion date would also push the next occurrence of a repeating event out by that much.
+        if value is not None and value > time() + _DONE_AT_SKEW:
+            raise ValueError("doneAt must not be in the future")
+        return value
 
 
 class EventReadResponse(PyModel):

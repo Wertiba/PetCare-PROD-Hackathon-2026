@@ -4121,7 +4121,7 @@
               }
             ],
             "title": "Doneat",
-            "description": "Actual completion time in fractional Unix seconds (UTC); defaults to now."
+            "description": "Actual completion time in fractional Unix seconds (UTC); defaults to now. Not in the future."
           }
         },
         "type": "object",

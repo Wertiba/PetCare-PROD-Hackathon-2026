@@ -43,7 +43,7 @@ class SqlAlchemyNotificationGateway(NotificationGateway):
         stmt = self._apply_criteria(
             self._owned(select(Notification), user_id), now, event_id=event_id, pet_id=pet_id, status=status, due=due
         )
-        stmt = stmt.order_by(Notification.time.desc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(Notification.time.desc(), Notification.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())

@@ -48,7 +48,7 @@ class SqlAlchemyStateGateway(StateGateway):
         stmt = self._apply_criteria(
             self._owned(select(State), user_id), pet_id=pet_id, category_id=category_id, from_=from_, to=to
         )
-        stmt = stmt.order_by(State.time.desc(), State.created_at.desc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(State.time.desc(), State.created_at.desc(), State.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())

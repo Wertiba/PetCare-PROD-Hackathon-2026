@@ -192,3 +192,22 @@ def test_reopening_and_completing_again_does_not_duplicate_the_next_event(client
         assert client.patch(f"/api/v1/events/{event_id}", json={"status": status}, headers=auth).status_code == 200
     planned = client.get("/api/v1/events", params={"petId": pet_id, "status": "planned"}, headers=auth).json()
     assert planned["total"] == 1
+
+
+@pytest.mark.req("5.4.1")
+def test_completion_date_cannot_be_in_the_future(client, auth, pet_id):
+    event_id = _create(client, auth, pet_id).json()["id"]
+    later = _timestamp(datetime.now(UTC) + timedelta(days=30))
+    response = client.post(f"/api/v1/events/{event_id}/complete", json={"doneAt": later}, headers=auth)
+    assert response.status_code == 422
+    assert client.get(f"/api/v1/events/{event_id}", headers=auth).json()["status"] == "planned"
+
+
+def test_pages_of_events_on_the_same_time_neither_repeat_nor_skip(client, auth, pet_id):
+    created = {_create(client, auth, pet_id, name=f"Осмотр {n}", schedule=1893492000.0).json()["id"] for n in range(5)}
+    seen = [
+        item["id"]
+        for page in range(5)
+        for item in client.get("/api/v1/events", params={"page": page, "size": 1}, headers=auth).json()["items"]
+    ]
+    assert sorted(seen) == sorted(created)

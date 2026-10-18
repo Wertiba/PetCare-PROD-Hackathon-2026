@@ -41,7 +41,7 @@ class SqlAlchemyPetGateway(PetGateway):
             select(Pet)
             .options(selectinload(Pet.breed))
             .where(Pet.user_id == user_id)
-            .order_by(Pet.created_at.desc())
+            .order_by(Pet.created_at.desc(), Pet.id)
             .offset(offset)
             .limit(limit)
         )
