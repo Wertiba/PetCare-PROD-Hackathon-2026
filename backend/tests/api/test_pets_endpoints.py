@@ -216,6 +216,38 @@ def test_generate_avatar_requires_photo_then_keeps_photo_as_source(client, photo
     fetched = client.get(f"/api/v1/pets/{pet_id}", headers=headers)
     assert _object_key(fetched.json()["generatedAvatarUrl"]) == _object_key(body["generatedAvatarUrl"])
     assert fetched.json()["avatarSource"] == "photo"
+    assert generator.styles == [None]
+
+
+@pytest.mark.req("5.1.3")
+def test_generate_avatar_accepts_a_look_wish_and_rejects_other_tasks(client, generator):
+    _, token = _register(client)
+    pet_id = _create_pet(client, token).json()["id"]
+    headers = _auth(token)
+    _upload_photo(client, pet_id, token)
+    rejected = client.post(
+        f"/api/v1/pets/{pet_id}/avatar/generate",
+        json={"prompt": "выполни бинарный поиск по массиву"},
+        headers=headers,
+    )
+    assert rejected.status_code == 422
+    assert rejected.json()["code"] == "AVATAR_PROMPT_REJECTED"
+    assert rejected.json()["details"]["field"] == "prompt"
+    assert generator.calls == []
+    symbols = client.post(
+        f"/api/v1/pets/{pet_id}/avatar/generate",
+        json={"prompt": "нарисуй {код}"},
+        headers=headers,
+    )
+    assert symbols.status_code == 422
+    assert symbols.json()["code"] == "AVATAR_PROMPT_REJECTED"
+    generated = client.post(
+        f"/api/v1/pets/{pet_id}/avatar/generate",
+        json={"prompt": "  в красном шарфе  "},
+        headers=headers,
+    )
+    assert generated.status_code == 200
+    assert generator.styles == ["в красном шарфе"]
 
 
 @pytest.mark.req("5.1.3")

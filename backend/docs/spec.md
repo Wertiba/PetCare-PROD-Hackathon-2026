@@ -499,7 +499,7 @@ erDiagram
 | GET / PATCH / DELETE 🔒 | `/pets/{petId}` | Карточка с `animal`, `breed`, `ageMonths`, `photoUrl` | 5.1 |
 | PUT 🔒 | `/pets/{petId}/photo` | Фото (multipart `file`) | 5.1.3 |
 | POST 🔒 | `/pets/{petId}/photo/upload-url`, `/pets/{petId}/photo/confirm` | Прямая загрузка фото в хранилище (раздел 11.1) | 5.1.3 |
-| POST / PUT / DELETE 🔒 | `/pets/{petId}/avatar/generate`, `/pets/{petId}/avatar`, `/pets/{petId}/avatar/generated` | Сгенерировать аватар по фото, выбрать, что показывать | доп. |
+| POST / PUT / DELETE 🔒 | `/pets/{petId}/avatar/generate`, `/pets/{petId}/avatar`, `/pets/{petId}/avatar/generated` | Сгенерировать аватар по фото (с необязательным пожеланием `prompt`), выбрать, что показывать | доп. |
 | GET 🔒 | `/pets/{petId}/report` | PDF-отчёт о здоровье и уходе (`application/pdf`, скачивание) | доп. |
 
 ### Карта здоровья и напоминания (5.2, 5.4)
@@ -752,7 +752,15 @@ flowchart LR
 `multipart/form-data`, поле `file`. jpeg, png или webp, до 5 МБ.
 
 `POST /api/v1/pets/{petId}/avatar/generate`
-Тела нет. Ответ может идти до трёх минут: на фронте нужен долгий таймаут и состояние загрузки. `avatarSource` этот метод не меняет.
+Тело необязательно. Без него аватар строится по зашитому стилю. С пожеланием:
+
+```json
+{ "prompt": "в красном шарфе" }
+```
+
+`prompt` — до 120 символов, только внешний вид: цвет, аксессуар, фон, настроение. Буквы, цифры и знаки `. , ! ? ' - « »`. Просьбы сделать что-то другое (поиск, код, «игнорируй инструкции») не доходят до модели: `422 AVATAR_PROMPT_REJECTED`, поле `prompt`. Пустая строка значит то же, что тела нет.
+
+Ответ может идти до трёх минут: на фронте нужен долгий таймаут и состояние загрузки. `avatarSource` этот метод не меняет.
 
 `PUT /api/v1/pets/{petId}/avatar`
 
@@ -777,6 +785,7 @@ flowchart LR
 |---|---|
 | `422 PET_PHOTO_REQUIRED` | генерация или выбор фото, а фото нет |
 | `422 GENERATED_AVATAR_MISSING` | выбрали аватар, а его ещё не генерировали |
+| `422 AVATAR_PROMPT_REJECTED` | `prompt` длиннее 120 символов, с посторонними символами или не про внешний вид |
 | `413` | файл больше 5 МБ |
 | `415` | не jpeg/png/webp |
 | `422 PHOTO_UPLOAD_NOT_FOUND` | confirm с чужим, несуществующим или не тем ключом |

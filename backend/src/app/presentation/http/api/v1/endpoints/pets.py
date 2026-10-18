@@ -2,7 +2,7 @@ from typing import Annotated
 from urllib.parse import quote
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, File, Response, UploadFile, status
+from fastapi import APIRouter, Body, File, Response, UploadFile, status
 
 from app.application.pagination import Pagination
 from app.application.pets.dto import PetCreateData, PetUpdateData
@@ -26,6 +26,7 @@ from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
 from app.presentation.http.paginated import Page
 from app.presentation.http.schemas.pet import (
+    AvatarGenerateBody,
     PetAvatarBody,
     PetCreateBody,
     PetPhotoConfirmBody,
@@ -160,7 +161,10 @@ async def delete_photo(user: CurrentUserDep, pet_id: PetId, interactor: FromDish
     status_code=status.HTTP_200_OK,
     responses={
         **_NOT_FOUND,
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "PET_PHOTO_REQUIRED"},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "model": ErrorResponse,
+            "description": "PET_PHOTO_REQUIRED or AVATAR_PROMPT_REJECTED",
+        },
         status.HTTP_502_BAD_GATEWAY: {"model": ErrorResponse, "description": "AVATAR_GENERATION_FAILED"},
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "model": ErrorResponse,
@@ -169,10 +173,16 @@ async def delete_photo(user: CurrentUserDep, pet_id: PetId, interactor: FromDish
     },
 )
 async def generate_avatar(
-    user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[GeneratePetAvatar]
+    user: CurrentUserDep,
+    pet_id: PetId,
+    interactor: FromDishka[GeneratePetAvatar],
+    body: Annotated[AvatarGenerateBody | None, Body()] = None,
 ) -> PetReadResponse:
-    """Build a stylized avatar from the pet's photo. Does not change avatarSource."""
-    result = await interactor(user.id, pet_id)
+    """Build a stylized avatar from the pet's photo. Does not change avatarSource.
+
+    Optional `prompt` is a short look wish. Requests to do anything else are rejected.
+    """
+    result = await interactor(user.id, pet_id, None if body is None else body.prompt)
     track("pet", "avatar_generated")
     return PetReadResponse.model_validate(result, from_attributes=True)
 

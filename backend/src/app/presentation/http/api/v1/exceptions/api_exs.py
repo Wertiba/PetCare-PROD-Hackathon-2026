@@ -153,6 +153,12 @@ class AvatarGenerationUnavailable(APIException):
     message = "Avatar generation is unavailable"
 
 
+class AvatarPromptRejected(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "AVATAR_PROMPT_REJECTED"
+    message = "Prompt must be a short description of the avatar look"
+
+
 class WebPushNotConfigured(APIException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     code = "WEB_PUSH_NOT_CONFIGURED"

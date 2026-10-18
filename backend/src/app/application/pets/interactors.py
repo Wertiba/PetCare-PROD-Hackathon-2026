@@ -22,6 +22,7 @@ from app.application.ports.unit_of_work import UnitOfWork
 from app.domain.breeds.entity import Breed
 from app.domain.breeds.errors import RelatedBreedNotFoundError
 from app.domain.breeds.ids import BreedId
+from app.domain.pets.avatar_prompt import normalize_avatar_prompt
 from app.domain.pets.entity import Pet
 from app.domain.pets.enums import AvatarSource
 from app.domain.pets.errors import (
@@ -283,12 +284,13 @@ class DeleteGeneratedAvatar(_PetContext):
 class GeneratePetAvatar(_PetContext):
     avatars: AvatarGenerator
 
-    async def __call__(self, user_id: UserId, pet_id: PetId) -> PetResult:
+    async def __call__(self, user_id: UserId, pet_id: PetId, prompt: str | None = None) -> PetResult:
         pet = await self._require_pet(user_id, pet_id)
         if not pet.photo_key:
             raise PetPhotoRequiredError
+        style = normalize_avatar_prompt(prompt)
         original = await self.photos.load(pet.photo_key)
-        generated = await self.avatars.generate(original, content_type_for_key(pet.photo_key))
+        generated = await self.avatars.generate(original, content_type_for_key(pet.photo_key), style=style)
         extension = photo_extension(generated.content_type)
         new_key = await self.photos.save(generated.content, extension)
         old_avatar = pet.generated_avatar_key

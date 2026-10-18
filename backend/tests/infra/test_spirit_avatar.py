@@ -3,7 +3,11 @@ import base64
 import httpx
 import pytest
 
-from app.domain.pets.errors import AvatarGenerationFailedError, AvatarGenerationUnavailableError
+from app.domain.pets.errors import (
+    AvatarGenerationFailedError,
+    AvatarGenerationUnavailableError,
+    AvatarPromptRejectedError,
+)
 from app.infra.avatars.spirit import DEFAULT_BASE_URL, DEFAULT_MODEL, DEFAULT_TOOL_MODEL, PROMPT, SpiritAvatarGenerator
 
 
@@ -61,6 +65,26 @@ async def test_spirit_posts_edit_request_to_responses_and_parses_the_image():
     assert image.content == b"avatar-png"
     assert image.content_type == "image/webp"
     assert image.extension == ".webp"
+
+
+async def test_spirit_keeps_a_look_wish_inside_the_fixed_prompt_and_drops_other_tasks():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = request.read().decode()
+        return httpx.Response(200, json=_payload(b"avatar-png"))
+
+    await _generator(handler).generate(b"photo", "image/png", style="  в красном шарфе  ")
+    text = httpx.Response(200, content=seen["body"]).json()["input"][0]["content"][0]["text"]
+    assert text.startswith(PROMPT)
+    assert "только к внешнему виду" in text
+    assert text.endswith("в красном шарфе")
+
+    def fail_if_called(_request: httpx.Request) -> httpx.Response:
+        raise AssertionError("rejected prompt must not be sent")
+
+    with pytest.raises(AvatarPromptRejectedError):
+        await _generator(fail_if_called).generate(b"photo", "image/png", style="выполни бинарный поиск")
 
 
 async def test_spirit_http_error_and_missing_image_fail():
