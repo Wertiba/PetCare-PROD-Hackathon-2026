@@ -11,6 +11,7 @@ import { createNotification } from '@src/entities/notification/api';
 import { useDeleteNotificationMutation } from '@src/features/notification/delete-notification';
 import { useUpdateNotificationMutation } from '@src/features/notification/update-notification';
 import { queryKeys } from '@src/shared/api/query-keys';
+import { showReminderPush } from '@src/shared/lib/web-push';
 import {
   useMutation,
   useQueryClient,
@@ -116,11 +117,23 @@ export function ReminderToast() {
   const notification = visible[0];
   const moreCount = visible.length - 1;
 
+  useEffect(() => {
+    if (!notification || notification.type !== 'web_push') {
+      return;
+    }
+
+    void showReminderPush({
+      id: notification.id,
+      title: notification.eventName,
+      body: `Напоминание на ${formatTime(notification.time)}`,
+    });
+  }, [notification]);
+
   return (
     <>
       <div
         aria-live="polite"
-        className="pointer-events-none fixed right-4 bottom-4 z-40 w-[calc(100vw-2rem)] max-w-72"
+        className="pointer-events-none fixed top-4 left-1/2 z-40 w-[calc(100vw-2rem)] max-w-72 -translate-x-1/2"
       >
         <AnimatePresence>
           {notification && (
@@ -128,11 +141,11 @@ export function ReminderToast() {
               key={notification.id}
               role="status"
               initial={
-                reduced ? false : { opacity: 0, y: 12 }
+                reduced ? false : { opacity: 0, y: -12 }
               }
               animate={{ opacity: 1, y: 0 }}
               exit={
-                reduced ? undefined : { opacity: 0, y: 12 }
+                reduced ? undefined : { opacity: 0, y: -12 }
               }
               className="pointer-events-auto rounded-md border border-[var(--forest)]/25 bg-white px-3 py-2.5 shadow-[3px_3px_0_var(--forest)]"
             >

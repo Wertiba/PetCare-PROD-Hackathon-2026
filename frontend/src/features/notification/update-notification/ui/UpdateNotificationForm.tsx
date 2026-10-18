@@ -2,7 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Notification } from '@src/entities/notification';
+import { ensureWebPushPermission } from '@src/shared/lib/web-push';
 import { FormField, SubmitButton } from '@src/shared/ui';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useUpdateNotificationMutation } from '../model/update-notification.mutation';
@@ -15,8 +17,8 @@ const TYPE_LABELS: Record<
   UpdateNotificationValues['type'],
   string
 > = {
-  app: 'В приложении',
-  telegram: 'Telegram',
+  app: 'В приложении (скоро)',
+  telegram: 'Telegram (скоро)',
   web_push: 'Push в браузере',
 };
 
@@ -27,6 +29,15 @@ const toDateTimeInputValue = (timestamp: number) => {
   )
     .toISOString()
     .slice(0, 16);
+};
+
+const todayInputValue = () => {
+  const date = new Date();
+  return new Date(
+    date.getTime() - date.getTimezoneOffset() * 60_000,
+  )
+    .toISOString()
+    .slice(0, 10);
 };
 
 interface UpdateNotificationFormProps {
@@ -40,14 +51,20 @@ export function UpdateNotificationForm({
 }: UpdateNotificationFormProps) {
   const { mutate, isPending, error } =
     useUpdateNotificationMutation();
+  const [permissionError, setPermissionError] = useState<
+    string | null
+  >(null);
+  const currentClock = toDateTimeInputValue(
+    notification.time,
+  ).slice(11);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<UpdateNotificationValues>({
     defaultValues: {
-      type: notification.type,
-      time: toDateTimeInputValue(notification.time),
+      type: 'web_push',
+      time: `${todayInputValue()}T${currentClock}`,
     },
     mode: 'onTouched',
     resolver: zodResolver(updateNotificationSchema),
@@ -56,19 +73,27 @@ export function UpdateNotificationForm({
   return (
     <form
       onSubmit={(event) => {
-        void handleSubmit((values) =>
+        void handleSubmit(async (values) => {
+          setPermissionError(null);
+          const permission =
+            await ensureWebPushPermission();
+          if (!permission.ok) {
+            setPermissionError(permission.reason);
+            return;
+          }
+
           mutate(
             {
               id: notification.id,
               data: {
-                type: values.type,
+                type: 'web_push',
                 time:
                   new Date(values.time).getTime() / 1000,
               },
             },
             { onSuccess },
-          ),
-        )(event);
+          );
+        })(event);
       }}
       className="flex flex-col gap-5"
       noValidate
@@ -95,13 +120,31 @@ export function UpdateNotificationForm({
         >
           {Object.entries(TYPE_LABELS).map(
             ([value, label]) => (
-              <option key={value} value={value}>
+              <option
+                key={value}
+                value={value}
+                disabled={value !== 'web_push'}
+              >
                 {label}
               </option>
             ),
           )}
         </select>
       </div>
+
+      <p className="text-sm leading-5 text-[var(--ink)]/60">
+        При сохранении браузер попросит разрешение на
+        системные Push-уведомления.
+      </p>
+
+      {permissionError ? (
+        <p
+          role="alert"
+          className="border-l-4 border-amber-600 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-900"
+        >
+          {permissionError}
+        </p>
+      ) : null}
 
       {error ? (
         <p

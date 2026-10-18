@@ -28,7 +28,7 @@ export function NextReminderToast({
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed right-4 bottom-36 z-40 w-[calc(100vw-2rem)] max-w-72"
+      className="pointer-events-none fixed top-36 left-1/2 z-40 w-[calc(100vw-2rem)] max-w-72 -translate-x-1/2"
     >
       <AnimatePresence>
         {next && (
@@ -36,11 +36,11 @@ export function NextReminderToast({
             key={next.id}
             role="status"
             initial={
-              reduced ? false : { opacity: 0, y: 12 }
+              reduced ? false : { opacity: 0, y: -12 }
             }
             animate={{ opacity: 1, y: 0 }}
             exit={
-              reduced ? undefined : { opacity: 0, y: 12 }
+              reduced ? undefined : { opacity: 0, y: -12 }
             }
             className="pointer-events-auto overflow-hidden rounded-md bg-[var(--forest)] text-white shadow-[3px_3px_0_var(--lime)]"
           >

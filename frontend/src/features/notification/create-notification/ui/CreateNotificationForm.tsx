@@ -6,6 +6,7 @@ import {
   Timestamp,
   Uid,
 } from '@src/shared/api/global.types';
+import { ensureWebPushPermission } from '@src/shared/lib/web-push';
 import { FormField, SubmitButton } from '@src/shared/ui';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -20,14 +21,18 @@ const TYPE_LABELS: Record<
   CreateNotificationValues['type'],
   string
 > = {
-  app: 'В приложении',
-  telegram: 'Telegram',
+  app: 'В приложении (скоро)',
+  telegram: 'Telegram (скоро)',
   web_push: 'Push в браузере',
 };
 
-const INITIAL_VALUES: CreateNotificationValues = {
-  type: 'app',
-  time: '',
+const todayInputValue = () => {
+  const date = new Date();
+  return new Date(
+    date.getTime() - date.getTimezoneOffset() * 60_000,
+  )
+    .toISOString()
+    .slice(0, 10);
 };
 
 const toDateTimeInputValue = (timestamp: Timestamp) => {
@@ -54,11 +59,16 @@ export function CreateNotificationForm({
 }: CreateNotificationFormProps) {
   const { mutate, isPending, error } =
     useCreateNotificationMutation();
+  const [permissionError, setPermissionError] = useState<
+    string | null
+  >(null);
+  const today = todayInputValue();
+  const initialClock = defaultTime
+    ? toDateTimeInputValue(defaultTime).slice(11)
+    : '';
   const initialValues: CreateNotificationValues = {
-    ...INITIAL_VALUES,
-    time: defaultTime
-      ? toDateTimeInputValue(defaultTime)
-      : INITIAL_VALUES.time,
+    type: 'web_push',
+    time: initialClock ? `${today}T${initialClock}` : '',
   };
   const {
     register,
@@ -73,10 +83,9 @@ export function CreateNotificationForm({
   });
 
   // Parts live in local state: a half-filled value ("2026-10-20T") is not a valid datetime.
-  const [initialDate = '', initialClock = ''] =
-    initialValues.time.split('T');
-  const [datePart, setDatePart] = useState(initialDate);
+  const [datePart, setDatePart] = useState(today);
   const [timePart, setTimePart] = useState(initialClock);
+
   const syncTime = (date: string, clock: string) => {
     setDatePart(date);
     setTimePart(clock);
@@ -90,24 +99,32 @@ export function CreateNotificationForm({
   return (
     <form
       onSubmit={(event) => {
-        void handleSubmit((values) =>
+        void handleSubmit(async (values) => {
+          setPermissionError(null);
+          const permission =
+            await ensureWebPushPermission();
+          if (!permission.ok) {
+            setPermissionError(permission.reason);
+            return;
+          }
+
           mutate(
             {
               eventId,
-              type: values.type,
+              type: 'web_push',
               status: 'pending',
               time: new Date(values.time).getTime() / 1000,
             },
             {
               onSuccess: (notification) => {
                 reset(initialValues);
-                setDatePart(initialDate);
+                setDatePart(today);
                 setTimePart(initialClock);
                 onSuccess?.(notification);
               },
             },
-          ),
-        )(event);
+          );
+        })(event);
       }}
       className="flex flex-col gap-5"
       noValidate
@@ -155,13 +172,31 @@ export function CreateNotificationForm({
         >
           {Object.entries(TYPE_LABELS).map(
             ([value, label]) => (
-              <option key={value} value={value}>
+              <option
+                key={value}
+                value={value}
+                disabled={value !== 'web_push'}
+              >
                 {label}
               </option>
             ),
           )}
         </select>
       </div>
+
+      <p className="text-sm leading-5 text-[var(--ink)]/60">
+        При сохранении браузер попросит разрешение на
+        системные Push-уведомления.
+      </p>
+
+      {permissionError ? (
+        <p
+          role="alert"
+          className="border-l-4 border-amber-600 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-900"
+        >
+          {permissionError}
+        </p>
+      ) : null}
 
       {error ? (
         <p

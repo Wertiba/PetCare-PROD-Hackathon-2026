@@ -258,7 +258,7 @@ export function CareCalendar({
   }
 
   return (
-    <div>
+    <div className="bg-white px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-5">
         <div>
           <p className="text-sm font-semibold text-[var(--ink)]/55">

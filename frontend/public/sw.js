@@ -19,6 +19,8 @@ self.addEventListener('push', (event) => {
   const options = {
     body: payload.body || '',
     data: { url: payload.url || '/dashboard' },
+    tag: payload.tag || undefined,
+    timestamp: payload.timestamp || Date.now(),
   };
 
   event.waitUntil(
