@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from dishka import AsyncContainer
@@ -9,6 +10,7 @@ from app.bootstrap import build_container
 from app.infra.config import AppConfig, HttpConfig
 from app.infra.database.mappings import start_mappers
 from app.infra.logger import Logger
+from app.infra.notifications.worker import start_notification_workers
 from app.presentation.http.api import ops_router, v1_router
 from app.presentation.http.api.v1.exceptions.handlers import register_exception_handlers
 from app.presentation.http.middleware.observability import ObservabilityMiddleware
@@ -16,14 +18,22 @@ from app.presentation.http.middleware.trace_id import TraceIdMiddleware
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # noqa: RUF029
+async def lifespan(app: FastAPI):
     container = app.state.dishka_container
     logger = await container.get(Logger)
+    stop = asyncio.Event()
+    tasks: list[asyncio.Task[None]] = []
     try:
         start_mappers()
+        tasks = await start_notification_workers(container, stop)
         logger.get_logger().info("PetCare API started")
         yield
     finally:
+        stop.set()
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         await container.close()
         logger.get_logger().info("PetCare API stopped")
 

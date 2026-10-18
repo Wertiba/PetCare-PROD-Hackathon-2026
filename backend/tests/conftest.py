@@ -21,6 +21,8 @@ for _key, _value in {
     "S3_SECRET_KEY": "test-photos-secret",
 }.items():
     os.environ.setdefault(_key, _value)
+# Background dispatch must not start during tests.
+os.environ["NOTIFICATIONS_WORKER_ENABLED"] = "false"
 import pytest
 from dishka import Provider, Scope, provide
 from sqlalchemy import event

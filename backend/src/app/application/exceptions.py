@@ -4,3 +4,7 @@ class ApplicationError(Exception):
 
 class DuplicateError(ApplicationError):
     """Violation of a uniqueness constraint."""
+
+
+class WebPushDeliveryError(ApplicationError):
+    pass

@@ -16,4 +16,6 @@ class Notification:
     status: NotificationStatus
     time: float
     created_at: float = field(default_factory=time)
+    # External delivery only. In-app toasts keep using status.
+    delivered_at: float | None = None
     event: Event

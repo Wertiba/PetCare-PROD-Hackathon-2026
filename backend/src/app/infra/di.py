@@ -8,10 +8,12 @@ from app.infra.config import (
     DatabaseConfig,
     HttpConfig,
     LoggingConfig,
+    NotificationsConfig,
     RunConfig,
     RustFSAdminConfig,
     S3Config,
     SecurityConfig,
+    WebPushConfig,
 )
 from app.infra.logger import Logger
 
@@ -54,5 +56,13 @@ class ConfigProvider(Provider):
     @provide
     def get_avatar(self) -> AvatarConfig:
         return AvatarConfig(**env)
+
+    @provide
+    def get_web_push(self) -> WebPushConfig:
+        return WebPushConfig(**env)
+
+    @provide
+    def get_notifications(self) -> NotificationsConfig:
+        return NotificationsConfig(**env)
 
     logger = provide(Logger)

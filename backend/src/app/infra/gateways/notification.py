@@ -1,6 +1,7 @@
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.application.exceptions import ApplicationError
 from app.application.ports.notification_gateway import NotificationGateway
@@ -49,6 +50,42 @@ class SqlAlchemyNotificationGateway(NotificationGateway):
             return list(result.scalars().all())
         except SQLAlchemyError as e:
             raise ApplicationError("Database error") from e
+
+    async def list_pending_undelivered(self, *, now: float, earliest: float) -> list[Notification]:
+        stmt = (
+            select(Notification)
+            .options(selectinload(Notification.event).selectinload(Event.pet))
+            .where(
+                Notification.status == NotificationStatus.PENDING,
+                Notification.delivered_at.is_(None),
+                Notification.time <= now,
+                Notification.time >= earliest,
+            )
+            .order_by(Notification.time.asc())
+        )
+        try:
+            result = await self.session.execute(stmt)
+            return list(result.scalars().all())
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+
+    async def claim_delivery(self, notification_id: NotificationId, delivered_at: float) -> bool:
+        # Conditional update is the cross-worker lock. RETURNING one id is rowcount == 1.
+        # synchronize_session=False keeps a stale identity-map copy from writing delivered_at back to NULL.
+        stmt = (
+            update(Notification)
+            .where(Notification.id == notification_id, Notification.delivered_at.is_(None))
+            .values(delivered_at=delivered_at)
+            .returning(Notification.id)
+            .execution_options(synchronize_session=False)
+        )
+        try:
+            result = await self.session.execute(stmt)
+            claimed = result.scalar_one_or_none() is not None
+            await self.session.commit()
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+        return claimed
 
     async def count_by_user_id(
         self,

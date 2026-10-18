@@ -78,6 +78,21 @@ class AvatarConfig(BaseModel):
     timeout: float = Field(alias="LLM_AVATAR_TIMEOUT", default=180.0)
 
 
+class WebPushConfig(BaseModel):
+    public_key: str = Field(alias="VAPID_PUBLIC_KEY", default="")
+    private_key: str = Field(alias="VAPID_PRIVATE_KEY", default="", repr=False)
+    subject: str = Field(alias="VAPID_SUBJECT", default="")
+
+    def configured(self) -> bool:
+        return bool(self.public_key.strip() and self.private_key.strip() and self.subject.strip())
+
+
+class NotificationsConfig(BaseModel):
+    worker_enabled: bool = Field(alias="NOTIFICATIONS_WORKER_ENABLED", default=True)
+    dispatch_interval: int = Field(alias="NOTIFICATIONS_DISPATCH_INTERVAL", default=15, ge=1)
+    max_lateness: int = Field(alias="NOTIFICATIONS_MAX_LATENESS", default=86400, ge=0)
+
+
 def build_postgres_url(config: DatabaseConfig) -> URL:
     return URL.create(
         config.driver,

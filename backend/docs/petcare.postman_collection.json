@@ -1593,6 +1593,131 @@
           ]
         },
         {
+          "name": "Get Notification Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "settings"
+              ],
+              "query": []
+            },
+            "description": "Channels the current user wants. `webPushAvailable` is false when VAPID keys are not set."
+          }
+        },
+        {
+          "name": "Update Notification Settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "settings"
+              ],
+              "query": []
+            },
+            "description": "Update Notification Settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"webPushEnabled\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Web Push Public Key",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/web-push/public-key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "web-push",
+                "public-key"
+              ],
+              "query": []
+            },
+            "description": "VAPID application server key, base64url, for `pushManager.subscribe`."
+          }
+        },
+        {
+          "name": "Save Web Push Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/web-push/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "web-push",
+                "subscriptions"
+              ],
+              "query": []
+            },
+            "description": "Upserts the browser PushSubscription by endpoint for the current user.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"https://push.example.com/subscription/1\",\n  \"keys\": {\n    \"p256dh\": \"p256dh-key\",\n    \"auth\": \"auth-key\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Test Notification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "test"
+              ],
+              "query": []
+            },
+            "description": "Sends a test message through Web Push when that channel is enabled."
+          }
+        },
+        {
           "name": "Get Notification",
           "request": {
             "method": "GET",
@@ -2051,6 +2176,44 @@
               "query": []
             },
             "description": "Delete Note"
+          }
+        },
+        {
+          "name": "Delete Web Push Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/web-push/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "web-push",
+                "subscriptions"
+              ],
+              "query": [
+                {
+                  "key": "endpoint",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Removes the current user's subscription. Missing ones are ignored. Query or JSON `endpoint`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"https://push.example.com/subscription/1\"\n}"
+            }
           }
         },
         {

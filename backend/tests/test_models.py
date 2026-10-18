@@ -20,6 +20,8 @@ def test_tables_have_expected_columns():
         "states",
         "events",
         "notifications",
+        "notification_settings",
+        "web_push_subscriptions",
         "notes",
         "food",
     }
@@ -90,6 +92,19 @@ def test_tables_have_expected_columns():
         "type",
         "status",
         "time",
+        "created_at",
+        "delivered_at",
+    }
+    assert {c["name"] for c in inspector.get_columns("notification_settings")} == {
+        "user_id",
+        "web_push_enabled",
+    }
+    assert {c["name"] for c in inspector.get_columns("web_push_subscriptions")} == {
+        "id",
+        "user_id",
+        "endpoint",
+        "p256dh",
+        "auth",
         "created_at",
     }
     assert {c["name"] for c in inspector.get_columns("notes")} == {
@@ -168,6 +183,29 @@ def _migration_sql(revisions: str, *, downgrade: bool = False) -> str:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
     (command.downgrade if downgrade else command.upgrade)(config, revisions, sql=True)
     return output.getvalue()
+
+
+def test_alembic_revision_chain_has_a_single_head():
+    from pathlib import Path
+
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    script = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
+    assert script.get_heads() == ["0010_notification_delivery"]
+
+
+def test_notification_delivery_migration_adds_channel_storage_and_reverts():
+    sql = _migration_sql("0009_jury_demo_data:0010_notification_delivery")
+    assert "delivered_at" in sql
+    assert "notification_settings" in sql
+    assert "web_push_enabled" in sql
+    assert "web_push_subscriptions" in sql
+    assert "uq_web_push_subscriptions_endpoint" in sql
+    back = _migration_sql("0010_notification_delivery:0009_jury_demo_data", downgrade=True)
+    assert "DROP TABLE web_push_subscriptions" in back
+    assert "DROP TABLE notification_settings" in back
+    assert "DROP COLUMN delivered_at" in back
 
 
 def test_category_id_migration_renames_column_constraint_and_index_in_place():

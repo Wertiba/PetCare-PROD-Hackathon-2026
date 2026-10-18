@@ -19,6 +19,7 @@ from app.infra.gateways.di import GatewayProvider
 from app.infra.photos.di import PhotoProvider
 from app.infra.reports.di import ReportRendererProvider
 from app.infra.security.di import SecurityProvider
+from app.infra.webpush.di import WebPushProvider
 
 
 def build_container(*providers: Provider) -> AsyncContainer:
@@ -30,6 +31,7 @@ def build_container(*providers: Provider) -> AsyncContainer:
         PhotoProvider(),
         AvatarProvider(),
         ReportRendererProvider(),
+        WebPushProvider(),
         AuthProvider(),
         UserProvider(),
         PetProvider(),

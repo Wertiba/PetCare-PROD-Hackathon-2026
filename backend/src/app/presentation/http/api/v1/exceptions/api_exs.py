@@ -151,3 +151,9 @@ class AvatarGenerationUnavailable(APIException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     code = "AVATAR_GENERATION_UNAVAILABLE"
     message = "Avatar generation is unavailable"
+
+
+class WebPushNotConfigured(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "WEB_PUSH_NOT_CONFIGURED"
+    message = "Web Push is not configured"

@@ -3150,6 +3150,224 @@
         }
       }
     },
+    "/api/v1/notifications/settings": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Notification Settings",
+        "description": "Channels the current user wants. `webPushAvailable` is false when VAPID keys are not set.",
+        "operationId": "get_notification_settings_api_v1_notifications_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Update Notification Settings",
+        "operationId": "update_notification_settings_api_v1_notifications_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSettingsPatchBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/web-push/public-key": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Web Push Public Key",
+        "description": "VAPID application server key, base64url, for `pushManager.subscribe`.",
+        "operationId": "get_web_push_public_key_api_v1_notifications_web_push_public_key_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushPublicKeyResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/web-push/subscriptions": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Save Web Push Subscription",
+        "description": "Upserts the browser PushSubscription by endpoint for the current user.",
+        "operationId": "save_web_push_subscription_api_v1_notifications_web_push_subscriptions_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebPushSubscriptionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Delete Web Push Subscription",
+        "description": "Removes the current user's subscription. Missing ones are ignored. Query or JSON `endpoint`.",
+        "operationId": "delete_web_push_subscription_api_v1_notifications_web_push_subscriptions_delete",
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Endpoint"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WebPushUnsubscribeBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Send Test Notification",
+        "description": "Sends a test message through Web Push when that channel is enabled.",
+        "operationId": "send_test_notification_api_v1_notifications_test_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestNotificationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/notifications/{notification_id}": {
       "get": {
         "tags": [
@@ -4315,6 +4533,35 @@
         "type": "object",
         "title": "CategoryUpdateBody"
       },
+      "ChannelDeliveryResponse": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "ok"
+        ],
+        "title": "ChannelDeliveryResponse"
+      },
       "ErrorResponse": {
         "properties": {
           "code": {
@@ -5104,6 +5351,18 @@
             "type": "number",
             "title": "Createdat",
             "description": "Unix seconds in UTC; fractional seconds are supported."
+          },
+          "deliveredAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deliveredat",
+            "description": "When an external channel accepted the reminder. Null until then. Status is unchanged."
           }
         },
         "type": "object",
@@ -5118,6 +5377,41 @@
           "createdAt"
         ],
         "title": "NotificationReadResponse"
+      },
+      "NotificationSettingsPatchBody": {
+        "properties": {
+          "webPushEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Webpushenabled"
+          }
+        },
+        "type": "object",
+        "title": "NotificationSettingsPatchBody"
+      },
+      "NotificationSettingsResponse": {
+        "properties": {
+          "webPushEnabled": {
+            "type": "boolean",
+            "title": "Webpushenabled"
+          },
+          "webPushAvailable": {
+            "type": "boolean",
+            "title": "Webpushavailable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "webPushEnabled",
+          "webPushAvailable"
+        ],
+        "title": "NotificationSettingsResponse"
       },
       "NotificationStatus": {
         "type": "string",
@@ -5995,6 +6289,22 @@
         "type": "object",
         "title": "StateUpdateBody"
       },
+      "TestNotificationResponse": {
+        "properties": {
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/ChannelDeliveryResponse"
+            },
+            "type": "array",
+            "title": "Channels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channels"
+        ],
+        "title": "TestNotificationResponse"
+      },
       "UserAndAccessTokenResponse": {
         "properties": {
           "accessToken": {
@@ -6168,6 +6478,78 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WebPushKeysBody": {
+        "properties": {
+          "p256dh": {
+            "type": "string",
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "title": "Auth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "title": "WebPushKeysBody"
+      },
+      "WebPushPublicKeyResponse": {
+        "properties": {
+          "publicKey": {
+            "type": "string",
+            "title": "Publickey"
+          }
+        },
+        "type": "object",
+        "required": [
+          "publicKey"
+        ],
+        "title": "WebPushPublicKeyResponse"
+      },
+      "WebPushSubscriptionBody": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/WebPushKeysBody"
+          },
+          "expirationTime": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expirationtime"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "keys"
+        ],
+        "title": "WebPushSubscriptionBody"
+      },
+      "WebPushUnsubscribeBody": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "WebPushUnsubscribeBody"
       }
     }
   }

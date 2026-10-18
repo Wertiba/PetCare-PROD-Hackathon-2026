@@ -23,6 +23,7 @@ from .api_exs import (
     Unauthorized,
     UnsupportedMedia,
     ValidationFailed,
+    WebPushNotConfigured,
     WrongLoginOrPassword,
 )
 from .base import APIException
@@ -53,5 +54,6 @@ __all__ = [
     "Unauthorized",
     "UnsupportedMedia",
     "ValidationFailed",
+    "WebPushNotConfigured",
     "WrongLoginOrPassword",
 ]

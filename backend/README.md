@@ -71,6 +71,7 @@ cookie и база получают свои конфигурации из эт�
 | Cookie и CORS | `APP_COOKIE_SECURE`, `APP_CORS_ALLOWED_ORIGINS` |
 | Логи в stdout | `LOG_CONSOLE_LEVEL`, `LOG_CONSOLE_ENQUEUE`, `LOG_CONSOLE_BACKTRACE`, `LOG_CONSOLE_DIAGNOSE`, `LOG_CONSOLE_FORMAT` |
 | Фотографии | `S3_*` (описаны ниже) |
+| Внешние напоминания | `NOTIFICATIONS_*`, `VAPID_*` (см. [docs/notifications.md](docs/notifications.md)) |
 
 Миграциям нужны только настройки `DB_*`, инициализатору хранилища — только `S3_*`
 и `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY`. Они не требуют остальные конфигурации.
@@ -135,7 +136,11 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET / PATCH / DELETE | `/api/v1/events/{id}` | Событие |
 | POST | `/api/v1/events/{id}/complete` | Отметить выполненным, тело `{doneAt?}`. Для повторяющегося создаёт следующее |
 | GET / POST | `/api/v1/notifications?eventId=&petId=&status=&due=` | Уведомления. `due=true` — pending, время которых наступило |
-| GET / PATCH / DELETE | `/api/v1/notifications/{id}` | Уведомление (например, `{"status": "read"}`) |
+| GET / PATCH / DELETE | `/api/v1/notifications/{id}` | Уведомление (например, `{"status": "read"}`). `deliveredAt` — внешняя доставка, `status` по-прежнему для тостов в приложении |
+| GET / PATCH | `/api/v1/notifications/settings` | Канал Web Push |
+| GET | `/api/v1/notifications/web-push/public-key` | Публичный VAPID-ключ |
+| POST / DELETE | `/api/v1/notifications/web-push/subscriptions` | Подписка браузера |
+| POST | `/api/v1/notifications/test` | Проверочное сообщение в Web Push, если канал включён |
 | GET / POST | `/api/v1/notes?petId=&q=` | Текстовые заметки в карточке питомца, новые сначала |
 | GET / PATCH / DELETE | `/api/v1/notes/{id}` | Заметка |
 | GET / POST | `/api/v1/foods?petId=&isApproach=&isTolerability=` | Журнал кормлений: `name`, `weight` (г), `ingredients`, `isApproach` (понравилось), `isTolerability` (подошло), `consequences` (реакция) |
@@ -151,6 +156,10 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 - **Значение замера** проверяется по типу категории: `check` — 0 или 1, `scale` — от 1 до 5, `number` — не меньше 0. Иначе `422 INVALID_VALUE`.
 - **Повторяющиеся события** (`period`: daily, weekly, monthly, quarterly, half_year, yearly). В ответе есть `nextSchedule`. Когда запланированное событие отмечают выполненным (через `/complete` или `PATCH status=done`), сервис создаёт следующее. Дата считается от более поздней из двух: плановой или фактической (`doneAt`). Прививку, сделанную на два месяца позже плана, в следующий раз нужно делать через год от фактической даты.
 - **Тип события** (`type`): vaccination, parasite_treatment, vet_visit, medication, grooming, other. По нему строится карта здоровья: `GET /events?petId=...&type=vaccination`.
+
+## Внешние напоминания
+
+Web Push не меняет `status`: фронт по-прежнему опрашивает `GET /notifications?due=true` и сам отмечает прочитанным. Внешняя отправка пишется в `deliveredAt`. Пользователь включает Web Push в настройках и регистрирует подписку браузера. Переменные и ключи VAPID описаны в [docs/notifications.md](docs/notifications.md).
 
 ## Календарь
 

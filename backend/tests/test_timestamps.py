@@ -111,9 +111,9 @@ def test_unsupported_event_timestamps_return_422_without_writes(client, auth, pe
 
 
 def test_all_persistent_instant_columns_are_numeric():
-    names = {"created_at", "updated_at", "expires_at", "birth_date", "time", "schedule", "done_at"}
+    names = {"created_at", "updated_at", "expires_at", "birth_date", "time", "schedule", "done_at", "delivered_at"}
     columns = [column for table in metadata.tables.values() for column in table.columns if column.name in names]
-    assert len(columns) == 22
+    assert len(columns) == 24
     assert all(isinstance(column.type, Double) for column in columns)
 
 
@@ -140,7 +140,7 @@ def test_documented_timestamp_fields_are_numbers():
         "PetReadResponse": ["birthDate", "createdAt", "updatedAt"],
         "EventReadResponse": ["schedule", "doneAt", "nextSchedule", "createdAt", "updatedAt"],
         "StateReadResponse": ["time", "createdAt"],
-        "NotificationReadResponse": ["time", "createdAt"],
+        "NotificationReadResponse": ["time", "createdAt", "deliveredAt"],
         "ErrorResponse": ["timestamp"],
     }
     for model, names in fields.items():
