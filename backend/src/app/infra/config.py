@@ -62,6 +62,7 @@ class S3Config(BaseModel):
     bucket: str = Field(alias="S3_BUCKET", default="media")
     region: str = Field(alias="S3_REGION", default="us-east-1")
     presigned_ttl: int = Field(alias="S3_PRESIGNED_TTL", default=604800)
+    upload_ttl: int = Field(alias="S3_UPLOAD_TTL", default=900)
 
 
 class RustFSAdminConfig(BaseModel):

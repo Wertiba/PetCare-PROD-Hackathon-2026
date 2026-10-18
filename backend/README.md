@@ -117,8 +117,12 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET / POST | `/api/v1/pets` | Свои питомцы / создать (`name`, `breedId`, `birthDate?`). Вид берётся из породы |
 | GET / PATCH / DELETE | `/api/v1/pets/{petId}` | Карточка с `animal` и `breed`. Удаление каскадно удаляет события, замеры, уведомления, заметки, корма |
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ. Новое фото сбрасывает сгенерированный аватар |
+| POST | `/api/v1/pets/{petId}/photo/upload-url` | Подписанная ссылка, чтобы браузер загрузил jpeg/png/webp (до 5 МБ) напрямую. В базе ничего не меняет |
+| POST | `/api/v1/pets/{petId}/photo/confirm` | Принять объект `{key}` после прямой загрузки. Новое фото сбрасывает сгенерированный аватар |
+| DELETE | `/api/v1/pets/{petId}/photo` | Удалить фото и аватар, собранный из него |
 | POST | `/api/v1/pets/{petId}/avatar/generate` | Стилизованный аватар по уже загруженному фото. `avatarSource` не меняется |
 | PUT | `/api/v1/pets/{petId}/avatar` | Какую картинку показывать: `{"source": "photo"}` или `{"source": "generated"}` |
+| DELETE | `/api/v1/pets/{petId}/avatar/generated` | Удалить только сгенерированный аватар. Если он был выбран, показ возвращается на фото |
 | GET | `/api/v1/pets/{petId}/report` | PDF-отчёт: ближайшие процедуры, прививки и обработки, активность по месяцам, график веса, самочувствие, корма и заключения врачей |
 | GET / POST | `/api/v1/categories?type=&q=` | Общие для всех категории: встроенные, затем созданные пользователями / создать |
 | GET / PATCH / DELETE | `/api/v1/categories/{id}` | Менять может автор или админ (иначе `403`, для встроенных `SYSTEM_CATEGORY_READ_ONLY`). Пока категорией пользуются другие, нельзя удалить её или сменить `kind`/`type`: `409 CATEGORY_IN_USE` |
@@ -159,8 +163,12 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | Метод | Путь | |
 |---|---|---|
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле `file`. jpeg/png/webp, до 5 МБ |
+| POST | `/api/v1/pets/{petId}/photo/upload-url` | Подписанный `PUT` для прямой загрузки. В базе ничего не меняет |
+| POST | `/api/v1/pets/{petId}/photo/confirm` | Принять загруженный `{key}` |
+| DELETE | `/api/v1/pets/{petId}/photo` | Удалить фото и аватар из него |
 | POST | `/api/v1/pets/{petId}/avatar/generate` | Аватар по загруженному фото. Выбор не меняет |
 | PUT | `/api/v1/pets/{petId}/avatar` | `{"source": "photo"}` или `{"source": "generated"}` |
+| DELETE | `/api/v1/pets/{petId}/avatar/generated` | Удалить только аватар. Показ возвращается на фото |
 
 Показывать `avatarUrl`. Фотографии и аватары хранятся в приватном RustFS через
 `PhotosGateway` на aioboto3. Генерация — Spirit LLM Proxy, ключ `LLM_PROXY_API_KEY`.
@@ -268,10 +276,9 @@ Production Compose запускает `rustfs/rustfs:1.0.2` и одноразо�
 тестовые или стандартные учётные данные. Только RustFS и инициализатор получают
 секрет администратора; backend получает ограниченные учётные данные приложения.
 
-Клиент по-прежнему загружает фото через `PUT /api/v1/pets/{petId}/photo`.
-Backend проверяет владельца, тип MIME и ограничение 5 МиБ, загружает объект через
-внутренний адрес `http://rustfs:9000` и сохраняет в `photo_key` только ключ
-`pets/<uuid>.<extension>`. Сгенерированный аватар хранится в том же bucket,
+Браузер загружает фото напрямую: `POST /api/v1/pets/{petId}/photo/upload-url`, затем `PUT` на выданную ссылку и `POST .../photo/confirm`. Ключ — `pets/<petId>/photo/<uuid>.<extension>`.
+`PUT /api/v1/pets/{petId}/photo` остаётся запасным путём через backend: тот проверяет владельца, тип MIME и ограничение 5 МиБ, загружает объект через
+внутренний адрес `http://rustfs:9000` и сохраняет ключ `pets/<uuid>.<extension>`. Сгенерированный аватар хранится в том же bucket,
 его ключ — в `generated_avatar_key`. Миграция `0008_pet_avatars` переименовывает
 `photo_url` в `photo_key`, сохраняя ключи S3, и добавляет поля аватара.
 
@@ -311,6 +318,7 @@ Python-приложение его не читает.
 | `S3_ACCESS_KEY` | Идентификатор ограниченного пользователя приложения | Из `PHOTOS_ACCESS_KEY` |
 | `S3_SECRET_KEY` | Секрет пользователя приложения для запросов к S3 и подписи ссылок | Из `PHOTOS_SECRET_KEY` |
 | `S3_PRESIGNED_TTL` | Срок действия ссылки в секундах; не срок хранения фотографии | `604800` (7 дней) |
+| `S3_UPLOAD_TTL` | Срок подписанной ссылки на прямую загрузку, секунды | `900` (15 минут) |
 
 Compose передаёт эти переменные backend и инициализатору. В корневом `.env` и GitLab
 учётные данные по-прежнему задаются как `PHOTOS_ACCESS_KEY` и `PHOTOS_SECRET_KEY`;

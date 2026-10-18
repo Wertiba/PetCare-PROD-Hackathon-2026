@@ -17,6 +17,10 @@ class UnsupportedFileTypeError(EntityError):
     pass
 
 
+class PhotoUploadNotFoundError(EntityError):
+    pass
+
+
 class PetPhotoRequiredError(EntityError):
     pass
 

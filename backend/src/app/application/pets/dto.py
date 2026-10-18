@@ -33,6 +33,16 @@ class PetUpdateData:
 
 
 @dataclass(kw_only=True)
+class PetPhotoUploadUrlResult:
+    key: str
+    uploadUrl: str
+    method: str
+    headers: dict[str, str]
+    expiresAt: float
+    maxBytes: int
+
+
+@dataclass(kw_only=True)
 class PetResult:
     id: PetId
     userId: UserId

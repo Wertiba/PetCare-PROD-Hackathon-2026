@@ -3,8 +3,9 @@ from uuid import uuid4
 
 import aioboto3
 from aiobotocore.config import AioConfig
+from botocore.exceptions import ClientError
 
-from app.application.ports.photos import PhotosGateway
+from app.application.ports.photos import PhotoObject, PhotosGateway
 from app.infra.config import S3Config
 
 _CONTENT_TYPES = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
@@ -34,6 +35,7 @@ class S3PhotosGateway(PhotosGateway):
         self.client = client
         self.signer = signer
         self.config = config
+        self.upload_ttl = config.upload_ttl
 
     @staticmethod
     def _validate_key(key: str) -> None:
@@ -72,3 +74,29 @@ class S3PhotosGateway(PhotosGateway):
             ExpiresIn=self.config.presigned_ttl,
             HttpMethod="GET",
         )
+
+    async def get_presigned_upload_url(self, key: str, content_type: str) -> str:
+        self._validate_key(key)
+        return await self.signer.generate_presigned_url(
+            "put_object",
+            Params={"Bucket": self.config.bucket, "Key": key, "ContentType": content_type},
+            ExpiresIn=self.config.upload_ttl,
+            HttpMethod="PUT",
+        )
+
+    async def stat(self, key: str) -> PhotoObject | None:
+        self._validate_key(key)
+        try:
+            response = await self.client.head_object(Bucket=self.config.bucket, Key=key)
+        except ClientError as error:
+            code = str(error.response.get("Error", {}).get("Code", ""))
+            if code in {"404", "NoSuchKey", "NotFound"}:
+                return None
+            raise
+        return PhotoObject(size=int(response["ContentLength"]), content_type=response.get("ContentType"))
+
+    async def read_head(self, key: str, length: int) -> bytes:
+        self._validate_key(key)
+        response = await self.client.get_object(Bucket=self.config.bucket, Key=key, Range=f"bytes=0-{length - 1}")
+        async with response["Body"] as body:
+            return await body.read()

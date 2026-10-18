@@ -18,6 +18,7 @@ from app.domain.pets.errors import (
     GeneratedAvatarMissingError,
     PetNotFoundError,
     PetPhotoRequiredError,
+    PhotoUploadNotFoundError,
     RelatedPetNotFoundError,
     UnsupportedFileTypeError,
 )
@@ -49,6 +50,7 @@ from app.presentation.http.api.v1.exceptions.api_exs import (
     PayloadTooLarge,
     PetNotFoundRef,
     PetPhotoRequired,
+    PhotoUploadNotFound,
     SystemCategoryReadOnly,
     Unauthorized,
     UnsupportedMedia,
@@ -112,6 +114,10 @@ DOMAIN_TO_API: dict[type, callable] = {
     ),
     PetPhotoRequiredError: lambda path, exc=None: PetPhotoRequired(
         path=path,
+    ),
+    PhotoUploadNotFoundError: lambda path, exc=None: PhotoUploadNotFound(
+        path=path,
+        details={"field": "key"},
     ),
     GeneratedAvatarMissingError: lambda path, exc=None: GeneratedAvatarMissing(
         path=path,

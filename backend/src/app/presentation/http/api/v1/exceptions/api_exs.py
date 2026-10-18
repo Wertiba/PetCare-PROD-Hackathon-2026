@@ -129,6 +129,12 @@ class PetPhotoRequired(APIException):
     message = "Pet photo is required"
 
 
+class PhotoUploadNotFound(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "PHOTO_UPLOAD_NOT_FOUND"
+    message = "Uploaded photo not found"
+
+
 class GeneratedAvatarMissing(APIException):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "GENERATED_AVATAR_MISSING"

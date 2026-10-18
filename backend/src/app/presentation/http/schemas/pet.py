@@ -68,6 +68,24 @@ class PetAvatarBody(PyModel):
     source: AvatarSource
 
 
+class PetPhotoUploadUrlBody(PyModel):
+    contentType: str
+    size: Annotated[int, Field(ge=1)]
+
+
+class PetPhotoUploadUrlResponse(PyModel):
+    key: str
+    uploadUrl: str
+    method: str
+    headers: dict[str, str]
+    expiresAt: float
+    maxBytes: int
+
+
+class PetPhotoConfirmBody(PyModel):
+    key: str
+
+
 class PetReadResponse(PyModel):
     id: PetId
     userId: UserId

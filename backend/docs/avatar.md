@@ -45,14 +45,49 @@
 | `422 GENERATED_AVATAR_MISSING` | выбрали аватар, а его ещё не генерировали |
 | `413` | файл больше 5 МБ |
 | `415` | не jpeg/png/webp |
+| `422 PHOTO_UPLOAD_NOT_FOUND` | confirm с чужим, несуществующим или не тем ключом |
 | `502 AVATAR_GENERATION_FAILED` | Spirit не вернул картинку |
 | `503 AVATAR_GENERATION_UNAVAILABLE` | не задан `LLM_PROXY_API_KEY` |
 
 Ссылки подписанные и живут `S3_PRESIGNED_TTL` секунд (по умолчанию 604800 — 7 дней). Если картинка перестала открываться, карточку питомца нужно запросить заново.
 
+## Прямая загрузка
+
+Браузер кладёт файл сразу в хранилище по подписанной ссылке. Байты через backend не проходят. Пока нет confirm, карточка питомца не меняется.
+
+1. `POST /api/v1/pets/{petId}/photo/upload-url`
+
+```json
+{ "contentType": "image/jpeg", "size": 12345 }
+```
+
+`contentType` — `image/jpeg`, `image/png` или `image/webp`. `size` — байты, от 1 до 5 МБ. В ответе `key`, `uploadUrl`, `method` (`PUT`), `headers`, `expiresAt` и `maxBytes`.
+
+2. Браузер отправляет файл на `uploadUrl`. `Content-Type` должен совпасть с `headers`: этот заголовок входит в подпись.
+
+```js
+await fetch(uploadUrl, { method: "PUT", headers, body: file })
+```
+
+Ссылка живёт 15 минут (`S3_UPLOAD_TTL`, по умолчанию 900).
+
+3. `POST /api/v1/pets/{petId}/photo/confirm` с телом `{"key": "<key из шага 1>"}`. В ответе питомец: новое фото, `avatarSource` снова `photo`, старый сгенерированный аватар сброшен.
+
+4. Дальше, как раньше: `POST .../avatar/generate`, затем `PUT .../avatar`.
+
+Пропустить фото или аватар — просто не вызывать эти методы.
+
+`DELETE /api/v1/pets/{petId}/photo` удаляет фото и аватар, собранный из него. `DELETE /api/v1/pets/{petId}/avatar/generated` удаляет только аватар и, если он был выбран, возвращает показ на фото. Повторный вызов ничего не удаляет.
+
+`PUT /api/v1/pets/{petId}/photo` остаётся запасным путём: файл идёт через backend.
+
+В production загрузка идёт на тот же домен (`https://<DOMAIN>/media/...`), отдельный CORS не нужен. Локально RustFS часто на другом порту: тогда браузеру нужен CORS на хранилище, либо используйте multipart `PUT /photo`.
+
+Неподтверждённые загрузки остаются в bucket как сироты. Очистки пока нет.
+
 ## Фронт
 
-1. Форма загрузки шлёт файл на `PUT .../photo`, не base64.
+1. Форма загрузки берёт ссылку из раздела «Прямая загрузка». `PUT .../photo` — запасной путь, не base64.
 2. После ответа показывает `photoUrl` и, если есть, `generatedAvatarUrl`.
 3. Кнопка «Сделать аватар» вызывает `POST .../avatar/generate` и ждёт ответ.
 4. Две кнопки выбора вызывают `PUT .../avatar`.
@@ -83,6 +118,7 @@ S3_PUBLIC_ENDPOINT_URL=https://<DOMAIN>
 S3_REGION=us-east-1
 S3_BUCKET=media
 S3_PRESIGNED_TTL=604800
+S3_UPLOAD_TTL=900
 ```
 
 `S3_ENDPOINT_URL` — внутренний origin для backend. `S3_PUBLIC_ENDPOINT_URL` — origin,
