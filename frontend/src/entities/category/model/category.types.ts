@@ -20,5 +20,6 @@ export interface Category {
   kind: CategoryKind;
   type: CategoryType;
   unit: CategoryUnit;
-  createdBy: Uid;
+  createdBy: Uid | null;
+  isSystem: boolean;
 }
