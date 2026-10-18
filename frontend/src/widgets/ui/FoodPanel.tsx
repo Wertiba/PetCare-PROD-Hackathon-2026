@@ -6,6 +6,7 @@ import {
 } from '@src/entities/food';
 import type { Pet } from '@src/entities/pet';
 import { CreateFoodForm } from '@src/features/food/create-food';
+import { FoodStats } from '@src/widgets/ui/FoodStats';
 import { useMemo, useState } from 'react';
 
 const RECENT_NAMES_LIMIT = 6;
@@ -249,6 +250,8 @@ export function FoodPanel({
             Напомнить покормить →
           </button>
         </section>
+
+        {items?.length ? <FoodStats items={items} /> : null}
 
         {verdicts.length ? (
           <section
