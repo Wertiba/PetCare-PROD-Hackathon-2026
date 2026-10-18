@@ -686,6 +686,70 @@
           }
         },
         {
+          "name": "Issue Photo Upload Url",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/photo/upload-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "photo",
+                "upload-url"
+              ],
+              "query": []
+            },
+            "description": "Presigned PUT for a direct upload. The pet changes only after confirm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1024\n}"
+            }
+          }
+        },
+        {
+          "name": "Confirm Photo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/photo/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "photo",
+                "confirm"
+              ],
+              "query": []
+            },
+            "description": "Store an object uploaded with the presigned URL as the pet's photo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"pets/{{petId}}/photo/00000000-0000-4000-8000-000000000001.jpg\"\n}"
+            }
+          }
+        },
+        {
           "name": "Upload Photo",
           "request": {
             "method": "PUT",
@@ -1529,6 +1593,131 @@
           ]
         },
         {
+          "name": "Get Notification Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "settings"
+              ],
+              "query": []
+            },
+            "description": "Channels the current user wants. `webPushAvailable` is false when VAPID keys are not set."
+          }
+        },
+        {
+          "name": "Update Notification Settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "settings"
+              ],
+              "query": []
+            },
+            "description": "Update Notification Settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"webPushEnabled\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Web Push Public Key",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/web-push/public-key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "web-push",
+                "public-key"
+              ],
+              "query": []
+            },
+            "description": "VAPID application server key, base64url, for `pushManager.subscribe`."
+          }
+        },
+        {
+          "name": "Save Web Push Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/web-push/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "web-push",
+                "subscriptions"
+              ],
+              "query": []
+            },
+            "description": "Upserts the browser PushSubscription by endpoint for the current user.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"https://push.example.com/subscription/1\",\n  \"keys\": {\n    \"p256dh\": \"p256dh-key\",\n    \"auth\": \"auth-key\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Test Notification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "test"
+              ],
+              "query": []
+            },
+            "description": "Sends a test message through Web Push when that channel is enabled."
+          }
+        },
+        {
           "name": "Get Notification",
           "request": {
             "method": "GET",
@@ -1990,6 +2179,44 @@
           }
         },
         {
+          "name": "Delete Web Push Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/web-push/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "web-push",
+                "subscriptions"
+              ],
+              "query": [
+                {
+                  "key": "endpoint",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Removes the current user's subscription. Missing ones are ignored. Query or JSON `endpoint`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"https://push.example.com/subscription/1\"\n}"
+            }
+          }
+        },
+        {
           "name": "Delete Notification",
           "request": {
             "method": "DELETE",
@@ -2092,6 +2319,51 @@
               "query": []
             },
             "description": "Delete Pet"
+          }
+        },
+        {
+          "name": "Delete Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/photo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "photo"
+              ],
+              "query": []
+            },
+            "description": "Remove the photo and the avatar generated from it."
+          }
+        },
+        {
+          "name": "Delete Generated Avatar",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/avatar/generated",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets",
+                "{{petId}}",
+                "avatar",
+                "generated"
+              ],
+              "query": []
+            },
+            "description": "Remove the generated avatar. If it was selected, show the photo again."
           }
         },
         {

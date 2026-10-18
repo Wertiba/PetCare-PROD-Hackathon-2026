@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.engine import URL
 
 
@@ -32,6 +32,14 @@ class SecurityConfig(BaseModel):
     algorithm: str = Field(alias="APP_SECURITY_ALGORITHM", default="HS256")
 
 
+class SeedAdminConfig(BaseModel):
+    """Admin account created by migration 0011; the frontend quick-login button uses the same credentials."""
+
+    login: str = Field(alias="ADMIN_LOGIN")
+    password: str = Field(alias="ADMIN_PASSWORD", repr=False)
+    full_name: str = Field(alias="ADMIN_FULL_NAME", default="Администратор")
+
+
 class HttpConfig(BaseModel):
     cookie_secure: bool = Field(alias="APP_COOKIE_SECURE", default=True)
     cors_allowed_origins: str = Field(
@@ -62,6 +70,7 @@ class S3Config(BaseModel):
     bucket: str = Field(alias="S3_BUCKET", default="media")
     region: str = Field(alias="S3_REGION", default="us-east-1")
     presigned_ttl: int = Field(alias="S3_PRESIGNED_TTL", default=604800)
+    upload_ttl: int = Field(alias="S3_UPLOAD_TTL", default=900)
 
 
 class RustFSAdminConfig(BaseModel):
@@ -75,6 +84,34 @@ class AvatarConfig(BaseModel):
     model: str = Field(alias="LLM_AVATAR_MODEL", default="openai/gpt-5.6-sol")
     tool_model: str = Field(alias="LLM_IMAGE_TOOL_MODEL", default="gpt-image-1.5")
     timeout: float = Field(alias="LLM_AVATAR_TIMEOUT", default=180.0)
+
+
+class WebPushConfig(BaseModel):
+    public_key: str = Field(alias="VAPID_PUBLIC_KEY", default="")
+    private_key: str = Field(alias="VAPID_PRIVATE_KEY", default="", repr=False)
+    subject: str = Field(alias="VAPID_SUBJECT", default="")
+    allowed_hosts: str = Field(
+        alias="WEB_PUSH_ALLOWED_HOSTS",
+        default="fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com",
+    )
+    timeout: float = Field(alias="WEB_PUSH_TIMEOUT", default=10, gt=0)
+
+    @field_validator("subject")
+    @classmethod
+    def vapid_subject(cls, value: str) -> str:
+        stripped = value.strip()
+        if stripped and not stripped.startswith(("mailto:", "https://")):
+            raise ValueError("VAPID_SUBJECT must start with mailto: or https://")
+        return value
+
+    def configured(self) -> bool:
+        return bool(self.public_key.strip() and self.private_key.strip() and self.subject.strip())
+
+
+class NotificationsConfig(BaseModel):
+    worker_enabled: bool = Field(alias="NOTIFICATIONS_WORKER_ENABLED", default=True)
+    dispatch_interval: int = Field(alias="NOTIFICATIONS_DISPATCH_INTERVAL", default=15, ge=1)
+    max_lateness: int = Field(alias="NOTIFICATIONS_MAX_LATENESS", default=86400, ge=0)
 
 
 def build_postgres_url(config: DatabaseConfig) -> URL:

@@ -1,7 +1,9 @@
 import os
 from contextlib import asynccontextmanager
-from unittest.mock import AsyncMock, Mock
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
+
+from botocore.exceptions import ClientError
 
 for _key, _value in {
     "DB_HOST": "localhost",
@@ -19,6 +21,12 @@ for _key, _value in {
     "S3_SECRET_KEY": "test-photos-secret",
 }.items():
     os.environ.setdefault(_key, _value)
+# Background dispatch must not start during tests.
+os.environ["NOTIFICATIONS_WORKER_ENABLED"] = "false"
+# Fixture endpoints use push.example.com. Production suffixes stay allowlisted too.
+os.environ["WEB_PUSH_ALLOWED_HOSTS"] = (
+    "fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com,example.com"
+)
 import pytest
 from dishka import Provider, Scope, provide
 from sqlalchemy import event
@@ -134,6 +142,14 @@ def photo_objects():
 
 @pytest.fixture(autouse=True)
 def isolated_photo_storage(photo_objects, monkeypatch):
+    content_types: dict[str, str] = {}
+
+    def stored_type(key: str) -> str | None:
+        if key in content_types:
+            return content_types[key]
+        extension = key[key.rfind(".") :] if "." in key else ""
+        return {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}.get(extension)
+
     @asynccontextmanager
     async def client_factory(config, *, public=False):
         if public:
@@ -141,17 +157,38 @@ def isolated_photo_storage(photo_objects, monkeypatch):
                 yield signer
         else:
             client = Mock()
-            client.put_object = AsyncMock(
-                side_effect=lambda **kwargs: photo_objects.update({kwargs["Key"]: kwargs["Body"]})
-            )
+
+            async def put_object(**kwargs):
+                photo_objects[kwargs["Key"]] = kwargs["Body"]
+                if content_type := kwargs.get("ContentType"):
+                    content_types[kwargs["Key"]] = content_type
+
             async def get_object(**kwargs):
+                data = photo_objects[kwargs["Key"]]
+                if range_header := kwargs.get("Range"):
+                    start_text, end_text = range_header.removeprefix("bytes=").split("-", 1)
+                    start = int(start_text) if start_text else 0
+                    end = int(end_text) if end_text else len(data) - 1
+                    data = data[start : end + 1]
                 body = AsyncMock()
                 body.__aenter__.return_value = body
-                body.read.return_value = photo_objects[kwargs["Key"]]
+                body.read.return_value = data
                 return {"Body": body}
 
+            async def head_object(**kwargs):
+                key = kwargs["Key"]
+                if key not in photo_objects:
+                    raise ClientError({"Error": {"Code": "404", "Message": "Not Found"}}, "HeadObject")
+                return {"ContentLength": len(photo_objects[key]), "ContentType": stored_type(key)}
+
+            async def delete_object(**kwargs):
+                photo_objects.pop(kwargs["Key"], None)
+                content_types.pop(kwargs["Key"], None)
+
+            client.put_object = AsyncMock(side_effect=put_object)
             client.get_object = AsyncMock(side_effect=get_object)
-            client.delete_object = AsyncMock(side_effect=lambda **kwargs: photo_objects.pop(kwargs["Key"], None))
+            client.head_object = AsyncMock(side_effect=head_object)
+            client.delete_object = AsyncMock(side_effect=delete_object)
             yield client
 
     monkeypatch.setattr("app.infra.photos.di.create_s3_client", client_factory)

@@ -16,6 +16,7 @@ def test_me_returns_and_updates_profile(client, auth):
     assert updated.json()["fullName"] == "Новое Имя"
     assert client.get("/api/v1/users/me", headers=auth).json()["fullName"] == "Новое Имя"
     assert client.patch("/api/v1/users/me", json={"fullName": "!"}, headers=auth).status_code == 422
+    client.cookies.clear()
     assert client.get("/api/v1/users/me").status_code == 401
 
 

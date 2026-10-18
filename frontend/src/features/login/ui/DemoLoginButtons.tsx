@@ -1,6 +1,6 @@
 'use client';
 
-import { demoUsers } from '@src/shared/config';
+import { demoAdmin, demoUsers } from '@src/shared/config';
 
 import { useLoginMutation } from '../model/use-login-mutation';
 
@@ -30,6 +30,14 @@ export function DemoLoginButtons() {
             {user.login}
           </button>
         ))}
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => mutate(demoAdmin)}
+          className="col-span-2 border border-[var(--ink)] bg-[var(--forest)] px-3 py-3 text-sm font-bold tracking-[0.01em] text-white transition-transform hover:-translate-y-0.5 hover:bg-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)] disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-3 lg:col-span-5"
+        >
+          Войти как админ
+        </button>
       </div>
       {error ? (
         <p

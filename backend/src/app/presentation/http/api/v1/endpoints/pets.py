@@ -7,10 +7,14 @@ from fastapi import APIRouter, File, Response, UploadFile, status
 from app.application.pagination import Pagination
 from app.application.pets.dto import PetCreateData, PetUpdateData
 from app.application.pets.interactors import (
+    ConfirmPetPhoto,
     CreatePet,
+    DeleteGeneratedAvatar,
     DeletePet,
+    DeletePetPhoto,
     GeneratePetAvatar,
     GetPet,
+    IssuePetPhotoUploadUrl,
     ListPets,
     SelectPetAvatar,
     SetPetPhoto,
@@ -21,13 +25,28 @@ from app.domain.pets.ids import PetId
 from app.infra.metrics import track
 from app.presentation.http.api.v1.dependencies import CurrentUserDep, PaginationDep
 from app.presentation.http.paginated import Page
-from app.presentation.http.schemas.pet import PetAvatarBody, PetCreateBody, PetReadResponse, PetUpdateBody
+from app.presentation.http.schemas.pet import (
+    PetAvatarBody,
+    PetCreateBody,
+    PetPhotoConfirmBody,
+    PetPhotoUploadUrlBody,
+    PetPhotoUploadUrlResponse,
+    PetReadResponse,
+    PetUpdateBody,
+)
 from app.presentation.http.schemas.responses import ErrorResponse
 from app.presentation.http.uploads import read_photo
 
 router = APIRouter(prefix="/pets", tags=["Pets"], route_class=DishkaRoute)
 _NOT_FOUND = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Pet not found"}}
 _UNPROCESSABLE = {status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "Breed not found"}}
+_PHOTO_FILE = {
+    status.HTTP_413_CONTENT_TOO_LARGE: {"model": ErrorResponse, "description": "File is too large"},
+    status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"model": ErrorResponse, "description": "Unsupported file type"},
+}
+_PHOTO_UPLOAD = {
+    status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "PHOTO_UPLOAD_NOT_FOUND"},
+}
 
 
 @router.get("", response_model=Page[PetReadResponse], status_code=status.HTTP_200_OK)
@@ -75,21 +94,63 @@ async def delete_pet(user: CurrentUserDep, pet_id: PetId, interactor: FromDishka
     track("pet", "deleted")
 
 
+@router.post(
+    "/{pet_id}/photo/upload-url",
+    response_model=PetPhotoUploadUrlResponse,
+    status_code=status.HTTP_200_OK,
+    responses={**_NOT_FOUND, **_PHOTO_FILE},
+)
+async def issue_photo_upload_url(
+    user: CurrentUserDep,
+    pet_id: PetId,
+    interactor: FromDishka[IssuePetPhotoUploadUrl],
+    body: PetPhotoUploadUrlBody,
+) -> PetPhotoUploadUrlResponse:
+    """Presigned PUT for a direct upload. The pet changes only after confirm."""
+    result = await interactor(user.id, pet_id, body.contentType, body.size)
+    track("pet", "photo_upload_url_issued")
+    return PetPhotoUploadUrlResponse.model_validate(result, from_attributes=True)
+
+
+@router.post(
+    "/{pet_id}/photo/confirm",
+    response_model=PetReadResponse,
+    status_code=status.HTTP_200_OK,
+    responses={**_NOT_FOUND, **_PHOTO_FILE, **_PHOTO_UPLOAD},
+)
+async def confirm_photo(
+    user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[ConfirmPetPhoto], body: PetPhotoConfirmBody
+) -> PetReadResponse:
+    """Store an object uploaded with the presigned URL as the pet's photo."""
+    result = await interactor(user.id, pet_id, body.key)
+    track("pet", "photo_uploaded")
+    return PetReadResponse.model_validate(result, from_attributes=True)
+
+
 @router.put(
     "/{pet_id}/photo",
     response_model=PetReadResponse,
     status_code=status.HTTP_200_OK,
-    responses={
-        **_NOT_FOUND,
-        status.HTTP_413_CONTENT_TOO_LARGE: {"model": ErrorResponse, "description": "File is too large"},
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"model": ErrorResponse, "description": "Unsupported file type"},
-    },
+    responses={**_NOT_FOUND, **_PHOTO_FILE},
 )
 async def upload_photo(
     user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[SetPetPhoto], file: Annotated[UploadFile, File()]
 ) -> PetReadResponse:
     result = await interactor(user.id, pet_id, await read_photo(file))
     track("pet", "photo_uploaded")
+    return PetReadResponse.model_validate(result, from_attributes=True)
+
+
+@router.delete(
+    "/{pet_id}/photo",
+    response_model=PetReadResponse,
+    status_code=status.HTTP_200_OK,
+    responses=_NOT_FOUND,
+)
+async def delete_photo(user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[DeletePetPhoto]) -> PetReadResponse:
+    """Remove the photo and the avatar generated from it."""
+    result = await interactor(user.id, pet_id)
+    track("pet", "photo_deleted")
     return PetReadResponse.model_validate(result, from_attributes=True)
 
 
@@ -113,6 +174,21 @@ async def generate_avatar(
     """Build a stylized avatar from the pet's photo. Does not change avatarSource."""
     result = await interactor(user.id, pet_id)
     track("pet", "avatar_generated")
+    return PetReadResponse.model_validate(result, from_attributes=True)
+
+
+@router.delete(
+    "/{pet_id}/avatar/generated",
+    response_model=PetReadResponse,
+    status_code=status.HTTP_200_OK,
+    responses=_NOT_FOUND,
+)
+async def delete_generated_avatar(
+    user: CurrentUserDep, pet_id: PetId, interactor: FromDishka[DeleteGeneratedAvatar]
+) -> PetReadResponse:
+    """Remove the generated avatar. If it was selected, show the photo again."""
+    result = await interactor(user.id, pet_id)
+    track("pet", "generated_avatar_deleted")
     return PetReadResponse.model_validate(result, from_attributes=True)
 
 

@@ -16,6 +16,9 @@ import { AddWeightForm } from '@src/features/state/create-state';
 import { Uid } from '@src/shared/api/global.types';
 import { useMemo, useState } from 'react';
 
+import { EventCreatedToast } from './EventCreatedToast';
+import { EventReminderCount } from './EventNotifications';
+
 // System category seeded by the backend for weight measurements, in grams.
 const WEIGHT_CATEGORY_NAME = 'Вес';
 
@@ -143,8 +146,10 @@ function EventBadges({ event }: { event: Event }) {
 
 function HealthEntryItem({
   entry,
+  onOpenReminders,
 }: {
   entry: HealthEntry;
+  onOpenReminders: (event?: Event) => void;
 }) {
   return (
     <li className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 border-b border-[var(--forest)]/10 py-4 last:border-b-0">
@@ -175,6 +180,10 @@ function HealthEntryItem({
             <div className="mt-2 flex flex-wrap gap-1.5 empty:hidden">
               <EventBadges event={entry.event} />
             </div>
+            <EventReminderCount
+              event={entry.event}
+              onOpen={onOpenReminders}
+            />
           </>
         )}
       </div>
@@ -185,9 +194,11 @@ function HealthEntryItem({
 function HealthBoard({
   pet,
   weightCategoryId,
+  onOpenReminders,
 }: {
   pet: Pet;
   weightCategoryId: Uid | null;
+  onOpenReminders: (event?: Event) => void;
 }) {
   const [entryType, setEntryType] =
     useState<EntryType | null>(null);
@@ -197,6 +208,8 @@ function HealthBoard({
   const [savedLabel, setSavedLabel] = useState<
     string | null
   >(null);
+  const [createdEvent, setCreatedEvent] =
+    useState<Event | null>(null);
   const events = useGetEventsQuery({
     page: 0,
     size: 100,
@@ -236,9 +249,6 @@ function HealthBoard({
     return result.sort((a, b) => b.time - a.time);
   }, [eventItems, stateItems, weightCategoryId]);
 
-  const presentTypes = entryTypes.filter((type) =>
-    entries.some((entry) => entryTypeOf(entry) === type),
-  );
   const visible =
     filter === 'all'
       ? entries
@@ -291,33 +301,31 @@ function HealthBoard({
           ) : null}
         </div>
 
-        {presentTypes.length > 1 ? (
-          <div
-            role="group"
-            aria-label="Фильтр по типу записи"
-            className="mt-5 flex flex-wrap gap-2"
+        <div
+          role="group"
+          aria-label="Фильтр по типу записи"
+          className="mt-5 flex flex-wrap gap-2"
+        >
+          <button
+            type="button"
+            aria-pressed={filter === 'all'}
+            onClick={() => setFilter('all')}
+            className={chipClassName}
           >
+            Все
+          </button>
+          {entryTypes.map((type) => (
             <button
+              key={type}
               type="button"
-              aria-pressed={filter === 'all'}
-              onClick={() => setFilter('all')}
+              aria-pressed={filter === type}
+              onClick={() => setFilter(type)}
               className={chipClassName}
             >
-              Все
+              {entryLabel(type)}
             </button>
-            {presentTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={filter === type}
-                onClick={() => setFilter(type)}
-                className={chipClassName}
-              >
-                {entryLabel(type)}
-              </button>
-            ))}
-          </div>
-        ) : null}
+          ))}
+        </div>
 
         {events.isPending || weights.isPending ? (
           <p className="py-6 text-sm text-[var(--ink)]/60">
@@ -336,6 +344,7 @@ function HealthBoard({
               <HealthEntryItem
                 key={`${entry.kind}-${entry.id}`}
                 entry={entry}
+                onOpenReminders={onOpenReminders}
               />
             ))}
           </ol>
@@ -345,6 +354,13 @@ function HealthBoard({
             врачу, прививку или взвешивание.
           </p>
         )}
+        <button
+          type="button"
+          onClick={() => onOpenReminders()}
+          className="mt-4 text-sm font-bold text-[var(--forest)] underline underline-offset-2 hover:text-[var(--forest)]/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+        >
+          Перейти к напоминаниям →
+        </button>
       </section>
 
       <section
@@ -399,7 +415,10 @@ function HealthBoard({
                 key={entryType}
                 petId={pet.id}
                 type={entryType}
-                onSuccess={(event) => finish(event.name)}
+                onSuccess={(event) => {
+                  finish(event.name);
+                  setCreatedEvent(event);
+                }}
               />
             ) : weightCategoryId ? (
               <AddWeightForm
@@ -421,11 +440,21 @@ function HealthBoard({
           </div>
         ) : null}
       </section>
+      <EventCreatedToast
+        event={createdEvent}
+        onClose={() => setCreatedEvent(null)}
+      />
     </div>
   );
 }
 
-export function HealthPanel({ pet }: { pet: Pet }) {
+export function HealthPanel({
+  pet,
+  onOpenReminders,
+}: {
+  pet: Pet;
+  onOpenReminders: (event?: Event) => void;
+}) {
   const categories = useGetCategoriesQuery({
     page: 0,
     size: 20,
@@ -450,6 +479,7 @@ export function HealthPanel({ pet }: { pet: Pet }) {
     <HealthBoard
       pet={pet}
       weightCategoryId={weightCategory?.id ?? null}
+      onOpenReminders={onOpenReminders}
     />
   );
 }

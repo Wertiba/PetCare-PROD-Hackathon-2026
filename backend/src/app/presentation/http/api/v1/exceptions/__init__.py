@@ -18,10 +18,12 @@ from .api_exs import (
     PayloadTooLarge,
     PetNotFoundRef,
     PetPhotoRequired,
+    PhotoUploadNotFound,
     SystemCategoryReadOnly,
     Unauthorized,
     UnsupportedMedia,
     ValidationFailed,
+    WebPushNotConfigured,
     WrongLoginOrPassword,
 )
 from .base import APIException
@@ -47,9 +49,11 @@ __all__ = [
     "PayloadTooLarge",
     "PetNotFoundRef",
     "PetPhotoRequired",
+    "PhotoUploadNotFound",
     "SystemCategoryReadOnly",
     "Unauthorized",
     "UnsupportedMedia",
     "ValidationFailed",
+    "WebPushNotConfigured",
     "WrongLoginOrPassword",
 ]

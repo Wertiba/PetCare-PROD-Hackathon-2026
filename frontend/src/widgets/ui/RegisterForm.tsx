@@ -65,7 +65,7 @@ export function RegisterForm() {
         label="Password"
         type="password"
         autoComplete="new-password"
-        placeholder="At least 8 characters"
+        placeholder="Не менее 8 символов"
         error={errors.password?.message}
         {...register('password')}
       />

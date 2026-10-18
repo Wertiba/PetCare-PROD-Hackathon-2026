@@ -198,7 +198,6 @@ function AdminBreedList({
             key={breed.id}
             id={breed.id}
             name={breed.name}
-            isSeeded={breed.createdBy === null}
             pending={
               update.isPending &&
               update.variables.id === breed.id

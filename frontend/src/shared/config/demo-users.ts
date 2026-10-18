@@ -12,3 +12,9 @@ export const demoUsers = [
   { login: 'жюри9', password: DEMO_PASSWORD },
   { login: 'жюри10', password: DEMO_PASSWORD },
 ] as const;
+
+// Must match ADMIN_LOGIN / ADMIN_PASSWORD in .env (backend migration 0011_seed_admin).
+export const demoAdmin = {
+  login: 'admin',
+  password: 'admin12345',
+} as const;

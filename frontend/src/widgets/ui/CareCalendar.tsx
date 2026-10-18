@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  type Event,
   type EventPeriod,
   type EventType,
   eventStatusLabels,
@@ -8,8 +9,15 @@ import {
 } from '@src/entities/event';
 import { useGetPetQuery } from '@src/entities/pet';
 import { useCreateEventMutation } from '@src/features/event/create-event';
+import { CreateNotificationForm } from '@src/features/notification/create-notification/ui/CreateNotificationForm';
+import { createPetColorMap } from '@src/shared/lib';
 import { Dialog } from '@src/shared/ui';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+import {
+  EventNotificationsButton,
+  EventNotificationsDialog,
+} from './EventNotifications';
 
 const monthFormatter = new Intl.DateTimeFormat('ru-RU', {
   month: 'long',
@@ -87,17 +95,42 @@ function Icon({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CareCalendar() {
+export function CareCalendar({
+  focusEvent,
+  petId,
+}: {
+  focusEvent?: Event;
+  petId?: string;
+}) {
   const now = new Date();
+  const initialDate = focusEvent
+    ? new Date(focusEvent.schedule * 1000)
+    : now;
   const [visibleDate, setVisibleDate] = useState(
-    () => new Date(now.getFullYear(), now.getMonth(), 1),
+    () =>
+      new Date(
+        initialDate.getFullYear(),
+        initialDate.getMonth(),
+        1,
+      ),
   );
   const [selectedDate, setSelectedDate] = useState(() =>
-    startOfDay(now),
+    startOfDay(initialDate),
+  );
+  const [listEvent, setListEvent] = useState<Event | null>(
+    focusEvent ?? null,
+  );
+  const closeList = useCallback(
+    () => setListEvent(null),
+    [],
   );
   const [isCreateOpen, setCreateOpen] = useState(false);
+  const [notificationEvent, setNotificationEvent] =
+    useState<Event | null>(null);
   const petsQuery = useGetPetQuery({ page: 0, size: 100 });
-  const pets = petsQuery.data?.items ?? [];
+  const pets = (petsQuery.data?.items ?? []).filter(
+    (pet) => !petId || pet.id === petId,
+  );
   const rangeStart = new Date(
     visibleDate.getFullYear(),
     visibleDate.getMonth(),
@@ -111,14 +144,32 @@ export function CareCalendar() {
   const eventsQuery = useGetEventsQuery({
     page: 0,
     size: 100,
+    petId,
     from: rangeStart.getTime() / 1000,
     to: rangeEnd.getTime() / 1000 - 1,
   });
+  const petColorById = useMemo(
+    () => createPetColorMap(pets.map((pet) => pet.id)),
+    [pets],
+  );
+  const petNameById = useMemo(
+    () => new Map(pets.map((pet) => [pet.id, pet.name])),
+    [pets],
+  );
   const eventsByDate = useMemo(() => {
-    const result = new Map<string, number>();
+    const result = new Map<
+      string,
+      { count: number; petIds: Set<string> }
+    >();
     eventsQuery.data?.items.forEach((event) => {
       const key = dateKey(new Date(event.schedule * 1000));
-      result.set(key, (result.get(key) ?? 0) + 1);
+      const eventsForDay = result.get(key) ?? {
+        count: 0,
+        petIds: new Set<string>(),
+      };
+      eventsForDay.count += 1;
+      eventsForDay.petIds.add(event.petId);
+      result.set(key, eventsForDay);
     });
     return result;
   }, [eventsQuery.data?.items]);
@@ -217,7 +268,7 @@ export function CareCalendar() {
   }
 
   return (
-    <div>
+    <div className="bg-white px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-5">
         <div>
           <p className="text-sm font-semibold text-[var(--ink)]/55">
@@ -335,7 +386,9 @@ export function CareCalendar() {
               const isSelected =
                 key === dateKey(selectedDate);
               const isToday = key === dateKey(now);
-              const eventCount = eventsByDate.get(key) ?? 0;
+              const eventsForDay = eventsByDate.get(key);
+              const eventPetIds = eventsForDay?.petIds;
+              const eventCount = eventsForDay?.count ?? 0;
               return (
                 <div
                   key={key}
@@ -349,11 +402,22 @@ export function CareCalendar() {
                     className={`relative grid size-10 place-items-center rounded-full text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)] sm:size-11 ${isSelected ? 'bg-[var(--forest)] text-white' : isToday ? 'border-2 border-[var(--forest)] text-[var(--forest)]' : 'text-[var(--ink)] hover:bg-[var(--lime)]'}`}
                   >
                     <span>{date.getDate()}</span>
-                    {eventCount ? (
+                    {eventPetIds ? (
                       <span
                         aria-hidden="true"
-                        className={`absolute bottom-1 size-1.5 rounded-full ${isSelected ? 'bg-[var(--lime)]' : 'bg-[var(--forest)]'}`}
-                      />
+                        className="absolute bottom-1 flex max-w-8 items-center justify-center gap-0.5"
+                      >
+                        {[...eventPetIds].map((petId) => (
+                          <span
+                            key={petId}
+                            className="size-1.5 rounded-full ring-1 ring-white"
+                            style={{
+                              backgroundColor:
+                                petColorById.get(petId),
+                            }}
+                          />
+                        ))}
+                      </span>
                     ) : null}
                   </button>
                 </div>
@@ -383,11 +447,31 @@ export function CareCalendar() {
               selectedEvents.map((event) => (
                 <article
                   key={event.id}
-                  className="border-l-2 border-[var(--lime)] bg-[var(--cream)] px-3 py-3"
+                  className="border-l-2 bg-[var(--cream)] px-3 py-3"
+                  style={{
+                    borderLeftColor: petColorById.get(
+                      event.petId,
+                    ),
+                  }}
                 >
-                  <p className="font-bold text-[var(--forest)]">
-                    {event.name}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="font-bold text-[var(--forest)]">
+                      {event.name}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--ink)]/65">
+                      <span
+                        aria-hidden="true"
+                        className="size-2 rounded-full"
+                        style={{
+                          backgroundColor: petColorById.get(
+                            event.petId,
+                          ),
+                        }}
+                      />
+                      {petNameById.get(event.petId) ??
+                        'Питомец'}
+                    </span>
+                  </div>
                   <p className="mt-1 text-sm text-[var(--ink)]/60">
                     {eventTypes.find(
                       (item) => item.value === event.type,
@@ -399,6 +483,20 @@ export function CareCalendar() {
                       {event.description}
                     </p>
                   ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNotificationEvent(event)
+                      }
+                      className="rounded-sm border border-[var(--forest)]/25 bg-white px-3 py-1.5 text-sm font-bold text-[var(--forest)] transition-colors hover:border-[var(--forest)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+                    >
+                      + Добавить напоминание
+                    </button>
+                    <EventNotificationsButton
+                      event={event}
+                    />
+                  </div>
                 </article>
               ))
             ) : (
@@ -417,7 +515,66 @@ export function CareCalendar() {
           onClose={() => setCreateOpen(false)}
         />
       ) : null}
+
+      {listEvent ? (
+        <EventNotificationsDialog
+          event={listEvent}
+          onClose={closeList}
+        />
+      ) : null}
+
+      {notificationEvent ? (
+        <CreateNotificationDialog
+          event={notificationEvent}
+          onClose={() => setNotificationEvent(null)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function CreateNotificationDialog({
+  event,
+  onClose,
+}: {
+  event: Event;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog
+      labelledBy="create-notification-title"
+      onClose={onClose}
+    >
+      <div className="mx-auto w-xl max-w-full p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div>
+            <p className="text-sm font-semibold text-[var(--ink)]/55">
+              {event.name}
+            </p>
+            <h2
+              id="create-notification-title"
+              className="mt-1 text-2xl font-black text-[var(--forest)]"
+            >
+              Новое уведомление
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть"
+            className="grid size-9 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
+          >
+            ×
+          </button>
+        </div>
+        <div className="mt-5">
+          <CreateNotificationForm
+            eventId={event.id}
+            onSuccess={onClose}
+          />
+        </div>
+      </div>
+    </Dialog>
   );
 }
 

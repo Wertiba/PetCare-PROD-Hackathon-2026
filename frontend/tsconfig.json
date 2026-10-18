@@ -29,6 +29,9 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
+    "**/*.mjs",
+    "**/*.cjs",
+    "**/*.js"
   ],
   "exclude": ["node_modules"]
 }

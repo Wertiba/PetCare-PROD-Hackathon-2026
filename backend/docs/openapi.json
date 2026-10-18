@@ -1150,6 +1150,170 @@
         }
       }
     },
+    "/api/v1/pets/{pet_id}/photo/upload-url": {
+      "post": {
+        "tags": [
+          "Pets"
+        ],
+        "summary": "Issue Photo Upload Url",
+        "description": "Presigned PUT for a direct upload. The pet changes only after confirm.",
+        "operationId": "issue_photo_upload_url_api_v1_pets__pet_id__photo_upload_url_post",
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PetId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetPhotoUploadUrlBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetPhotoUploadUrlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File is too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported file type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pets/{pet_id}/photo/confirm": {
+      "post": {
+        "tags": [
+          "Pets"
+        ],
+        "summary": "Confirm Photo",
+        "description": "Store an object uploaded with the presigned URL as the pet's photo.",
+        "operationId": "confirm_photo_api_v1_pets__pet_id__photo_confirm_post",
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PetId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetPhotoConfirmBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File is too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported file type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "PHOTO_UPLOAD_NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pets/{pet_id}/photo": {
       "put": {
         "tags": [
@@ -1210,6 +1374,56 @@
           },
           "415": {
             "description": "Unsupported file type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Pets"
+        ],
+        "summary": "Delete Photo",
+        "description": "Remove the photo and the avatar generated from it.",
+        "operationId": "delete_photo_api_v1_pets__pet_id__photo_delete",
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PetId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1296,6 +1510,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pets/{pet_id}/avatar/generated": {
+      "delete": {
+        "tags": [
+          "Pets"
+        ],
+        "summary": "Delete Generated Avatar",
+        "description": "Remove the generated avatar. If it was selected, show the photo again.",
+        "operationId": "delete_generated_avatar_api_v1_pets__pet_id__avatar_generated_delete",
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PetId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -2895,6 +3161,224 @@
         }
       }
     },
+    "/api/v1/notifications/settings": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Notification Settings",
+        "description": "Channels the current user wants. `webPushAvailable` is false when VAPID keys are not set.",
+        "operationId": "get_notification_settings_api_v1_notifications_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Update Notification Settings",
+        "operationId": "update_notification_settings_api_v1_notifications_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSettingsPatchBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/web-push/public-key": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Web Push Public Key",
+        "description": "VAPID application server key, base64url, for `pushManager.subscribe`.",
+        "operationId": "get_web_push_public_key_api_v1_notifications_web_push_public_key_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushPublicKeyResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/web-push/subscriptions": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Save Web Push Subscription",
+        "description": "Upserts the browser PushSubscription by endpoint for the current user.",
+        "operationId": "save_web_push_subscription_api_v1_notifications_web_push_subscriptions_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebPushSubscriptionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Delete Web Push Subscription",
+        "description": "Removes the current user's subscription. Missing ones are ignored. Query or JSON `endpoint`.",
+        "operationId": "delete_web_push_subscription_api_v1_notifications_web_push_subscriptions_delete",
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Endpoint"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WebPushUnsubscribeBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Send Test Notification",
+        "description": "Sends a test message through Web Push when that channel is enabled.",
+        "operationId": "send_test_notification_api_v1_notifications_test_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestNotificationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/notifications/{notification_id}": {
       "get": {
         "tags": [
@@ -3695,7 +4179,9 @@
         "properties": {
           "accessToken": {
             "type": "string",
-            "title": "Accesstoken"
+            "title": "Accesstoken",
+            "description": "Deprecated: retained in the response body for backward compatibility and will be removed in a future API version. Use the HttpOnly accessToken cookie instead. No removal date has been scheduled.",
+            "deprecated": true
           },
           "expiresIn": {
             "type": "integer",
@@ -4062,6 +4548,35 @@
         },
         "type": "object",
         "title": "CategoryUpdateBody"
+      },
+      "ChannelDeliveryResponse": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "ok"
+        ],
+        "title": "ChannelDeliveryResponse"
       },
       "ErrorResponse": {
         "properties": {
@@ -4854,6 +5369,18 @@
             "type": "number",
             "title": "Createdat",
             "description": "Unix seconds in UTC; fractional seconds are supported."
+          },
+          "deliveredAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deliveredat",
+            "description": "When at least one device accepted the push, or the remaining subscriptions were all revoked. Null until then. Status is unchanged."
           }
         },
         "type": "object",
@@ -4868,6 +5395,41 @@
           "createdAt"
         ],
         "title": "NotificationReadResponse"
+      },
+      "NotificationSettingsPatchBody": {
+        "properties": {
+          "webPushEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Webpushenabled"
+          }
+        },
+        "type": "object",
+        "title": "NotificationSettingsPatchBody"
+      },
+      "NotificationSettingsResponse": {
+        "properties": {
+          "webPushEnabled": {
+            "type": "boolean",
+            "title": "Webpushenabled"
+          },
+          "webPushAvailable": {
+            "type": "boolean",
+            "title": "Webpushavailable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "webPushEnabled",
+          "webPushAvailable"
+        ],
+        "title": "NotificationSettingsResponse"
       },
       "NotificationStatus": {
         "type": "string",
@@ -5287,6 +5849,79 @@
         "type": "string",
         "format": "uuid"
       },
+      "PetPhotoConfirmBody": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "PetPhotoConfirmBody"
+      },
+      "PetPhotoUploadUrlBody": {
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "title": "Contenttype"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contentType",
+          "size"
+        ],
+        "title": "PetPhotoUploadUrlBody"
+      },
+      "PetPhotoUploadUrlResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "title": "Uploadurl"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Headers"
+          },
+          "expiresAt": {
+            "type": "number",
+            "title": "Expiresat"
+          },
+          "maxBytes": {
+            "type": "integer",
+            "title": "Maxbytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "uploadUrl",
+          "method",
+          "headers",
+          "expiresAt",
+          "maxBytes"
+        ],
+        "title": "PetPhotoUploadUrlResponse"
+      },
       "PetReadResponse": {
         "properties": {
           "id": {
@@ -5676,11 +6311,29 @@
         "type": "object",
         "title": "StateUpdateBody"
       },
+      "TestNotificationResponse": {
+        "properties": {
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/ChannelDeliveryResponse"
+            },
+            "type": "array",
+            "title": "Channels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channels"
+        ],
+        "title": "TestNotificationResponse"
+      },
       "UserAndAccessTokenResponse": {
         "properties": {
           "accessToken": {
             "type": "string",
-            "title": "Accesstoken"
+            "title": "Accesstoken",
+            "description": "Deprecated: retained in the response body for backward compatibility and will be removed in a future API version. Use the HttpOnly accessToken cookie instead. No removal date has been scheduled.",
+            "deprecated": true
           },
           "expiresIn": {
             "type": "integer",
@@ -5850,6 +6503,81 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WebPushKeysBody": {
+        "properties": {
+          "p256dh": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Auth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "title": "WebPushKeysBody"
+      },
+      "WebPushPublicKeyResponse": {
+        "properties": {
+          "publicKey": {
+            "type": "string",
+            "title": "Publickey"
+          }
+        },
+        "type": "object",
+        "required": [
+          "publicKey"
+        ],
+        "title": "WebPushPublicKeyResponse"
+      },
+      "WebPushSubscriptionBody": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "title": "Endpoint"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/WebPushKeysBody"
+          },
+          "expirationTime": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expirationtime"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "keys"
+        ],
+        "title": "WebPushSubscriptionBody"
+      },
+      "WebPushUnsubscribeBody": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "WebPushUnsubscribeBody"
       }
     }
   }

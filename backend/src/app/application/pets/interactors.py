@@ -1,9 +1,19 @@
+import re
 from dataclasses import dataclass
+from time import time
 from typing import Any
+from uuid import uuid4
 
 from app.application.changes import apply_changes
 from app.application.pagination import Page, Pagination
-from app.application.pets.dto import PetAnimalResult, PetBreedResult, PetCreateData, PetResult, PetUpdateData
+from app.application.pets.dto import (
+    PetAnimalResult,
+    PetBreedResult,
+    PetCreateData,
+    PetPhotoUploadUrlResult,
+    PetResult,
+    PetUpdateData,
+)
 from app.application.ports.avatar_generator import AvatarGenerator
 from app.application.ports.breed_gateway import BreedGateway
 from app.application.ports.pet_gateway import PetGateway
@@ -19,9 +29,11 @@ from app.domain.pets.errors import (
     GeneratedAvatarMissingError,
     PetNotFoundError,
     PetPhotoRequiredError,
+    PhotoUploadNotFoundError,
     UnsupportedFileTypeError,
 )
 from app.domain.pets.ids import PetId
+from app.domain.pets.image import IMAGE_HEADER_BYTES, sniff_image_type
 from app.domain.pets.rules import age_months
 from app.domain.users.ids import UserId
 
@@ -46,6 +58,15 @@ def content_type_for_key(key: str) -> str:
     if dot < 0:
         return "application/octet-stream"
     return _EXTENSION_TYPES.get(key[dot:].lower(), "application/octet-stream")
+
+
+_DIRECT_PHOTO_KEY = re.compile(r"pets/(?P<pet>[0-9a-f-]{36})/photo/[0-9a-f-]{36}\.(?:jpg|png|webp)")
+
+
+def _require_direct_photo_key(key: str, pet_id: PetId) -> None:
+    match = _DIRECT_PHOTO_KEY.fullmatch(key)
+    if match is None or match.group("pet") != str(pet_id):
+        raise PhotoUploadNotFoundError
 
 
 @dataclass
@@ -95,6 +116,28 @@ class _PetContext:
         if pet is None:
             raise PetNotFoundError
         return pet
+
+    async def _commit_photo_replacement(self, pet: Pet, new_key: str) -> tuple[PetResult, str | None, str | None]:
+        old_photo = pet.photo_key
+        old_avatar = pet.generated_avatar_key
+        apply_changes(
+            pet,
+            {"photo_key": new_key, "generated_avatar_key": None, "avatar_source": AvatarSource.PHOTO},
+        )
+        result = await self._to_read_response(pet)
+        await self.uow.commit()
+        return result, old_photo, old_avatar
+
+    async def _delete_replaced_objects(self, old_photo: str | None, old_avatar: str | None, new_key: str) -> None:
+        if old_photo and old_photo != new_key:
+            await self.photos.delete(old_photo)
+        if old_avatar:
+            await self.photos.delete(old_avatar)
+
+    async def _replace_photo(self, pet: Pet, new_key: str) -> PetResult:
+        result, old_photo, old_avatar = await self._commit_photo_replacement(pet, new_key)
+        await self._delete_replaced_objects(old_photo, old_avatar, new_key)
+        return result
 
 
 class ListPets(_PetContext):
@@ -158,23 +201,81 @@ class SetPetPhoto(_PetContext):
         if len(upload.content) > MAX_PHOTO_BYTES:
             raise FileTooLargeError
         pet = await self._require_pet(user_id, pet_id)
-        old_photo = pet.photo_key
-        old_avatar = pet.generated_avatar_key
         new_key = await self.photos.save(upload.content, extension)
         try:
-            apply_changes(
-                pet,
-                {"photo_key": new_key, "generated_avatar_key": None, "avatar_source": AvatarSource.PHOTO},
-            )
-            result = await self._to_read_response(pet)
-            await self.uow.commit()
+            result, old_photo, old_avatar = await self._commit_photo_replacement(pet, new_key)
         except Exception:
             await self.photos.delete(new_key)
             raise
-        if old_photo and old_photo != new_key:
-            await self.photos.delete(old_photo)
-        if old_avatar:
-            await self.photos.delete(old_avatar)
+        await self._delete_replaced_objects(old_photo, old_avatar, new_key)
+        return result
+
+
+class IssuePetPhotoUploadUrl(_PetContext):
+    async def __call__(self, user_id: UserId, pet_id: PetId, content_type: str, size: int) -> PetPhotoUploadUrlResult:
+        await self._require_pet(user_id, pet_id)
+        media_type = photo_media_type(content_type)
+        if size > MAX_PHOTO_BYTES:
+            raise FileTooLargeError
+        key = f"pets/{pet_id}/photo/{uuid4()}{_PHOTO_EXTENSIONS[media_type]}"
+        return PetPhotoUploadUrlResult(
+            key=key,
+            uploadUrl=await self.photos.get_presigned_upload_url(key, media_type),
+            method="PUT",
+            headers={"Content-Type": media_type},
+            expiresAt=time() + self.photos.upload_ttl,
+            maxBytes=MAX_PHOTO_BYTES,
+        )
+
+
+class ConfirmPetPhoto(_PetContext):
+    async def __call__(self, user_id: UserId, pet_id: PetId, key: str) -> PetResult:
+        pet = await self._require_pet(user_id, pet_id)
+        _require_direct_photo_key(key, pet_id)
+        if pet.photo_key == key:
+            return await self._to_read_response(pet)
+        stored = await self.photos.stat(key)
+        if stored is None:
+            raise PhotoUploadNotFoundError
+        if stored.size > MAX_PHOTO_BYTES:
+            await self.photos.delete(key)
+            raise FileTooLargeError
+        header = await self.photos.read_head(key, IMAGE_HEADER_BYTES)
+        if sniff_image_type(header) != content_type_for_key(key):
+            await self.photos.delete(key)
+            raise UnsupportedFileTypeError
+        return await self._replace_photo(pet, key)
+
+
+class DeletePetPhoto(_PetContext):
+    async def __call__(self, user_id: UserId, pet_id: PetId) -> PetResult:
+        pet = await self._require_pet(user_id, pet_id)
+        photo_key = pet.photo_key
+        avatar_key = pet.generated_avatar_key
+        if photo_key is None:
+            return await self._to_read_response(pet)
+        apply_changes(pet, {"photo_key": None, "generated_avatar_key": None, "avatar_source": AvatarSource.PHOTO})
+        result = await self._to_read_response(pet)
+        await self.uow.commit()
+        await self.photos.delete(photo_key)
+        await self.photos.delete(avatar_key)
+        return result
+
+
+class DeleteGeneratedAvatar(_PetContext):
+    async def __call__(self, user_id: UserId, pet_id: PetId) -> PetResult:
+        pet = await self._require_pet(user_id, pet_id)
+        avatar_key = pet.generated_avatar_key
+        source = pet.avatar_source if isinstance(pet.avatar_source, AvatarSource) else AvatarSource(pet.avatar_source)
+        if avatar_key is None and source != AvatarSource.GENERATED:
+            return await self._to_read_response(pet)
+        changes: dict[str, Any] = {"generated_avatar_key": None}
+        if source == AvatarSource.GENERATED:
+            changes["avatar_source"] = AvatarSource.PHOTO
+        apply_changes(pet, changes)
+        result = await self._to_read_response(pet)
+        await self.uow.commit()
+        await self.photos.delete(avatar_key)
         return result
 
 

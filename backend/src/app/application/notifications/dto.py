@@ -8,6 +8,29 @@ from app.domain.pets.ids import PetId
 
 
 @dataclass(kw_only=True)
+class NotificationSettingsResult:
+    webPushEnabled: bool
+    webPushAvailable: bool
+
+
+@dataclass(kw_only=True)
+class NotificationSettingsPatch:
+    changes: dict[str, Any]
+
+
+@dataclass(kw_only=True)
+class ChannelDeliveryResult:
+    channel: str
+    ok: bool
+    error: str | None = None
+
+
+@dataclass(kw_only=True)
+class TestDeliveryResult:
+    channels: list[ChannelDeliveryResult]
+
+
+@dataclass(kw_only=True)
 class NotificationCreateData:
     eventId: EventId
     type: NotificationType = NotificationType.APP
@@ -30,3 +53,4 @@ class NotificationResult:
     status: NotificationStatus
     time: float
     createdAt: float
+    deliveredAt: float | None = None

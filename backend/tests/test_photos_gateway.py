@@ -4,8 +4,10 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from aiobotocore.stub import AioStubber
+from botocore.exceptions import ClientError
 from botocore.stub import ANY
 
+from app.application.ports.photos import PhotoObject
 from app.infra.config import S3Config
 from app.infra.photos.s3 import S3PhotosGateway, create_s3_client
 
@@ -112,9 +114,81 @@ async def test_invalid_keys_cannot_be_signed_or_deleted(gateway, key):
     with pytest.raises(ValueError, match="Invalid photo object key"):
         await gateway.get_presigned_url(key)
     with pytest.raises(ValueError, match="Invalid photo object key"):
+        await gateway.get_presigned_upload_url(key, "image/png")
+    with pytest.raises(ValueError, match="Invalid photo object key"):
         await gateway.delete(key)
     with pytest.raises(ValueError, match="Invalid photo object key"):
         await gateway.load(key)
+    with pytest.raises(ValueError, match="Invalid photo object key"):
+        await gateway.stat(key)
+    with pytest.raises(ValueError, match="Invalid photo object key"):
+        await gateway.read_head(key, 16)
+
+
+async def test_presigned_upload_url_signs_content_type_on_the_public_host(gateway):
+    key = "pets/00000000-0000-0000-0000-000000000001/photo/00000000-0000-0000-0000-000000000002.png"
+    signed = urlsplit(await gateway.get_presigned_upload_url(key, "image/png"))
+    assert signed.scheme == "https"
+    assert signed.netloc == "petcare.example.com"
+    assert signed.path == f"/media/{key}"
+    query = parse_qs(signed.query)
+    assert query["X-Amz-Expires"] == ["900"]
+    assert set(query["X-Amz-SignedHeaders"][0].split(";")) == {"content-type", "host"}
+    assert "test-photos-secret" not in signed.geturl()
+
+
+async def test_stat_returns_size_and_content_type(gateway):
+    key = "pets/00000000-0000-0000-0000-000000000001.png"
+    with AioStubber(gateway.client) as stub:
+        stub.add_response(
+            "head_object",
+            {"ContentLength": 42, "ContentType": "image/png"},
+            {"Bucket": "media", "Key": key},
+        )
+        assert await gateway.stat(key) == PhotoObject(size=42, content_type="image/png")
+        stub.assert_no_pending_responses()
+
+
+@pytest.mark.parametrize("code", ["404", "NoSuchKey", "NotFound"])
+async def test_stat_returns_none_when_the_object_is_missing(gateway, code):
+    key = "pets/00000000-0000-0000-0000-000000000001.png"
+    with AioStubber(gateway.client) as stub:
+        stub.add_client_error(
+            "head_object",
+            service_error_code=code,
+            service_message="Not Found",
+            http_status_code=404,
+            expected_params={"Bucket": "media", "Key": key},
+        )
+        assert await gateway.stat(key) is None
+        stub.assert_no_pending_responses()
+
+
+async def test_stat_reraises_other_client_errors(gateway):
+    key = "pets/00000000-0000-0000-0000-000000000001.png"
+    with AioStubber(gateway.client) as stub:
+        stub.add_client_error(
+            "head_object",
+            service_error_code="AccessDenied",
+            service_message="Access Denied",
+            http_status_code=403,
+            expected_params={"Bucket": "media", "Key": key},
+        )
+        with pytest.raises(ClientError):
+            await gateway.stat(key)
+
+
+async def test_read_head_requests_a_byte_range(gateway, monkeypatch):
+    key = "pets/00000000-0000-0000-0000-000000000001.png"
+    body = AsyncMock()
+    body.__aenter__.return_value = body
+    body.read.return_value = b"\x89PNG\r\n\x1a\nrest"
+    get_object = AsyncMock(return_value={"Body": body})
+    monkeypatch.setattr(gateway.client, "get_object", get_object)
+
+    assert await gateway.read_head(key, 16) == b"\x89PNG\r\n\x1a\nrest"
+    get_object.assert_awaited_once_with(Bucket="media", Key=key, Range="bytes=0-15")
+    body.__aexit__.assert_awaited_once()
 
 
 async def test_signing_failure_after_upload_cleans_up_the_new_object(client, auth, pet_id, monkeypatch):

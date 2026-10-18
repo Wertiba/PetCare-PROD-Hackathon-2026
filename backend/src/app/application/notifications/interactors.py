@@ -37,6 +37,7 @@ class _NotificationContext:
             status=notification.status,
             time=notification.time,
             createdAt=notification.created_at,
+            deliveredAt=notification.delivered_at,
         )
 
     async def _require_notification(self, user_id: UserId, notification_id: NotificationId) -> Notification:

@@ -1,6 +1,7 @@
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, exists, func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.application.exceptions import ApplicationError
 from app.application.ports.notification_gateway import NotificationGateway
@@ -9,6 +10,7 @@ from app.domain.events.ids import EventId
 from app.domain.notifications.entity import Notification
 from app.domain.notifications.enums import NotificationStatus
 from app.domain.notifications.ids import NotificationId
+from app.domain.notifications.settings import NotificationSettings, WebPushSubscription
 from app.domain.pets.entity import Pet
 from app.domain.pets.ids import PetId
 from app.domain.users.ids import UserId
@@ -49,6 +51,63 @@ class SqlAlchemyNotificationGateway(NotificationGateway):
             return list(result.scalars().all())
         except SQLAlchemyError as e:
             raise ApplicationError("Database error") from e
+
+    async def list_pending_undelivered(self, *, now: float, earliest: float) -> list[Notification]:
+        # Users without the channel stay pending and can still be sent inside MAX_LATENESS.
+        has_subscription = exists().where(WebPushSubscription.user_id == Pet.user_id)
+        stmt = (
+            select(Notification)
+            .options(selectinload(Notification.event).selectinload(Event.pet))
+            .join(Event, Event.id == Notification.event_id)
+            .join(Pet, Pet.id == Event.pet_id)
+            .join(NotificationSettings, NotificationSettings.user_id == Pet.user_id)
+            .where(
+                Notification.status == NotificationStatus.PENDING,
+                Notification.delivered_at.is_(None),
+                Notification.time <= now,
+                Notification.time >= earliest,
+                NotificationSettings.web_push_enabled.is_(True),
+                has_subscription,
+            )
+            .order_by(Notification.time.asc())
+        )
+        try:
+            result = await self.session.execute(stmt)
+            return list(result.scalars().all())
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+
+    async def claim_delivery(self, notification_id: NotificationId, delivered_at: float) -> bool:
+        # Conditional update is the cross-worker lock. RETURNING one id is rowcount == 1.
+        # synchronize_session=False keeps a stale identity-map copy from writing delivered_at back to NULL.
+        stmt = (
+            update(Notification)
+            .where(Notification.id == notification_id, Notification.delivered_at.is_(None))
+            .values(delivered_at=delivered_at)
+            .returning(Notification.id)
+            .execution_options(synchronize_session=False)
+        )
+        try:
+            result = await self.session.execute(stmt)
+            claimed = result.scalar_one_or_none() is not None
+            await self.session.commit()
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+        return claimed
+
+    async def release_delivery(self, notification_id: NotificationId, claimed_at: float) -> None:
+        # Same claimed_at guard as the lock: a newer claim from another worker is left alone.
+        stmt = (
+            update(Notification)
+            .where(Notification.id == notification_id, Notification.delivered_at == claimed_at)
+            .values(delivered_at=None)
+            .execution_options(synchronize_session=False)
+        )
+        try:
+            await self.session.execute(stmt)
+            await self.session.commit()
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
 
     async def count_by_user_id(
         self,

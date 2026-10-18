@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from app.domain.events.enums import EventPeriod, EventStatus, EventType
 from app.domain.events.ids import EventId
+from app.domain.pets.entity import Pet
 from app.domain.pets.ids import PetId
 
 
@@ -20,3 +21,4 @@ class Event:
     done_at: float | None = None
     created_at: float = field(default_factory=time)
     updated_at: float = field(default_factory=time)
+    pet: Pet | None = None

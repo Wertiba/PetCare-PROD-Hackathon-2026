@@ -84,9 +84,19 @@ BODIES = {  # whole-body overrides where field-by-field examples would not make 
     ("/api/v1/animals/{animal_id}", "patch"): {"name": "Грызун"},
     ("/api/v1/breeds/{breed_id}", "patch"): {"name": "Джунгарский хомячок"},
     ("/api/v1/pets/{pet_id}", "patch"): {"name": "Барсик Второй", "birthDate": 1579046400},
+    ("/api/v1/pets/{pet_id}/photo/upload-url", "post"): {"contentType": "image/jpeg", "size": 1024},
+    ("/api/v1/pets/{pet_id}/photo/confirm", "post"): {
+        "key": "pets/{{petId}}/photo/00000000-0000-4000-8000-000000000001.jpg"
+    },
     ("/api/v1/categories/{category_id}", "patch"): {"name": "Прогулки у реки"},
     ("/api/v1/events/{event_id}", "patch"): {"description": "Взять ветпаспорт"},
     ("/api/v1/notifications/{notification_id}", "patch"): {"status": "read"},
+    ("/api/v1/notifications/settings", "patch"): {"webPushEnabled": False},
+    ("/api/v1/notifications/web-push/subscriptions", "post"): {
+        "endpoint": "https://push.example.com/subscription/1",
+        "keys": {"p256dh": "p256dh-key", "auth": "auth-key"},
+    },
+    ("/api/v1/notifications/web-push/subscriptions", "delete"): {"endpoint": "https://push.example.com/subscription/1"},
     ("/api/v1/states/{state_id}", "patch"): {"value": 0, "note": "Передумали"},
     ("/api/v1/notes/{note_id}", "patch"): {"content": "Уже не боится пылесоса"},
     ("/api/v1/foods/{food_id}", "patch"): {"isTolerability": False, "consequences": "Рвота через час после еды"},

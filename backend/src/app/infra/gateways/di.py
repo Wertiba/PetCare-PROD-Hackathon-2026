@@ -7,10 +7,12 @@ from app.application.ports.event_gateway import EventGateway
 from app.application.ports.food_gateway import FoodGateway
 from app.application.ports.note_gateway import NoteGateway
 from app.application.ports.notification_gateway import NotificationGateway
+from app.application.ports.notification_settings_gateway import NotificationSettingsGateway
 from app.application.ports.pet_gateway import PetGateway
 from app.application.ports.refresh_token_gateway import RefreshTokenGateway
 from app.application.ports.state_gateway import StateGateway
 from app.application.ports.user_gateway import UserGateway
+from app.application.ports.web_push_subscription_gateway import WebPushSubscriptionGateway
 from app.infra.gateways.animal import SqlAlchemyAnimalGateway
 from app.infra.gateways.breed import SqlAlchemyBreedGateway
 from app.infra.gateways.category import SqlAlchemyCategoryGateway
@@ -18,10 +20,12 @@ from app.infra.gateways.event import SqlAlchemyEventGateway
 from app.infra.gateways.food import SqlAlchemyFoodGateway
 from app.infra.gateways.note import SqlAlchemyNoteGateway
 from app.infra.gateways.notification import SqlAlchemyNotificationGateway
+from app.infra.gateways.notification_settings import SqlAlchemyNotificationSettingsGateway
 from app.infra.gateways.pet import SqlAlchemyPetGateway
 from app.infra.gateways.refresh_token import SqlAlchemyRefreshTokenGateway
 from app.infra.gateways.state import SqlAlchemyStateGateway
 from app.infra.gateways.user import SqlAlchemyUserGateway
+from app.infra.gateways.web_push_subscription import SqlAlchemyWebPushSubscriptionGateway
 
 
 class GatewayProvider(Provider):
@@ -34,6 +38,8 @@ class GatewayProvider(Provider):
     state = provide(SqlAlchemyStateGateway, provides=StateGateway)
     event = provide(SqlAlchemyEventGateway, provides=EventGateway)
     notification = provide(SqlAlchemyNotificationGateway, provides=NotificationGateway)
+    notification_settings = provide(SqlAlchemyNotificationSettingsGateway, provides=NotificationSettingsGateway)
+    web_push_subscription = provide(SqlAlchemyWebPushSubscriptionGateway, provides=WebPushSubscriptionGateway)
     note = provide(SqlAlchemyNoteGateway, provides=NoteGateway)
     food = provide(SqlAlchemyFoodGateway, provides=FoodGateway)
     refresh_token = provide(SqlAlchemyRefreshTokenGateway, provides=RefreshTokenGateway)

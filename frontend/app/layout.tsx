@@ -23,6 +23,7 @@ export const metadata: Metadata = {
   title: 'petcare — держите важное рядом',
   description:
     'Спокойное место для ежедневных деталей заботы о питомце.',
+  manifest: '/manifest.webmanifest',
 };
 
 export default function RootLayout({

@@ -13,11 +13,21 @@
       "CREATE INDEX idx_categories_created_by ON categories (created_by)"
     ]
   },
+  "notification_settings": {
+    "table": "\nCREATE TABLE notification_settings (\n\tuser_id UUID NOT NULL, \n\tweb_push_enabled BOOLEAN DEFAULT false NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": []
+  },
   "refresh_tokens": {
     "table": "\nCREATE TABLE refresh_tokens (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\thashed_token VARCHAR(255) NOT NULL, \n\texpires_at DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
     "indexes": [
       "CREATE INDEX idx_refresh_tokens_hashed_token ON refresh_tokens (hashed_token)",
       "CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens (user_id)"
+    ]
+  },
+  "web_push_subscriptions": {
+    "table": "\nCREATE TABLE web_push_subscriptions (\n\tid UUID NOT NULL, \n\tuser_id UUID NOT NULL, \n\tendpoint TEXT NOT NULL, \n\tp256dh VARCHAR(255) NOT NULL, \n\tauth VARCHAR(255) NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_web_push_subscriptions_endpoint UNIQUE (endpoint), \n\tFOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE\n)\n\n",
+    "indexes": [
+      "CREATE INDEX idx_web_push_subscriptions_user_id ON web_push_subscriptions (user_id)"
     ]
   },
   "breeds": {
@@ -56,7 +66,7 @@
     ]
   },
   "notifications": {
-    "table": "\nCREATE TABLE notifications (\n\tid UUID NOT NULL, \n\tevent_id UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\ttime DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(event_id) REFERENCES events (id) ON DELETE CASCADE\n)\n\n",
+    "table": "\nCREATE TABLE notifications (\n\tid UUID NOT NULL, \n\tevent_id UUID NOT NULL, \n\ttype VARCHAR(20) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\ttime DOUBLE PRECISION NOT NULL, \n\tcreated_at DOUBLE PRECISION NOT NULL, \n\tdelivered_at DOUBLE PRECISION, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(event_id) REFERENCES events (id) ON DELETE CASCADE\n)\n\n",
     "indexes": [
       "CREATE INDEX idx_notifications_event_id ON notifications (event_id)",
       "CREATE INDEX idx_notifications_status_time ON notifications (status, time)"

@@ -6,6 +6,7 @@ import {
 } from '@src/entities/food';
 import type { Pet } from '@src/entities/pet';
 import { CreateFoodForm } from '@src/features/food/create-food';
+import { FoodStats } from '@src/widgets/ui/FoodStats';
 import { useMemo, useState } from 'react';
 
 const RECENT_NAMES_LIMIT = 6;
@@ -148,7 +149,13 @@ function VerdictList({
   );
 }
 
-export function FoodPanel({ pet }: { pet: Pet }) {
+export function FoodPanel({
+  pet,
+  onOpenReminders,
+}: {
+  pet: Pet;
+  onOpenReminders: () => void;
+}) {
   const [saved, setSaved] = useState<string | null>(null);
   const foods = useGetFoodsQuery({
     page: 0,
@@ -198,75 +205,56 @@ export function FoodPanel({ pet }: { pet: Pet }) {
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr] xl:items-start">
-      <section
-        aria-labelledby="food-history-title"
-        className="order-2 rounded-md border-2 border-[var(--forest)] bg-white p-5 shadow-[4px_4px_0_var(--lime)] xl:order-1"
-      >
-        <h2
-          id="food-history-title"
-          className="text-xl font-black text-[var(--forest)]"
-        >
-          Дневник питания
-        </h2>
-        <p className="mt-1 text-sm text-[var(--ink)]/60">
-          Корма, порции и реакции на них
-        </p>
-
-        {foods.isPending ? (
-          <p className="py-6 text-sm text-[var(--ink)]/60">
-            Загружаем дневник…
-          </p>
-        ) : foods.isError ? (
-          <p
-            role="alert"
-            className="mt-5 border-l-4 border-red-700 bg-red-50 px-4 py-3 text-sm leading-5 text-red-800"
-          >
-            Не удалось загрузить дневник. Обновите страницу.
-          </p>
-        ) : items?.length ? (
-          <ol className="mt-3">
-            {items.map((food) => (
-              <FoodItem key={food.id} food={food} />
-            ))}
-          </ol>
-        ) : (
-          <p className="py-6 text-sm text-[var(--ink)]/60">
-            Пока нет записей. Запишите первое кормление —
-            так со временем станет видно, какие корма
-            подходят.
-          </p>
-        )}
-      </section>
-
-      <div className="order-1 grid gap-5 xl:order-2">
+      <div className="grid content-start gap-5">
         <section
-          aria-labelledby="food-entry-title"
-          className="rounded-md border border-[var(--forest)]/25 bg-white p-5"
+          aria-labelledby="food-history-title"
+          className="rounded-md border-2 border-[var(--forest)] bg-white p-5 shadow-[4px_4px_0_var(--lime)]"
         >
           <h2
-            id="food-entry-title"
+            id="food-history-title"
             className="text-xl font-black text-[var(--forest)]"
           >
-            Записать кормление
+            Дневник питания
           </h2>
-          <p className="mt-1 mb-5 text-sm text-[var(--ink)]/60">
-            Нравится и подходит — разные вопросы: корм может
-            нравиться, но не подходить.
+          <p className="mt-1 text-sm text-[var(--ink)]/60">
+            Корма, порции и реакции на них
           </p>
-          {saved ? (
-            <p
-              role="status"
-              className="mb-5 border-l-4 border-[var(--forest)] bg-[var(--lime)]/40 px-4 py-3 text-sm font-semibold text-[var(--forest)]"
-            >
-              {saved} — сохранено в дневнике
+
+          {foods.isPending ? (
+            <p className="py-6 text-sm text-[var(--ink)]/60">
+              Загружаем дневник…
             </p>
-          ) : null}
-          <CreateFoodForm
-            petId={pet.id}
-            recentNames={recentNames}
-            onSuccess={(food) => setSaved(food.name)}
-          />
+          ) : foods.isError ? (
+            <p
+              role="alert"
+              className="mt-5 border-l-4 border-red-700 bg-red-50 px-4 py-3 text-sm leading-5 text-red-800"
+            >
+              Не удалось загрузить дневник. Обновите
+              страницу.
+            </p>
+          ) : items?.length ? (
+            <ol className="mt-3">
+              {items.map((food) => (
+                <FoodItem key={food.id} food={food} />
+              ))}
+            </ol>
+          ) : (
+            <p className="py-6 text-sm text-[var(--ink)]/60">
+              Пока нет записей. Запишите первое кормление —
+              так со временем станет видно, какие корма
+              подходят.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={onOpenReminders}
+            className="mt-4 text-sm font-bold text-[var(--forest)] underline underline-offset-2 hover:text-[var(--forest)]/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+          >
+            Напомнить покормить →
+          </button>
         </section>
+
+        {items?.length ? <FoodStats items={items} /> : null}
 
         {verdicts.length ? (
           <section
@@ -298,6 +286,37 @@ export function FoodPanel({ pet }: { pet: Pet }) {
             </div>
           </section>
         ) : null}
+      </div>
+
+      <div>
+        <section
+          aria-labelledby="food-entry-title"
+          className="rounded-md border border-[var(--forest)]/25 bg-white p-5"
+        >
+          <h2
+            id="food-entry-title"
+            className="text-xl font-black text-[var(--forest)]"
+          >
+            Записать кормление
+          </h2>
+          <p className="mt-1 mb-5 text-sm text-[var(--ink)]/60">
+            Нравится и подходит — разные вопросы: корм может
+            нравиться, но не подходить.
+          </p>
+          {saved ? (
+            <p
+              role="status"
+              className="mb-5 border-l-4 border-[var(--forest)] bg-[var(--lime)]/40 px-4 py-3 text-sm font-semibold text-[var(--forest)]"
+            >
+              {saved} — сохранено в дневнике
+            </p>
+          ) : null}
+          <CreateFoodForm
+            petId={pet.id}
+            recentNames={recentNames}
+            onSuccess={(food) => setSaved(food.name)}
+          />
+        </section>
       </div>
     </div>
   );

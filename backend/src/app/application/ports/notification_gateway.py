@@ -24,6 +24,16 @@ class NotificationGateway(Protocol):
         due: bool = False,
     ) -> list[Notification]: ...
 
+    async def list_pending_undelivered(self, *, now: float, earliest: float) -> list[Notification]: ...
+
+    async def claim_delivery(self, notification_id: NotificationId, delivered_at: float) -> bool:
+        """Conditional UPDATE ... WHERE delivered_at IS NULL. True only when this worker claimed the row."""
+        ...
+
+    async def release_delivery(self, notification_id: NotificationId, claimed_at: float) -> None:
+        """SET delivered_at = NULL only when it still equals claimed_at. Commits."""
+        ...
+
     async def count_by_user_id(
         self,
         user_id: UserId,

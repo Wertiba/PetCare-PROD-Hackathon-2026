@@ -2,7 +2,20 @@ import uuid
 from enum import Enum
 from time import time
 
-from sqlalchemy import JSON, Boolean, Column, Double, ForeignKey, Index, Integer, String, Table, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    Double,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+    false,
+)
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -18,6 +31,7 @@ from app.domain.foods.entity import Food
 from app.domain.notes.entity import Note
 from app.domain.notifications.entity import Notification
 from app.domain.notifications.enums import NotificationStatus, NotificationType
+from app.domain.notifications.settings import NotificationSettings, WebPushSubscription
 from app.domain.pets.entity import Pet
 from app.domain.pets.enums import AvatarSource
 from app.domain.refresh_tokens.entity import RefreshToken
@@ -147,8 +161,27 @@ notifications = Table(
     Column("status", str_enum(NotificationStatus, "notification_status"), nullable=False),
     Column("time", Double(), nullable=False),
     Column("created_at", Double(), nullable=False, default=lambda: time()),
+    Column("delivered_at", Double(), nullable=True),
     Index("idx_notifications_event_id", "event_id"),
     Index("idx_notifications_status_time", "status", "time"),
+)
+notification_settings = Table(
+    "notification_settings",
+    metadata,
+    Column("user_id", PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("web_push_enabled", Boolean, nullable=False, default=False, server_default=false()),
+)
+web_push_subscriptions = Table(
+    "web_push_subscriptions",
+    metadata,
+    Column("id", PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
+    Column("user_id", PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    Column("endpoint", Text, nullable=False),
+    Column("p256dh", String(255), nullable=False),
+    Column("auth", String(255), nullable=False),
+    Column("created_at", Double(), nullable=False, default=lambda: time()),
+    UniqueConstraint("endpoint", name="uq_web_push_subscriptions_endpoint"),
+    Index("idx_web_push_subscriptions_user_id", "user_id"),
 )
 notes = Table(
     "notes",
@@ -202,10 +235,14 @@ def start_mappers() -> None:
     )
     mapper_registry.map_imperatively(Category, categories)
     mapper_registry.map_imperatively(State, states)
-    mapper_registry.map_imperatively(Event, events)
+    mapper_registry.map_imperatively(
+        Event, events, properties={"pet": relationship(Pet, lazy="selectin", viewonly=True)}
+    )
     mapper_registry.map_imperatively(
         Notification, notifications, properties={"event": relationship(Event, lazy="selectin")}
     )
+    mapper_registry.map_imperatively(NotificationSettings, notification_settings)
+    mapper_registry.map_imperatively(WebPushSubscription, web_push_subscriptions)
     mapper_registry.map_imperatively(Note, notes)
     mapper_registry.map_imperatively(Food, food)
     mapper_registry.map_imperatively(RefreshToken, refresh_tokens, properties={"user": relationship(User)})

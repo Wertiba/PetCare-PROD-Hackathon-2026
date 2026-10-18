@@ -10,7 +10,12 @@ from app.domain.errors import UnprocessableEntityError
 from app.domain.events.errors import EventNotFoundError, EventNotPlannedError, RelatedEventNotFoundError
 from app.domain.foods.errors import FoodNotFoundError
 from app.domain.notes.errors import NoteNotFoundError
-from app.domain.notifications.errors import NotificationNotFoundError
+from app.domain.notifications.errors import (
+    NotificationNotFoundError,
+    WebPushEndpointNotAllowedError,
+    WebPushEndpointRequiredError,
+    WebPushNotConfiguredError,
+)
 from app.domain.pets.errors import (
     AvatarGenerationFailedError,
     AvatarGenerationUnavailableError,
@@ -18,6 +23,7 @@ from app.domain.pets.errors import (
     GeneratedAvatarMissingError,
     PetNotFoundError,
     PetPhotoRequiredError,
+    PhotoUploadNotFoundError,
     RelatedPetNotFoundError,
     UnsupportedFileTypeError,
 )
@@ -49,10 +55,12 @@ from app.presentation.http.api.v1.exceptions.api_exs import (
     PayloadTooLarge,
     PetNotFoundRef,
     PetPhotoRequired,
+    PhotoUploadNotFound,
     SystemCategoryReadOnly,
     Unauthorized,
     UnsupportedMedia,
     ValidationFailed,
+    WebPushNotConfigured,
     WrongLoginOrPassword,
 )
 
@@ -113,6 +121,10 @@ DOMAIN_TO_API: dict[type, callable] = {
     PetPhotoRequiredError: lambda path, exc=None: PetPhotoRequired(
         path=path,
     ),
+    PhotoUploadNotFoundError: lambda path, exc=None: PhotoUploadNotFound(
+        path=path,
+        details={"field": "key"},
+    ),
     GeneratedAvatarMissingError: lambda path, exc=None: GeneratedAvatarMissing(
         path=path,
     ),
@@ -163,6 +175,15 @@ DOMAIN_TO_API: dict[type, callable] = {
     NotificationNotFoundError: lambda path, exc=None: NotFound(
         path=path,
         message="Notification not found",
+    ),
+    WebPushNotConfiguredError: lambda path, exc=None: WebPushNotConfigured(path=path),
+    WebPushEndpointNotAllowedError: lambda path, exc=None: ValidationFailed(
+        path=path,
+        details={"field": "endpoint"},
+    ),
+    WebPushEndpointRequiredError: lambda path, exc=None: ValidationFailed(
+        path=path,
+        details={"field": "endpoint"},
     ),
     NoteNotFoundError: lambda path, exc=None: NotFound(
         path=path,

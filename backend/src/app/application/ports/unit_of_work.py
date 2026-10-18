@@ -7,12 +7,27 @@ from app.domain.events.entity import Event
 from app.domain.foods.entity import Food
 from app.domain.notes.entity import Note
 from app.domain.notifications.entity import Notification
+from app.domain.notifications.settings import NotificationSettings, WebPushSubscription
 from app.domain.pets.entity import Pet
 from app.domain.refresh_tokens.entity import RefreshToken
 from app.domain.states.entity import State
 from app.domain.users.entity import User
 
-type Entity = User | Animal | Breed | Pet | Category | State | Event | Notification | Note | Food | RefreshToken
+type Entity = (
+    User
+    | Animal
+    | Breed
+    | Pet
+    | Category
+    | State
+    | Event
+    | Notification
+    | NotificationSettings
+    | WebPushSubscription
+    | Note
+    | Food
+    | RefreshToken
+)
 
 
 class UnitOfWork(Protocol):

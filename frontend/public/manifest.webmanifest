@@ -1,0 +1,11 @@
+{
+  "name": "petcare",
+  "short_name": "petcare",
+  "description": "Держите важное о питомцах рядом",
+  "lang": "ru",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f0",
+  "theme_color": "#173e32"
+}

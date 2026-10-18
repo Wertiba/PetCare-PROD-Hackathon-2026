@@ -129,6 +129,12 @@ class PetPhotoRequired(APIException):
     message = "Pet photo is required"
 
 
+class PhotoUploadNotFound(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "PHOTO_UPLOAD_NOT_FOUND"
+    message = "Uploaded photo not found"
+
+
 class GeneratedAvatarMissing(APIException):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "GENERATED_AVATAR_MISSING"
@@ -145,3 +151,9 @@ class AvatarGenerationUnavailable(APIException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     code = "AVATAR_GENERATION_UNAVAILABLE"
     message = "Avatar generation is unavailable"
+
+
+class WebPushNotConfigured(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "WEB_PUSH_NOT_CONFIGURED"
+    message = "Web Push is not configured"

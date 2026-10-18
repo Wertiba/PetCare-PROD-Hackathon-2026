@@ -74,6 +74,7 @@ _UNITS = {
     CategoryUnit.POINTS: "баллов",
     CategoryUnit.NONE: "",
 }
+_TOLERANCE_LEGEND = (("suited", "подошло", MINT), ("unsuited", "не подошло", CORAL), ("unknown", "не оценено", LINE))
 _MONTHS = ("янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек")
 
 
@@ -171,12 +172,14 @@ def _header(report: PetReport, width: float) -> Table:
     photo = _photo(report.photo, 34 * mm)
     table = Table([[lines, photo or ""]], colWidths=[width - 44 * mm, 44 * mm], rowHeights=[46 * mm])
     table.setStyle(
-        TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), GREEN),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("ALIGN", (1, 0), (1, 0), "CENTER"),
-            ("LEFTPADDING", (0, 0), (0, 0), 8 * mm),
-        ])
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), GREEN),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (1, 0), (1, 0), "CENTER"),
+                ("LEFTPADDING", (0, 0), (0, 0), 8 * mm),
+            ]
+        )
     )
     return table
 
@@ -206,12 +209,14 @@ def _kpis(report: PetReport, width: float) -> Table:
     tile = (width - gap * 3) / 4
     table = Table([cells], colWidths=[tile] * 4, rowHeights=[20 * mm])
     table.setStyle(
-        TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), TINT),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("LEFTPADDING", (0, 0), (-1, -1), 4 * mm),
-            ("LINEAFTER", (0, 0), (-2, 0), gap, colors.white),
-        ])
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), TINT),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4 * mm),
+                ("LINEAFTER", (0, 0), (-2, 0), gap, colors.white),
+            ]
+        )
     )
     return table
 
@@ -232,12 +237,14 @@ def _upcoming(report: PetReport, width: float) -> list:
     rows = [["Когда", "Процедура", "Тип", "Срок"]]
     late = []
     for index, event in enumerate(report.upcoming, start=1):
-        rows.append([
-            _date(event.schedule),
-            Paragraph(_text(event.name), _CELL_BOLD if event.is_overdue else _CELL),
-            _TYPE_LABELS[event.type],
-            _days_until(event.schedule, report.generated_at),
-        ])
+        rows.append(
+            [
+                _date(event.schedule),
+                Paragraph(_text(event.name), _CELL_BOLD if event.is_overdue else _CELL),
+                _TYPE_LABELS[event.type],
+                _days_until(event.schedule, report.generated_at),
+            ]
+        )
         if event.is_overdue:
             late.append(index)
     return [_table(rows, [24 * mm, width - 92 * mm, 28 * mm, 40 * mm], highlight=late)]
@@ -249,13 +256,15 @@ def _procedures(report: PetReport, width: float) -> list:
     rows = [["Процедура", "Как часто", "Сделано", "Последняя", "Следующая"]]
     late = []
     for index, item in enumerate(report.procedures, start=1):
-        rows.append([
-            Paragraph(_text(item.name), _CELL),
-            _PERIODS[item.period],
-            str(item.times_done),
-            _date(item.last_done),
-            _date(item.next_planned),
-        ])
+        rows.append(
+            [
+                Paragraph(_text(item.name), _CELL),
+                _PERIODS[item.period],
+                str(item.times_done),
+                _date(item.last_done),
+                _date(item.next_planned),
+            ]
+        )
         if item.is_overdue:
             late.append(index)
     return [_table(rows, [width - 104 * mm, 30 * mm, 18 * mm, 28 * mm, 28 * mm], highlight=late)]
@@ -395,22 +404,23 @@ def _food(report: PetReport, width: float) -> list:
     rows = [["Корм", "Раз", "Понравился", "Подошёл", "Реакции"]]
     bad = []
     for index, food in enumerate(report.foods, start=1):
-        rows.append([
-            Paragraph(_text(food.name), _CELL),
-            str(food.times),
-            f"{food.liked} из {food.times}",
-            f"{food.suited} из {food.times}",
-            Paragraph(_text("; ".join(food.reactions)) or "—", _CELL),
-        ])
+        rows.append(
+            [
+                Paragraph(_text(food.name), _CELL),
+                str(food.times),
+                f"{food.liked} из {food.times}",
+                f"{food.suited} из {food.times}",
+                Paragraph(_text("; ".join(food.reactions)) or "—", _CELL),
+            ]
+        )
         if food.unsuited:
             bad.append(index)
     table_width = width - 46 * mm
     table = _table(rows, [table_width - 106 * mm, 10 * mm, 22 * mm, 20 * mm, 54 * mm], highlight=bad)
     pie = _tolerance_chart(report.tolerance, 42 * mm)
-    verdicts = (("suited", "подошло", MINT), ("unsuited", "не подошло", CORAL), ("unknown", "не оценено", LINE))
     legend_lines = [
         f"<font color='{color.hexval().replace('0x', '#')}'>■</font> {label}: {report.tolerance.get(key, 0)}"
-        for key, label, color in verdicts
+        for key, label, color in _TOLERANCE_LEGEND
         if report.tolerance.get(key)
     ]
     side = [pie or "", Paragraph("<br/>".join(legend_lines), _SMALL)]

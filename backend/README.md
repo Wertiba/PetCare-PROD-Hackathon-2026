@@ -50,7 +50,7 @@ uv sync
 Перед запуском экспортируйте переменные подключения к БД, `APP_SECURITY_JWT_SECRET`
 и `S3_*` в окружение процесса. `backend/.env.example` — справочник переменных,
 он не загружается автоматически. Для локального HTTP задайте
-`APP_COOKIE_SECURE=false`, иначе браузер не сохранит refresh-cookie.
+`APP_COOKIE_SECURE=false`, иначе браузер не сохранит cookie токенов.
 
 Все конфигурации — обычные Pydantic `BaseModel` с полями и значениями по умолчанию.
 Каждое поле содержит явный `Field(alias="ИМЯ_ПЕРЕМЕННОЙ")`. Модели создаются
@@ -71,6 +71,7 @@ cookie и база получают свои конфигурации из эт�
 | Cookie и CORS | `APP_COOKIE_SECURE`, `APP_CORS_ALLOWED_ORIGINS` |
 | Логи в stdout | `LOG_CONSOLE_LEVEL`, `LOG_CONSOLE_ENQUEUE`, `LOG_CONSOLE_BACKTRACE`, `LOG_CONSOLE_DIAGNOSE`, `LOG_CONSOLE_FORMAT` |
 | Фотографии | `S3_*` (описаны ниже) |
+| Внешние напоминания | `NOTIFICATIONS_*`, `VAPID_*` (см. [docs/notifications.md](docs/notifications.md)) |
 
 Миграциям нужны только настройки `DB_*`, инициализатору хранилища — только `S3_*`
 и `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY`. Они не требуют остальные конфигурации.
@@ -90,9 +91,11 @@ uv run python -m app.run
 
 ## Авторизация
 
-`POST /api/v1/auth/register` принимает `login`, `password`, `fullName`; `POST /api/v1/auth/login` — `login` и `password`. Логин — непустая строка до 255 символов, уникальная с учётом регистра. Пользователь в ответах содержит `login`. Дублирующий логин возвращает `409 LOGIN_ALREADY_EXISTS`. Оба метода возвращают `accessToken`. Его передают заголовком `Authorization: Bearer <token>`.
+`POST /api/v1/auth/register` принимает `login`, `password`, `fullName`; `POST /api/v1/auth/login` — `login` и `password`. Логин — непустая строка до 255 символов, уникальная с учётом регистра. Пользователь в ответах содержит `login`. Дублирующий логин возвращает `409 LOGIN_ALREADY_EXISTS`.
 
-Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обновить access: `POST /api/v1/auth/refresh`. Выйти: `POST /api/v1/auth/logout`.
+Регистрация, вход и `POST /api/v1/auth/refresh` устанавливают HttpOnly-cookie `accessToken` и `refreshToken` с `SameSite=Lax`, `Path=/` и флагом `Secure` из `APP_COOKIE_SECURE`. Срок жизни access-cookie равен `expiresIn`, refresh-cookie — сроку refresh-токена. Защищённые методы принимают access-cookie; заголовок `Authorization: Bearer <token>` по-прежнему поддерживается и имеет приоритет, если передан. Некорректный заголовок не заменяется cookie. `POST /api/v1/auth/logout` отзывает refresh-токен и удаляет обе cookie.
+
+Тела ответов сохранены: `accessToken`, `expiresIn` и `user` (для регистрации и входа). Поле `accessToken` помечено `deprecated` в OpenAPI/Swagger с предупреждением об удалении из тела в будущей версии API; дата удаления пока не назначена. Новый frontend должен использовать cookie и включать `credentials: "include"` для запросов с другого разрешённого origin. Предупреждение находится в документации API, автоматически в консоли браузера оно не появляется.
 
 ## Postman
 
@@ -117,8 +120,12 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET / POST | `/api/v1/pets` | Свои питомцы / создать (`name`, `breedId`, `birthDate?`). Вид берётся из породы |
 | GET / PATCH / DELETE | `/api/v1/pets/{petId}` | Карточка с `animal` и `breed`. Удаление каскадно удаляет события, замеры, уведомления, заметки, корма |
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле формы `file`. jpeg, png или webp, до 5 МБ. Новое фото сбрасывает сгенерированный аватар |
+| POST | `/api/v1/pets/{petId}/photo/upload-url` | Подписанная ссылка, чтобы браузер загрузил jpeg/png/webp (до 5 МБ) напрямую. В базе ничего не меняет |
+| POST | `/api/v1/pets/{petId}/photo/confirm` | Принять объект `{key}` после прямой загрузки. Новое фото сбрасывает сгенерированный аватар |
+| DELETE | `/api/v1/pets/{petId}/photo` | Удалить фото и аватар, собранный из него |
 | POST | `/api/v1/pets/{petId}/avatar/generate` | Стилизованный аватар по уже загруженному фото. `avatarSource` не меняется |
 | PUT | `/api/v1/pets/{petId}/avatar` | Какую картинку показывать: `{"source": "photo"}` или `{"source": "generated"}` |
+| DELETE | `/api/v1/pets/{petId}/avatar/generated` | Удалить только сгенерированный аватар. Если он был выбран, показ возвращается на фото |
 | GET | `/api/v1/pets/{petId}/report` | PDF-отчёт: ближайшие процедуры, прививки и обработки, активность по месяцам, график веса, самочувствие, корма и заключения врачей |
 | GET / POST | `/api/v1/categories?type=&q=` | Общие для всех категории: встроенные, затем созданные пользователями / создать |
 | GET / PATCH / DELETE | `/api/v1/categories/{id}` | Менять может автор или админ (иначе `403`, для встроенных `SYSTEM_CATEGORY_READ_ONLY`). Пока категорией пользуются другие, нельзя удалить её или сменить `kind`/`type`: `409 CATEGORY_IN_USE` |
@@ -131,7 +138,11 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | GET / PATCH / DELETE | `/api/v1/events/{id}` | Событие |
 | POST | `/api/v1/events/{id}/complete` | Отметить выполненным, тело `{doneAt?}`. Для повторяющегося создаёт следующее |
 | GET / POST | `/api/v1/notifications?eventId=&petId=&status=&due=` | Уведомления. `due=true` — pending, время которых наступило |
-| GET / PATCH / DELETE | `/api/v1/notifications/{id}` | Уведомление (например, `{"status": "read"}`) |
+| GET / PATCH / DELETE | `/api/v1/notifications/{id}` | Уведомление (например, `{"status": "read"}`). `deliveredAt` — внешняя доставка, `status` по-прежнему для тостов в приложении |
+| GET / PATCH | `/api/v1/notifications/settings` | Канал Web Push |
+| GET | `/api/v1/notifications/web-push/public-key` | Публичный VAPID-ключ |
+| POST / DELETE | `/api/v1/notifications/web-push/subscriptions` | Подписка браузера |
+| POST | `/api/v1/notifications/test` | Проверочное сообщение в Web Push, если канал включён |
 | GET / POST | `/api/v1/notes?petId=&q=` | Текстовые заметки в карточке питомца, новые сначала |
 | GET / PATCH / DELETE | `/api/v1/notes/{id}` | Заметка |
 | GET / POST | `/api/v1/foods?petId=&isApproach=&isTolerability=` | Журнал кормлений: `name`, `weight` (г), `ingredients`, `isApproach` (понравилось), `isTolerability` (подошло), `consequences` (реакция) |
@@ -148,6 +159,10 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 - **Повторяющиеся события** (`period`: daily, weekly, monthly, quarterly, half_year, yearly). В ответе есть `nextSchedule`. Когда запланированное событие отмечают выполненным (через `/complete` или `PATCH status=done`), сервис создаёт следующее. Дата считается от более поздней из двух: плановой или фактической (`doneAt`). Прививку, сделанную на два месяца позже плана, в следующий раз нужно делать через год от фактической даты.
 - **Тип события** (`type`): vaccination, parasite_treatment, vet_visit, medication, grooming, other. По нему строится карта здоровья: `GET /events?petId=...&type=vaccination`.
 
+## Внешние напоминания
+
+Web Push не меняет `status`: фронт по-прежнему опрашивает `GET /notifications?due=true` и сам отмечает прочитанным. Внешняя отправка пишется в `deliveredAt`. Пользователь включает Web Push в настройках и регистрирует подписку браузера. Переменные и ключи VAPID описаны в [docs/notifications.md](docs/notifications.md).
+
 ## Календарь
 
 `GET /api/v1/events/calendar.ics` отдаёт файл `.ics` с запланированными событиями. Контракт, поля файла и пример скачивания — в [docs/calendar.md](docs/calendar.md).
@@ -159,8 +174,12 @@ Refresh-токен приходит в HttpOnly-cookie `refreshToken`. Обно�
 | Метод | Путь | |
 |---|---|---|
 | PUT | `/api/v1/pets/{petId}/photo` | Фото, поле `file`. jpeg/png/webp, до 5 МБ |
+| POST | `/api/v1/pets/{petId}/photo/upload-url` | Подписанный `PUT` для прямой загрузки. В базе ничего не меняет |
+| POST | `/api/v1/pets/{petId}/photo/confirm` | Принять загруженный `{key}` |
+| DELETE | `/api/v1/pets/{petId}/photo` | Удалить фото и аватар из него |
 | POST | `/api/v1/pets/{petId}/avatar/generate` | Аватар по загруженному фото. Выбор не меняет |
 | PUT | `/api/v1/pets/{petId}/avatar` | `{"source": "photo"}` или `{"source": "generated"}` |
+| DELETE | `/api/v1/pets/{petId}/avatar/generated` | Удалить только аватар. Показ возвращается на фото |
 
 Показывать `avatarUrl`. Фотографии и аватары хранятся в приватном RustFS через
 `PhotosGateway` на aioboto3. Генерация — Spirit LLM Proxy, ключ `LLM_PROXY_API_KEY`.
@@ -268,10 +287,9 @@ Production Compose запускает `rustfs/rustfs:1.0.2` и одноразо�
 тестовые или стандартные учётные данные. Только RustFS и инициализатор получают
 секрет администратора; backend получает ограниченные учётные данные приложения.
 
-Клиент по-прежнему загружает фото через `PUT /api/v1/pets/{petId}/photo`.
-Backend проверяет владельца, тип MIME и ограничение 5 МиБ, загружает объект через
-внутренний адрес `http://rustfs:9000` и сохраняет в `photo_key` только ключ
-`pets/<uuid>.<extension>`. Сгенерированный аватар хранится в том же bucket,
+Браузер загружает фото напрямую: `POST /api/v1/pets/{petId}/photo/upload-url`, затем `PUT` на выданную ссылку и `POST .../photo/confirm`. Ключ — `pets/<petId>/photo/<uuid>.<extension>`.
+`PUT /api/v1/pets/{petId}/photo` остаётся запасным путём через backend: тот проверяет владельца, тип MIME и ограничение 5 МиБ, загружает объект через
+внутренний адрес `http://rustfs:9000` и сохраняет ключ `pets/<uuid>.<extension>`. Сгенерированный аватар хранится в том же bucket,
 его ключ — в `generated_avatar_key`. Миграция `0008_pet_avatars` переименовывает
 `photo_url` в `photo_key`, сохраняя ключи S3, и добавляет поля аватара.
 
@@ -290,7 +308,10 @@ Caddy направляет `/media/*` в RustFS, сохраняя Host, путь
 Для запуска используйте обычный `docker compose up -d`. После изменения Caddyfile
 на работающем сервере выполните
 `docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile`.
-Pipeline выполняет перезагрузку автоматически.
+Pipeline выполняет `docker compose pull`, затем
+`docker compose up -d --force-recreate --wait --wait-timeout 300`.
+Контейнеры пересоздаются с сохранением именованных volumes; Caddy читает конфигурацию
+при старте. Pipeline ожидает готовности сервисов, отдельная перезагрузка Caddy не нужна.
 Необязательные настройки приложения, БД, логов и S3 также можно задать в GitLab CI:
 pipeline передаёт их Compose, а Compose — в окружение контейнеров. Файл `.env`
 на сервере используется только Docker Compose для подстановки переменных;
@@ -308,6 +329,7 @@ Python-приложение его не читает.
 | `S3_ACCESS_KEY` | Идентификатор ограниченного пользователя приложения | Из `PHOTOS_ACCESS_KEY` |
 | `S3_SECRET_KEY` | Секрет пользователя приложения для запросов к S3 и подписи ссылок | Из `PHOTOS_SECRET_KEY` |
 | `S3_PRESIGNED_TTL` | Срок действия ссылки в секундах; не срок хранения фотографии | `604800` (7 дней) |
+| `S3_UPLOAD_TTL` | Срок подписанной ссылки на прямую загрузку, секунды | `900` (15 минут) |
 
 Compose передаёт эти переменные backend и инициализатору. В корневом `.env` и GitLab
 учётные данные по-прежнему задаются как `PHOTOS_ACCESS_KEY` и `PHOTOS_SECRET_KEY`;

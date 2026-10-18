@@ -22,7 +22,7 @@ export const createEventSchema = z.object({
     .min(1, 'Укажите дату')
     .refine(
       (value) => !Number.isNaN(new Date(value).getTime()),
-      'Некорректная дата',
+      'Укажите корректную дату',
     ),
   period: z.enum(EVENT_PERIODS),
 });
