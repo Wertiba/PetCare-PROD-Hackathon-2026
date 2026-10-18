@@ -188,7 +188,9 @@ export function PetPhotoDialog({
             <textarea
               id="avatar-prompt"
               value={avatarPrompt}
-              onChange={(event) => setAvatarPrompt(event.target.value)}
+              onChange={(event) =>
+                setAvatarPrompt(event.target.value)
+              }
               disabled={isPending}
               rows={3}
               placeholder="Например: в красном шарфе"

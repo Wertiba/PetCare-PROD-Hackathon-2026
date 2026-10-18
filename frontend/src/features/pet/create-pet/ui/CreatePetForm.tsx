@@ -296,7 +296,9 @@ export function CreatePetForm({
             <textarea
               id="avatar-prompt"
               value={avatarPrompt}
-              onChange={(event) => setAvatarPrompt(event.target.value)}
+              onChange={(event) =>
+                setAvatarPrompt(event.target.value)
+              }
               rows={3}
               placeholder="Например: в красном шарфе"
               className="mt-2 block w-full resize-y border border-[var(--forest)]/45 bg-white px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink)]/40 focus:border-[var(--forest)] focus:outline-none"
