@@ -1,10 +1,10 @@
 'use client';
 
 import {
+  eventStatusLabels,
   useGetEventsQuery,
   useGetUpcomingEventsQuery,
 } from '@src/entities/event';
-import { useGetNotificationsQuery } from '@src/entities/notification';
 import {
   type Pet,
   useGetPetQuery,
@@ -111,11 +111,12 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
     size: 12,
     petId: pet.id,
   });
-  const reminders = useGetNotificationsQuery({
+  // Nothing creates notification records, so reminders come from the pet's planned events.
+  const reminders = useGetUpcomingEventsQuery({
+    days: 30,
     page: 0,
     size: 20,
     petId: pet.id,
-    due: true,
   });
   const states = useGetStatesQuery({
     page: 0,
@@ -155,9 +156,10 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
             key={item.id}
             className="border-b border-[var(--forest)]/10 pb-3"
           >
-            <b>{item.eventName}</b>
+            <b>{item.name}</b>
             <p className="text-sm text-[var(--ink)]/60">
-              {formatDate(item.time)}
+              {formatDate(item.schedule)}
+              {item.isOverdue ? ' · Просрочено' : ''}
             </p>
           </div>
         ))
@@ -168,7 +170,8 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
           >
             <b>{item.name}</b>
             <p className="text-sm text-[var(--ink)]/60">
-              {formatDate(item.schedule)} · {item.status}
+              {formatDate(item.schedule)} ·{' '}
+              {eventStatusLabels[item.status]}
             </p>
           </div>
         ));
