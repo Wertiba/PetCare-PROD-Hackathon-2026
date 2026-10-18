@@ -61,6 +61,7 @@ const quickDates: Record<
     { label: 'Вчера', days: -1 },
   ],
   planned: [
+    { label: 'Сегодня', days: 0 },
     { label: 'Завтра', days: 1 },
     { label: 'Через неделю', days: 7 },
     { label: 'Через месяц', days: 30 },

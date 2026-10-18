@@ -148,7 +148,13 @@ function VerdictList({
   );
 }
 
-export function FoodPanel({ pet }: { pet: Pet }) {
+export function FoodPanel({
+  pet,
+  onOpenReminders,
+}: {
+  pet: Pet;
+  onOpenReminders: () => void;
+}) {
   const [saved, setSaved] = useState<string | null>(null);
   const foods = useGetFoodsQuery({
     page: 0,
@@ -233,6 +239,13 @@ export function FoodPanel({ pet }: { pet: Pet }) {
             подходят.
           </p>
         )}
+        <button
+          type="button"
+          onClick={onOpenReminders}
+          className="mt-4 text-sm font-bold text-[var(--forest)] underline underline-offset-2 hover:text-[var(--forest)]/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+        >
+          Напомнить покормить →
+        </button>
       </section>
 
       <div className="order-1 grid gap-5 xl:order-2">

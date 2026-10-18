@@ -1,14 +1,21 @@
 'use client';
 
 import {
+  type Event,
   type EventPeriod,
   type EventType,
   useGetEventsQuery,
 } from '@src/entities/event';
 import { useGetPetQuery } from '@src/entities/pet';
 import { useCreateEventMutation } from '@src/features/event/create-event';
+import { CreateNotificationForm } from '@src/features/notification/create-notification';
 import { Dialog } from '@src/shared/ui';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+import {
+  EventNotificationsButton,
+  EventNotificationsDialog,
+} from './EventNotifications';
 
 const monthFormatter = new Intl.DateTimeFormat('ru-RU', {
   month: 'long',
@@ -86,15 +93,36 @@ function Icon({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CareCalendar() {
+export function CareCalendar({
+  focusEvent,
+}: {
+  focusEvent?: Event;
+}) {
   const now = new Date();
+  const initialDate = focusEvent
+    ? new Date(focusEvent.schedule * 1000)
+    : now;
   const [visibleDate, setVisibleDate] = useState(
-    () => new Date(now.getFullYear(), now.getMonth(), 1),
+    () =>
+      new Date(
+        initialDate.getFullYear(),
+        initialDate.getMonth(),
+        1,
+      ),
   );
   const [selectedDate, setSelectedDate] = useState(() =>
-    startOfDay(now),
+    startOfDay(initialDate),
+  );
+  const [listEvent, setListEvent] = useState<Event | null>(
+    focusEvent ?? null,
+  );
+  const closeList = useCallback(
+    () => setListEvent(null),
+    [],
   );
   const [isCreateOpen, setCreateOpen] = useState(false);
+  const [notificationEvent, setNotificationEvent] =
+    useState<Event | null>(null);
   const petsQuery = useGetPetQuery({ page: 0, size: 100 });
   const pets = petsQuery.data?.items ?? [];
   const rangeStart = new Date(
@@ -373,7 +401,7 @@ export function CareCalendar() {
               selectedEvents.map((event) => (
                 <article
                   key={event.id}
-                  className="border-l-2 border-[var(--lime)] bg-[var(--cream)] px-3 py-3"
+                  className="border-l-4 border-[var(--lime)] bg-[var(--cream)] px-3 py-3"
                 >
                   <p className="font-bold text-[var(--forest)]">
                     {event.name}
@@ -392,6 +420,20 @@ export function CareCalendar() {
                       {event.description}
                     </p>
                   ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNotificationEvent(event)
+                      }
+                      className="rounded-sm border border-[var(--forest)]/25 bg-white px-3 py-1.5 text-sm font-bold text-[var(--forest)] transition-colors hover:border-[var(--forest)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+                    >
+                      + Добавить напоминание
+                    </button>
+                    <EventNotificationsButton
+                      event={event}
+                    />
+                  </div>
                 </article>
               ))
             ) : (
@@ -410,7 +452,66 @@ export function CareCalendar() {
           onClose={() => setCreateOpen(false)}
         />
       ) : null}
+
+      {listEvent ? (
+        <EventNotificationsDialog
+          event={listEvent}
+          onClose={closeList}
+        />
+      ) : null}
+
+      {notificationEvent ? (
+        <CreateNotificationDialog
+          event={notificationEvent}
+          onClose={() => setNotificationEvent(null)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function CreateNotificationDialog({
+  event,
+  onClose,
+}: {
+  event: Event;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog
+      labelledBy="create-notification-title"
+      onClose={onClose}
+    >
+      <div className="mx-auto w-xl max-w-full p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div>
+            <p className="text-sm font-semibold text-[var(--ink)]/55">
+              {event.name}
+            </p>
+            <h2
+              id="create-notification-title"
+              className="mt-1 text-2xl font-black text-[var(--forest)]"
+            >
+              Новое уведомление
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть"
+            className="grid size-9 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
+          >
+            ×
+          </button>
+        </div>
+        <div className="mt-5">
+          <CreateNotificationForm
+            eventId={event.id}
+            onSuccess={onClose}
+          />
+        </div>
+      </div>
+    </Dialog>
   );
 }
 

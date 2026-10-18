@@ -1,0 +1,1 @@
+export { UpdateNotificationForm } from './UpdateNotificationForm';

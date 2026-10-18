@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  type Event,
   useGetEventsQuery,
   useGetUpcomingEventsQuery,
 } from '@src/entities/event';
@@ -19,6 +20,7 @@ import { CreatePetForm } from '@src/features/pet/create-pet';
 import { useDeletePetMutation } from '@src/features/pet/delete-pet';
 import { EditPetForm } from '@src/features/pet/update-pet';
 import { Dialog } from '@src/shared/ui';
+import { CareCalendar } from '@src/widgets/ui/CareCalendar';
 import {
   DashboardSidebar,
   type DashboardTool,
@@ -26,6 +28,7 @@ import {
 import { FoodPanel } from '@src/widgets/ui/FoodPanel';
 import { HealthPanel } from '@src/widgets/ui/HealthPanel';
 import { PetHome } from '@src/widgets/ui/PetHome';
+import { ReminderToast } from '@src/widgets/ui/ReminderToast';
 import { motion, useReducedMotion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -232,6 +235,9 @@ export function Dashboard() {
   const logout = useLogoutMutation();
   const deletion = useDeletePetMutation();
   const [tool, setTool] = useState<Tool>('home');
+  const [reminderEvent, setReminderEvent] = useState<
+    Event | undefined
+  >();
   const [selectedId, setSelectedId] = useState<
     string | null
   >(null);
@@ -551,7 +557,10 @@ export function Dashboard() {
       <DashboardSidebar
         activeTool={tool}
         hasPet={Boolean(pet)}
-        onToolChange={setTool}
+        onToolChange={(next) => {
+          setReminderEvent(undefined);
+          setTool(next);
+        }}
       />
       <main className="p-5 sm:p-8 lg:p-10">
         {petsQuery.isPending ? (
@@ -593,9 +602,25 @@ export function Dashboard() {
             onDelete={() => setDialog('delete')}
           />
         ) : tool === 'health' ? (
-          <HealthPanel key={pet.id} pet={pet} />
+          <HealthPanel
+            key={pet.id}
+            pet={pet}
+            onOpenReminders={(event) => {
+              setReminderEvent(event);
+              setTool('reminders');
+            }}
+          />
         ) : tool === 'food' ? (
-          <FoodPanel key={pet.id} pet={pet} />
+          <FoodPanel
+            key={pet.id}
+            pet={pet}
+            onOpenReminders={() => {
+              setReminderEvent(undefined);
+              setTool('reminders');
+            }}
+          />
+        ) : tool === 'reminders' ? (
+          <CareCalendar focusEvent={reminderEvent} />
         ) : (
           <Panel pet={pet} tool={tool} />
         )}
@@ -658,6 +683,7 @@ export function Dashboard() {
           </div>
         </PetModal>
       ) : null}
+      <ReminderToast />
     </div>
   );
 }
