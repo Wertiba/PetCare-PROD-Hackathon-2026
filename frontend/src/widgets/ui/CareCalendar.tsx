@@ -95,8 +95,10 @@ function Icon({ children }: { children: React.ReactNode }) {
 
 export function CareCalendar({
   focusEvent,
+  petId,
 }: {
   focusEvent?: Event;
+  petId?: string;
 }) {
   const now = new Date();
   const initialDate = focusEvent
@@ -124,7 +126,9 @@ export function CareCalendar({
   const [notificationEvent, setNotificationEvent] =
     useState<Event | null>(null);
   const petsQuery = useGetPetQuery({ page: 0, size: 100 });
-  const pets = petsQuery.data?.items ?? [];
+  const pets = (petsQuery.data?.items ?? []).filter(
+    (pet) => !petId || pet.id === petId,
+  );
   const rangeStart = new Date(
     visibleDate.getFullYear(),
     visibleDate.getMonth(),
@@ -138,6 +142,7 @@ export function CareCalendar({
   const eventsQuery = useGetEventsQuery({
     page: 0,
     size: 100,
+    petId,
     from: rangeStart.getTime() / 1000,
     to: rangeEnd.getTime() / 1000 - 1,
   });

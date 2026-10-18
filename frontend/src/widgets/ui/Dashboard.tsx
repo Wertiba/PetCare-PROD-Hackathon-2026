@@ -620,7 +620,11 @@ export function Dashboard() {
             }}
           />
         ) : tool === 'reminders' ? (
-          <CareCalendar focusEvent={reminderEvent} />
+          <CareCalendar
+            key={pet.id}
+            focusEvent={reminderEvent}
+            petId={pet.id}
+          />
         ) : (
           <Panel pet={pet} tool={tool} />
         )}
