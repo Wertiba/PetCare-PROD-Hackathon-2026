@@ -5,13 +5,13 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/health/liveness": {
+    "/api/v1/health/liveness": {
       "get": {
         "tags": [
           "Health"
         ],
         "summary": "Liveness",
-        "operationId": "liveness_health_liveness_get",
+        "operationId": "liveness_api_v1_health_liveness_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -26,13 +26,13 @@
         }
       }
     },
-    "/health/readiness": {
+    "/api/v1/health/readiness": {
       "get": {
         "tags": [
           "Health"
         ],
         "summary": "Readiness",
-        "operationId": "readiness_health_readiness_get",
+        "operationId": "readiness_api_v1_health_readiness_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -41,7 +41,7 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Readiness Health Readiness Get"
+                  "title": "Response Readiness Api V1 Health Readiness Get"
                 }
               }
             }

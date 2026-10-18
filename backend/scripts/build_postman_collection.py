@@ -188,7 +188,8 @@ for path, methods in spec["paths"].items():
             },
             "description": operation.get("description") or operation.get("summary", ""),
         }
-        if path.startswith("/health") or path == "/metrics" or path in ("/api/v1/auth/register", "/api/v1/auth/login"):
+        public = path.startswith("/api/v1/health") or path == "/metrics"
+        if public or path in ("/api/v1/auth/register", "/api/v1/auth/login"):
             request["auth"] = {"type": "noauth"}
         if "multipart/form-data" in operation.get("requestBody", {}).get("content", {}):
             request["body"] = {

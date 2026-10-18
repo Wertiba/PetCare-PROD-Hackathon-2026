@@ -6,6 +6,7 @@ from .breeds import router as breed_router
 from .categories import router as category_router
 from .events import router as event_router
 from .foods import router as food_router
+from .health import router as health_router
 from .notes import router as note_router
 from .notifications import router as notification_router
 from .pets import router as pet_router
@@ -14,6 +15,7 @@ from .users import router as user_router
 
 router = APIRouter(prefix="/v1")
 
+router.include_router(health_router)
 router.include_router(auth_router)
 router.include_router(user_router)
 router.include_router(animal_router)

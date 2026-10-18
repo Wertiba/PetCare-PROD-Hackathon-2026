@@ -62,7 +62,7 @@
 | Понятные ошибки форм, подсветка поля (п. 7–8 задания) | Единый формат ошибки `{code, message, traceId, timestamp, path, fieldErrors?, details?}`; у `422` есть `fieldErrors[].field` с именем поля из формы (`name`, `password`...) |
 | Безопасность | Пароли хешируются argon2. Access JWT (15 мин) и refresh (30 дн.) передаются в HttpOnly + Secure cookie с SameSite=Lax; refresh ротируется. Bearer-заголовок access JWT поддерживается и имеет приоритет перед cookie. В БД хранится только SHA-256 refresh-токена. Чужие объекты отвечают `404`, а не `403`, чтобы не раскрывать, что объект существует |
 | Целостность данных | Одна транзакция на пользовательскую операцию (Unit of Work); каскадное удаление по внешним ключам |
-| Наблюдаемость | `X-Trace-Id` в каждом ответе и строке лога, access-лог, метрики Prometheus на `/metrics`, проверки `/health/liveness` и `/health/readiness` |
+| Наблюдаемость | `X-Trace-Id` в каждом ответе и строке лога, access-лог, метрики Prometheus на `/metrics`, проверки `/api/v1/health/liveness` и `/api/v1/health/readiness` |
 | Простота проверки | Swagger на `/docs`, Postman-коллекция, демо-аккаунты `жюри1`…`жюри10` с готовой историей и админ (`ADMIN_LOGIN`) (у каждого свои питомцы, просроченные и ближайшие процедуры, год замеров и кормлений), деплой одной кнопкой из пайплайна |
 | Мобильные клиенты | API не зависит от клиента: время передаётся числом Unix seconds, ответы — JSON, пагинация единая |
 
@@ -218,7 +218,7 @@ flowchart TB
 |---|---|---|---|
 | `caddy` | `caddy:2-alpine` | admin API `:2019/config/` | `caddy_data` (сертификаты) |
 | `frontend` | `$FRONTEND_IMAGE` | `GET :3000` | — |
-| `backend` | `$BACKEND_IMAGE` | `GET /health/readiness` (проверяет БД) | — |
+| `backend` | `$BACKEND_IMAGE` | `GET /api/v1/health/readiness` (проверяет БД) | — |
 | `postgres` | `postgres:17-alpine` | `pg_isready` | `postgres_data` |
 | `rustfs` | `rustfs/rustfs:1.0.2` | `GET :9000/health/ready` | `rustfs_data` (фото и аватары) |
 | `rustfs-init` | `$BACKEND_IMAGE` | завершается после настройки | — |
@@ -449,9 +449,9 @@ erDiagram
 | `0007_jury_users` | Демо-аккаунты `жюри1`…`жюри10` (пароль `qwerty12345`) |
 | `0008_pet_avatars` | `pets.photo_url` → `photo_key`, сгенерированный аватар и выбор `avatar_source` |
 | `0008_states_category_id` | `states.cat_id` → `category_id` вместе с внешним ключом и индексом, данные сохраняются |
+| `0009_jury_demo_data` | Демо-история для `жюри1`…`жюри10`: у каждого 2–3 своих питомца с прививками, обработками, визитами, лекарствами, замерами, кормами, заметками и напоминаниями |
 | `0010_notification_delivery` | `notifications.delivered_at`, настройки каналов и подписки Web Push |
 | `0011_seed_admin` | Админ из `ADMIN_LOGIN` / `ADMIN_PASSWORD`; стартовые виды и породы принадлежат ему |
-| `0009_jury_demo_data` | Демо-история для `жюри1`…`жюри10`: у каждого 2–3 своих питомца с прививками, обработками, визитами, лекарствами, замерами, кормами, заметками и напоминаниями |
 
 ---
 
@@ -461,17 +461,19 @@ erDiagram
 
 **Общие правила**
 
-- Авторизация: `Authorization: Bearer <accessToken>` (🔒 в таблицах ниже). Refresh-токен передаётся только в HttpOnly-cookie `refreshToken`.
+- Авторизация (🔒 в таблицах ниже): HttpOnly-cookie `accessToken`, которую ставят вход, регистрация и refresh, или заголовок `Authorization: Bearer <accessToken>` (приоритетнее). Refresh-токен передаётся только в HttpOnly-cookie `refreshToken`.
 - Списки принимают `page` (с 0) и `size` (1–100) и отвечают `{items, page, size, total}`.
 - Чужой или несуществующий объект в пути — `404`. Ссылка в теле на чужой объект (`petId`, `categoryId`, `eventId`, `breedId`, `animalId`) — `422` с `code` вида `PET_NOT_FOUND` и `details.field`.
 - Ошибка: `{code, message, traceId, timestamp, path, fieldErrors?, details?}`. Коды: `VALIDATION_FAILED`, `UNAUTHORIZED`, `WRONG_LOGIN_OR_PASSWORD`, `USER_INACTIVE`, `FORBIDDEN`, `NOT_FOUND`, `*_NOT_FOUND`, `LOGIN_ALREADY_EXISTS`, `CONFLICT`, `EVENT_NOT_PLANNED`, `CATEGORY_IN_USE`, `SYSTEM_CATEGORY_READ_ONLY`, `INVALID_VALUE`, `FILE_TOO_LARGE`, `UNSUPPORTED_FILE_TYPE`, `INTERNAL_ERROR`.
 
 ### Служебные
 
+Кроме health, эти пути лежат вне `/api/v1`.
+
 | Метод | Путь | Назначение |
 |---|---|---|
-| GET | `/health/liveness` | Процесс жив |
-| GET | `/health/readiness` | БД отвечает (`503`, если нет) |
+| GET | `/api/v1/health/liveness` | Процесс жив |
+| GET | `/api/v1/health/readiness` | БД отвечает (`503`, если нет) |
 | GET | `/metrics` | Метрики Prometheus |
 | GET | `/docs`, `/openapi.json` | Swagger UI и схема |
 | GET | `/media/pets/{file}` | Фото питомца |
@@ -573,8 +575,8 @@ petcare/
         │   ├── reports/         # PDF на ReportLab, шрифты Inter
         │   └── config.py, logger.py, metrics.py
         └── presentation/http/
-            ├── api/endpoints/   # health, metrics
-            ├── api/v1/          # роутеры, CurrentUser, обработчики ошибок
+            ├── api/endpoints/   # metrics
+            ├── api/v1/          # роутеры (включая health), CurrentUser, обработчики ошибок
             ├── schemas/         # Pydantic-схемы запросов и ответов
             └── middleware/      # trace id, access-лог, метрики
 ```
@@ -709,7 +711,7 @@ flowchart LR
 | Логи | stdout контейнера (`docker compose logs backend`); в каждой строке `trace_id` |
 | Трассировка запроса | `X-Trace-Id` (передан клиентом или сгенерирован) возвращается в заголовке и в теле ошибки |
 | Метрики | `/metrics`: `petcare_http_requests_total{method,path,status}`, `petcare_http_request_duration_seconds`, `petcare_http_requests_in_progress`, `petcare_domain_events_total{entity,action}` |
-| Здоровье | `/health/liveness`, `/health/readiness` |
+| Здоровье | `/api/v1/health/liveness`, `/api/v1/health/readiness` |
 
 Доступ к БД на стенде: `docker compose exec postgres psql -U petcare -d petcare`.
 

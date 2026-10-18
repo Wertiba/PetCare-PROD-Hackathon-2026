@@ -23,7 +23,7 @@ async def _set_active(db_session_factory, user_id: str, active: bool) -> None:
 
 @pytest.mark.req("P.OBS")
 def test_readiness_reports_ready_database(client):
-    response = client.get("/health/readiness")
+    response = client.get("/api/v1/health/readiness")
     assert response.status_code == 200
     assert response.json() == {"status": "ready", "checks": {"database": "ready"}}
 
@@ -34,7 +34,7 @@ def test_readiness_reports_unavailable_database(client, monkeypatch):
         raise ConnectionRefusedError("connection refused")
 
     monkeypatch.setattr(SqlAlchemyDatabaseHealth, "check", down)
-    response = client.get("/health/readiness")
+    response = client.get("/api/v1/health/readiness")
     assert response.status_code == 503
     assert response.json() == {"status": "not ready", "checks": {"database": "not ready: connection refused"}}
 

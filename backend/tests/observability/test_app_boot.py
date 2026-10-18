@@ -19,7 +19,7 @@ pytestmark = pytest.mark.req("P.OBS")
 
 def test_app_imports_and_liveness_responds():
     client = TestClient(app)
-    response = client.get("/health/liveness")
+    response = client.get("/api/v1/health/liveness")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 

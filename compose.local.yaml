@@ -74,7 +74,7 @@ services:
       rustfs-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "--output", "/dev/null", "http://127.0.0.1:8000/health/readiness"]
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "--output", "/dev/null", "http://127.0.0.1:8000/api/v1/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 10

@@ -10,7 +10,7 @@ from app.infra.metrics import HTTP_REQUEST_DURATION_SECONDS, HTTP_REQUESTS_IN_PR
 
 logger = Logger.get_logger()
 
-_QUIET_PREFIXES = ("/health", "/metrics")
+_QUIET_PREFIXES = ("/api/v1/health", "/metrics")
 _UNMATCHED = "<unmatched>"
 
 
