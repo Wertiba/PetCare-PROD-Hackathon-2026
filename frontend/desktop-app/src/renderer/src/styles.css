@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+/* Токены из frontend/app/globals.css (светлая тема) */
+:root {
+  --background: #f7f6f0;
+  --foreground: #242924;
+  --forest: #173e32;
+  --lime: #cffa91;
+  --cream: #f7f6f0;
+  --white: #ffffff;
+  --ink: #242924;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Окно питомца прозрачное: видно только сам питомец и облачко. */
+body.pet {
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+}
+
+::selection {
+  background: var(--lime);
+  color: var(--forest);
+}

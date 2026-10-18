@@ -67,6 +67,13 @@ export const selectPetAvatar = async (
     })
   ).data;
 
+export const fetchPetReport = async (petId: Uid) =>
+  (
+    await api.get<Blob>(`/pets/${petId}/report`, {
+      responseType: 'blob',
+    })
+  ).data;
+
 export const fetchBreeds = async (
   query: FetchBreedsReqDto,
 ) =>

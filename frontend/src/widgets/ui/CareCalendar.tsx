@@ -9,6 +9,7 @@ import {
 } from '@src/entities/event';
 import { useGetPetQuery } from '@src/entities/pet';
 import { useCreateEventMutation } from '@src/features/event/create-event';
+import { useDownloadCalendarMutation } from '@src/features/event/download-calendar';
 import { CreateNotificationForm } from '@src/features/notification/create-notification/ui/CreateNotificationForm';
 import { createPetColorMap } from '@src/shared/lib';
 import { Dialog } from '@src/shared/ui';
@@ -75,6 +76,9 @@ const startOfDay = (date: Date) =>
     date.getDate(),
   );
 
+const CALENDAR_UNTIL_DEFAULT_DAYS = 365;
+const CALENDAR_UNTIL_MAX_DAYS = 1826;
+
 const inputClasses =
   'mt-1.5 w-full rounded-sm border border-[var(--forest)]/25 bg-white px-3 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--forest)] focus:ring-2 focus:ring-[var(--lime)]';
 
@@ -125,6 +129,7 @@ export function CareCalendar({
     [],
   );
   const [isCreateOpen, setCreateOpen] = useState(false);
+  const [isDownloadOpen, setDownloadOpen] = useState(false);
   const [notificationEvent, setNotificationEvent] =
     useState<Event | null>(null);
   const petsQuery = useGetPetQuery({ page: 0, size: 100 });
@@ -278,16 +283,28 @@ export function CareCalendar({
             Календарь заботы
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 rounded-sm bg-[var(--forest)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--forest)]/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
-        >
-          <Icon>
-            <path d="M12 5v14M5 12h14" />
-          </Icon>
-          Добавить событие
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setDownloadOpen(true)}
+            className="inline-flex items-center gap-2 rounded-sm border border-[var(--forest)]/25 bg-white px-4 py-2.5 text-sm font-bold text-[var(--forest)] transition-colors hover:bg-[var(--lime)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+          >
+            <Icon>
+              <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+            </Icon>
+            Скачать .ics
+          </button>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex items-center gap-2 rounded-sm bg-[var(--forest)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--forest)]/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)]"
+          >
+            <Icon>
+              <path d="M12 5v14M5 12h14" />
+            </Icon>
+            Добавить событие
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-7 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -516,6 +533,13 @@ export function CareCalendar({
         />
       ) : null}
 
+      {isDownloadOpen ? (
+        <DownloadCalendarDialog
+          petId={petId}
+          onClose={() => setDownloadOpen(false)}
+        />
+      ) : null}
+
       {listEvent ? (
         <EventNotificationsDialog
           event={listEvent}
@@ -530,6 +554,133 @@ export function CareCalendar({
         />
       ) : null}
     </div>
+  );
+}
+
+function DownloadCalendarDialog({
+  petId,
+  onClose,
+}: {
+  petId?: string;
+  onClose: () => void;
+}) {
+  const downloadCalendar = useDownloadCalendarMutation();
+  const today = startOfDay(new Date());
+  const shiftDays = (days: number) =>
+    dateKey(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + days,
+      ),
+    );
+  // Backend accepts until in (now, now + 1826 days]; the chosen day is sent as its end.
+  const minDate = shiftDays(0);
+  const maxDate = shiftDays(CALENDAR_UNTIL_MAX_DAYS - 1);
+  const [until, setUntil] = useState(() =>
+    shiftDays(CALENDAR_UNTIL_DEFAULT_DAYS),
+  );
+  const [validationError, setValidationError] = useState<
+    string | null
+  >(null);
+  const submit = (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    if (!until || until < minDate || until > maxDate) {
+      setValidationError(
+        'Выберите дату не раньше сегодня и не дальше чем через 5 лет.',
+      );
+      return;
+    }
+    setValidationError(null);
+    const [year, month, day] = until.split('-').map(Number);
+    downloadCalendar.mutate(
+      {
+        petId,
+        until:
+          new Date(year, month - 1, day + 1).getTime() /
+            1000 -
+          1,
+      },
+      { onSuccess: onClose },
+    );
+  };
+  return (
+    <Dialog
+      labelledBy="download-calendar-title"
+      onClose={onClose}
+    >
+      <div className="mx-auto w-xl max-w-full p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div>
+            <p className="text-sm font-semibold text-[var(--ink)]/55">
+              Файл для календаря телефона
+            </p>
+            <h2
+              id="download-calendar-title"
+              className="mt-1 text-2xl font-black text-[var(--forest)]"
+            >
+              Скачать .ics
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть"
+            className="grid size-9 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
+          >
+            ×
+          </button>
+        </div>
+        <form
+          onSubmit={submit}
+          className="mt-5 space-y-4"
+          noValidate
+        >
+          <label className="block text-sm font-bold text-[var(--forest)]">
+            Повторять события до
+            <input
+              type="date"
+              value={until}
+              min={minDate}
+              max={maxDate}
+              onChange={(event) =>
+                setUntil(event.target.value)
+              }
+              className={inputClasses}
+            />
+          </label>
+          {validationError || downloadCalendar.error ? (
+            <p
+              role="alert"
+              className="border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800"
+            >
+              {validationError ??
+                'Не удалось скачать календарь. Попробуйте ещё раз.'}
+            </p>
+          ) : null}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-sm px-4 py-2.5 text-sm font-bold text-[var(--forest)] hover:bg-[var(--cream)]"
+            >
+              Отмена
+            </button>
+            <button
+              type="submit"
+              disabled={downloadCalendar.isPending}
+              className="rounded-sm bg-[var(--forest)] px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {downloadCalendar.isPending
+                ? 'Скачиваем…'
+                : 'Скачать'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Dialog>
   );
 }
 

@@ -4,6 +4,7 @@ import { Uid } from '@src/shared/api/global.types';
 import type { Event } from '../model';
 import {
   CreateEventReqDto,
+  FetchEventsCalendarReqDto,
   FetchEventsReqDto,
   FetchEventsResDto,
   FetchUpcomingEventsReqDto,
@@ -25,6 +26,16 @@ export const fetchUpcomingEvents = async (
   (
     await api.get<FetchEventsResDto>('/events/upcoming', {
       params: query,
+    })
+  ).data;
+
+export const fetchEventsCalendar = async (
+  query: FetchEventsCalendarReqDto,
+) =>
+  (
+    await api.get<Blob>('/events/calendar.ics', {
+      params: query,
+      responseType: 'blob',
     })
   ).data;
 
