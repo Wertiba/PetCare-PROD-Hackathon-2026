@@ -129,7 +129,7 @@ export function CreateNotificationForm({
       className="flex flex-col gap-5"
       noValidate
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField
           id="notification-date"
           label="Дата"
@@ -151,7 +151,7 @@ export function CreateNotificationForm({
         {errors.time ? (
           <span
             role="alert"
-            className="col-span-2 text-sm text-red-700"
+            className="sm:col-span-2 text-sm text-red-700"
           >
             {errors.time.message}
           </span>

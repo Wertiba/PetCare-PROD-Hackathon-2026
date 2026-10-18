@@ -93,6 +93,29 @@ function StatTile({
 export function FoodStats({ items }: { items: Food[] }) {
   const intake = useMemo(() => {
     const today = startOfDay(new Date());
+    const dayGrams = new Map<number, number>();
+
+    let portions = 0;
+    let portionsGrams = 0;
+    for (const food of items) {
+      if (!food.weight) continue;
+      const day = startOfDay(
+        new Date(food.createdAt * 1000),
+      );
+      if (
+        day < today - (PERIOD_DAYS - 1) * DAY_MS ||
+        day > today
+      ) {
+        continue;
+      }
+      dayGrams.set(
+        day,
+        (dayGrams.get(day) ?? 0) + food.weight,
+      );
+      portions += 1;
+      portionsGrams += food.weight;
+    }
+
     const days: DailyIntake[] = Array.from(
       { length: PERIOD_DAYS },
       (_, index) => {
@@ -101,26 +124,10 @@ export function FoodStats({ items }: { items: Food[] }) {
         return {
           day,
           label: dayFormatter.format(day),
-          grams: 0,
+          grams: dayGrams.get(day) ?? 0,
         };
       },
     );
-    const byDay = new Map(
-      days.map((item) => [item.day, item]),
-    );
-
-    let portions = 0;
-    let portionsGrams = 0;
-    for (const food of items) {
-      if (!food.weight) continue;
-      const entry = byDay.get(
-        startOfDay(new Date(food.createdAt * 1000)),
-      );
-      if (!entry) continue;
-      entry.grams += food.weight;
-      portions += 1;
-      portionsGrams += food.weight;
-    }
 
     return {
       days,

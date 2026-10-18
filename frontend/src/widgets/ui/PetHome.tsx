@@ -11,6 +11,7 @@ import {
 import { useGetFoodsQuery } from '@src/entities/food';
 import type { Pet } from '@src/entities/pet';
 import { useGetStatesQuery } from '@src/entities/state';
+import { PetPhotoDialog } from '@src/features/pet/upload-photo/ui/PetPhotoDialog';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
@@ -251,7 +252,8 @@ export function PetHome({
   onDelete,
   onEdit,
 }: PetHomeProps) {
-  const [photoNotice, setPhotoNotice] = useState(false);
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] =
+    useState(false);
   const events = useGetUpcomingEventsQuery({
     days: 30,
     page: 0,
@@ -293,22 +295,25 @@ export function PetHome({
   const weightCategory = weightCategories.data?.items.find(
     (category) => category.name === WEIGHT_CATEGORY_NAME,
   );
+  const displayedPhoto = pet.avatarUrl ?? pet.photoUrl;
 
   return (
     <div className="mx-auto w-full max-w-[1600px]">
       <section className="grid overflow-hidden border-2 border-[var(--forest)] bg-white shadow-[6px_6px_0_var(--lime)] xl:grid-cols-[minmax(22rem,1.05fr)_minmax(28rem,1fr)]">
         <div className="relative min-h-[23rem] overflow-hidden bg-[var(--forest)] xl:min-h-[34rem]">
           <Image
-            key={pet.photoUrl ?? 'placeholder'}
-            src={pet.photoUrl ?? '/images/petcare-hero.png'}
+            key={displayedPhoto ?? 'placeholder'}
+            src={
+              displayedPhoto ?? '/images/petcare-hero.png'
+            }
             alt={
-              pet.photoUrl
+              displayedPhoto
                 ? `Фотография питомца ${pet.name}`
                 : `Фотография-заглушка для питомца ${pet.name}`
             }
             fill
             priority
-            unoptimized={Boolean(pet.photoUrl)}
+            unoptimized={Boolean(displayedPhoto)}
             sizes="(min-width: 1280px) 45vw, 100vw"
             className="object-cover"
           />
@@ -319,14 +324,16 @@ export function PetHome({
           ) : null}
           <button
             type="button"
-            onClick={() => setPhotoNotice(true)}
+            onClick={() => setIsPhotoDialogOpen(true)}
             className="absolute right-4 bottom-4 inline-flex items-center gap-2 border-2 border-[var(--forest)] bg-white px-4 py-3 text-sm font-black text-[var(--forest)] shadow-[4px_4px_0_var(--lime)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0_var(--lime)] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <ActionIcon>
               <path d="M14.5 6H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.5L9 4h4l1.5 2Z" />
               <circle cx="12" cy="13" r="3" />
             </ActionIcon>
-            Добавить фото
+            {pet.photoUrl
+              ? 'Изменить фото'
+              : 'Добавить фото'}
           </button>
         </div>
 
@@ -387,16 +394,6 @@ export function PetHome({
             ))}
           </dl>
 
-          {photoNotice ? (
-            <p
-              role="status"
-              className="mt-5 border-l-4 border-[var(--forest)] bg-[var(--lime)]/35 px-4 py-3 text-sm font-semibold text-[var(--forest)]"
-            >
-              Загрузка дополнительных фото появится в
-              следующем обновлении.
-            </p>
-          ) : null}
-
           <div className="mt-auto grid gap-2 pt-7 sm:grid-cols-2">
             <button
               type="button"
@@ -431,6 +428,13 @@ export function PetHome({
           </div>
         </div>
       </section>
+
+      {isPhotoDialogOpen ? (
+        <PetPhotoDialog
+          petId={pet.id}
+          onClose={() => setIsPhotoDialogOpen(false)}
+        />
+      ) : null}
 
       <section className="mt-7 grid border-y border-[var(--forest)]/20 bg-white xl:grid-cols-3 xl:divide-x xl:divide-[var(--forest)]/15">
         <article className="p-5 sm:p-7">

@@ -38,6 +38,35 @@ export const updatePet = async (
 export const deletePet = async (petId: Uid) =>
   (await api.delete<void>(`/pets/${petId}`)).data;
 
+/** Uploading a new file replaces the pet's only photo on the server. */
+export const uploadPetPhoto = async (
+  petId: Uid,
+  file: File,
+) => {
+  const data = new FormData();
+  data.append('file', file);
+
+  return (
+    await api.put<Pet>(`/pets/${petId}/photo`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  ).data;
+};
+
+export const generatePetAvatar = async (petId: Uid) =>
+  (await api.post<Pet>(`/pets/${petId}/avatar/generate`))
+    .data;
+
+export const selectPetAvatar = async (
+  petId: Uid,
+  source: Pet['avatarSource'],
+) =>
+  (
+    await api.put<Pet>(`/pets/${petId}/avatar`, {
+      source,
+    })
+  ).data;
+
 export const fetchBreeds = async (
   query: FetchBreedsReqDto,
 ) =>

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { Food } from '@src/entities/food';
 import { Uid } from '@src/shared/api/global.types';
 import { FormField, SubmitButton } from '@src/shared/ui';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { useCreateFoodMutation } from '../model/create-food.mutation';
@@ -28,8 +29,8 @@ const inputClassName =
 const INITIAL_VALUES: CreateFoodValues = {
   name: '',
   weight: '',
-  isApproach: 'unknown',
-  isTolerability: 'unknown',
+  isApproach: null,
+  isTolerability: null,
   reactions: [],
   details: '',
   ingredients: '',
@@ -39,7 +40,7 @@ const assessments: {
   name: 'isApproach' | 'isTolerability';
   legend: string;
   options: {
-    value: CreateFoodValues['isApproach'];
+    value: Exclude<CreateFoodValues['isApproach'], null>;
     label: string;
   }[];
 }[] = [
@@ -78,6 +79,7 @@ export function CreateFoodForm({
   recentNames = [],
   onSuccess,
 }: CreateFoodFormProps) {
+  const [formVersion, setFormVersion] = useState(0);
   const { mutate, isPending, error } =
     useCreateFoodMutation();
   const {
@@ -101,6 +103,7 @@ export function CreateFoodForm({
 
   return (
     <form
+      key={formVersion}
       onSubmit={(event) => {
         void handleSubmit((values) => {
           const consequences = [
@@ -130,6 +133,7 @@ export function CreateFoodForm({
             {
               onSuccess: (food) => {
                 reset(INITIAL_VALUES);
+                setFormVersion((version) => version + 1);
                 onSuccess?.(food);
               },
             },

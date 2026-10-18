@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" shape-rendering="crispEdges" aria-label="Спящая пиксельная собака">
+  <!-- Каждый логический пиксель равен 2×2 единицы -->
+  <path fill="#382D2A" d="M10 26h4v-6h6v-4h22v2h6v4h4v4h4v6h2v14h-4v6H42v4H14v-2H8v-4H4V34h2v-4h4z"/>
+  <path fill="#7F5542" d="M8 28h8v4h2v10h-4v4h-4v-4H8zm32-8h8v4h4v8h-4v6h-6V28h-2z"/>
+  <path fill="#B97849" d="M16 22h6v-2h18v4h2v16h-4v4H18v-4h-4V28h2z"/>
+  <path fill="#D99A5D" d="M22 20h14v6H22zm-6 8h6v6h-6zm20-2h6v8h-6z"/>
+  <path fill="#F2C993" d="M18 30h22v10h-4v4H22v-2h-4z"/>
+  <path fill="#382D2A" d="M18 28h8v2h-8zm14 0h8v2h-8zM26 32h8v6h-8z"/>
+  <path fill="#5A3D34" d="M28 34h4v2h-4z"/>
+  <path fill="#382D2A" d="M24 38h4v2h-4zm8 0h4v2h-4z"/>
+  <path fill="#E77F86" d="M28 40h6v4h-2v2h-2v-2h-2z"/>
+  <path fill="#B97849" d="M34 34h12v2h6v4h2v8h-4v2H36v-4h-6v-2h6z"/>
+  <path fill="#D99A5D" d="M40 38h8v2h4v6h-4v2h-8z"/>
+  <path fill="#B97849" d="M12 42h8v4h18v4h12v-2h4v4h-4v2H14v-2H8v-4H6v-4h6z"/>
+  <path fill="#7F5542" d="M12 46h10v4H12zm24 4h12v2H36z"/>
+  <path fill="#AFA1D1" d="M8 56h4v4H8zm8 0h4v4h-4zm8 0h4v4h-4z"/>
+</svg>

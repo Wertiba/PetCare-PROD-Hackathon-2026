@@ -21,8 +21,8 @@ export const createFoodSchema = z.object({
         value === '' || Number(value) <= 2_147_483_647,
       'Слишком большая порция',
     ),
-  isApproach: assessment,
-  isTolerability: assessment,
+  isApproach: assessment.nullable(),
+  isTolerability: assessment.nullable(),
   reactions: z.array(z.string()),
   details: z.string().max(500, 'Не больше 500 символов'),
   ingredients: z

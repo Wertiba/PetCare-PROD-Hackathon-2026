@@ -12,6 +12,9 @@ export interface Pet {
   birthDate: Timestamp | null;
   ageMonths: number | null;
   photoUrl: string | null;
+  generatedAvatarUrl: string | null;
+  avatarSource: 'photo' | 'generated';
+  avatarUrl: string | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
