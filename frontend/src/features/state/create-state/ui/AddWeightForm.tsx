@@ -59,7 +59,7 @@ export function AddWeightForm({
           mutate(
             {
               petId,
-              catId,
+              categoryId: catId,
               // The «Вес» category stores whole grams.
               value: Math.round(
                 toNumber(values.value) *

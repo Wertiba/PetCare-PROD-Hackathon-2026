@@ -19,6 +19,7 @@ import { useLogoutMutation } from '@src/features/logout';
 import { CreatePetForm } from '@src/features/pet/create-pet';
 import { useDeletePetMutation } from '@src/features/pet/delete-pet';
 import { EditPetForm } from '@src/features/pet/update-pet';
+import { createPetColorMap } from '@src/shared/lib';
 import { Dialog } from '@src/shared/ui';
 import { CareCalendar } from '@src/widgets/ui/CareCalendar';
 import {
@@ -259,6 +260,14 @@ export function Dashboard() {
   });
   const petItems = petsQuery.data?.items;
   const pets = useMemo(() => petItems ?? [], [petItems]);
+  const petColorById = useMemo(
+    () => createPetColorMap(pets.map((item) => item.id)),
+    [pets],
+  );
+  const petNameById = useMemo(
+    () => new Map(pets.map((item) => [item.id, item.name])),
+    [pets],
+  );
   const pet =
     pets.find((item) => item.id === selectedId) ?? pets[0];
   const choose = (item: Pet) => {
@@ -304,11 +313,8 @@ export function Dashboard() {
   return (
     <div className="min-h-dvh bg-[var(--cream)] text-[var(--ink)] lg:grid lg:grid-cols-[16rem_1fr] lg:grid-rows-[auto_1fr]">
       <header className="grid min-h-18 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-[var(--forest)]/15 px-5 py-3 sm:px-8 lg:col-span-2 lg:px-10">
-        <Link
-          href="/"
-          className="group flex items-center gap-3 text-[var(--forest)]"
-        >
-          <span className="grid size-12 place-items-center rounded-sm bg-[var(--forest)] transition-transform group-hover:-rotate-6">
+        <div className="group flex items-center gap-3 text-[var(--forest)]">
+          <span className="grid size-12 place-items-center rounded-2xl bg-[var(--forest)] transition-transform group-hover:-rotate-6">
             <Image
               src="/images/petcare-mark.svg"
               alt=""
@@ -320,7 +326,7 @@ export function Dashboard() {
           <span className="hidden text-lg font-black tracking-tight sm:inline">
             PetCare
           </span>
-        </Link>
+        </div>
         <div
           ref={petsMenuRef}
           className="relative flex min-w-0 justify-center"
@@ -448,7 +454,11 @@ export function Dashboard() {
                       (event) => (
                         <div
                           key={event.id}
-                          className="px-3 py-3"
+                          className="border-l-2 px-3 py-3"
+                          style={{
+                            borderLeftColor:
+                              petColorById.get(event.petId),
+                          }}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <p className="font-bold text-[var(--forest)]">
@@ -460,6 +470,20 @@ export function Dashboard() {
                               </span>
                             ) : null}
                           </div>
+                          <p className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[var(--ink)]/65">
+                            <span
+                              aria-hidden="true"
+                              className="size-2 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  petColorById.get(
+                                    event.petId,
+                                  ),
+                              }}
+                            />
+                            {petNameById.get(event.petId) ??
+                              'Питомец'}
+                          </p>
                           <p className="mt-1 text-sm text-[var(--ink)]/60">
                             {formatDate(event.schedule)}
                           </p>

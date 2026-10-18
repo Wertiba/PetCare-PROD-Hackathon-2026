@@ -219,7 +219,7 @@ function HealthBoard({
     page: 0,
     size: 100,
     petId: pet.id,
-    catId: weightCatId ?? undefined,
+    categoryId: weightCatId ?? undefined,
   });
 
   const eventItems = events.data?.items;
@@ -227,7 +227,7 @@ function HealthBoard({
   const entries = useMemo(() => {
     // States come newest first, so the next item is the previous weighing.
     const weightStates = (stateItems ?? []).filter(
-      (state) => state.catId === weightCatId,
+      (state) => state.categoryId === weightCatId,
     );
     const result: HealthEntry[] = [
       ...weightStates.map((state, index): HealthEntry => ({
@@ -249,9 +249,6 @@ function HealthBoard({
     return result.sort((a, b) => b.time - a.time);
   }, [eventItems, stateItems, weightCatId]);
 
-  const presentTypes = entryTypes.filter((type) =>
-    entries.some((entry) => entryTypeOf(entry) === type),
-  );
   const visible =
     filter === 'all'
       ? entries
@@ -304,33 +301,31 @@ function HealthBoard({
           ) : null}
         </div>
 
-        {presentTypes.length > 1 ? (
-          <div
-            role="group"
-            aria-label="Фильтр по типу записи"
-            className="mt-5 flex flex-wrap gap-2"
+        <div
+          role="group"
+          aria-label="Фильтр по типу записи"
+          className="mt-5 flex flex-wrap gap-2"
+        >
+          <button
+            type="button"
+            aria-pressed={filter === 'all'}
+            onClick={() => setFilter('all')}
+            className={chipClassName}
           >
+            Все
+          </button>
+          {entryTypes.map((type) => (
             <button
+              key={type}
               type="button"
-              aria-pressed={filter === 'all'}
-              onClick={() => setFilter('all')}
+              aria-pressed={filter === type}
+              onClick={() => setFilter(type)}
               className={chipClassName}
             >
-              Все
+              {entryLabel(type)}
             </button>
-            {presentTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={filter === type}
-                onClick={() => setFilter(type)}
-                className={chipClassName}
-              >
-                {entryLabel(type)}
-              </button>
-            ))}
-          </div>
-        ) : null}
+          ))}
+        </div>
 
         {events.isPending || weights.isPending ? (
           <p className="py-6 text-sm text-[var(--ink)]/60">

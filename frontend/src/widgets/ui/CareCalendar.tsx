@@ -8,7 +8,8 @@ import {
 } from '@src/entities/event';
 import { useGetPetQuery } from '@src/entities/pet';
 import { useCreateEventMutation } from '@src/features/event/create-event';
-import { CreateNotificationForm } from '@src/features/notification/create-notification';
+import { CreateNotificationForm } from '@src/features/notification/create-notification/ui/CreateNotificationForm';
+import { createPetColorMap } from '@src/shared/lib';
 import { Dialog } from '@src/shared/ui';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -146,11 +147,28 @@ export function CareCalendar({
     from: rangeStart.getTime() / 1000,
     to: rangeEnd.getTime() / 1000 - 1,
   });
+  const petColorById = useMemo(
+    () => createPetColorMap(pets.map((pet) => pet.id)),
+    [pets],
+  );
+  const petNameById = useMemo(
+    () => new Map(pets.map((pet) => [pet.id, pet.name])),
+    [pets],
+  );
   const eventsByDate = useMemo(() => {
-    const result = new Map<string, number>();
+    const result = new Map<
+      string,
+      { count: number; petIds: Set<string> }
+    >();
     eventsQuery.data?.items.forEach((event) => {
       const key = dateKey(new Date(event.schedule * 1000));
-      result.set(key, (result.get(key) ?? 0) + 1);
+      const eventsForDay = result.get(key) ?? {
+        count: 0,
+        petIds: new Set<string>(),
+      };
+      eventsForDay.count += 1;
+      eventsForDay.petIds.add(event.petId);
+      result.set(key, eventsForDay);
     });
     return result;
   }, [eventsQuery.data?.items]);
@@ -358,7 +376,9 @@ export function CareCalendar({
               const isSelected =
                 key === dateKey(selectedDate);
               const isToday = key === dateKey(now);
-              const eventCount = eventsByDate.get(key) ?? 0;
+              const eventsForDay = eventsByDate.get(key);
+              const eventPetIds = eventsForDay?.petIds;
+              const eventCount = eventsForDay?.count ?? 0;
               return (
                 <div
                   key={key}
@@ -372,11 +392,22 @@ export function CareCalendar({
                     className={`relative grid size-10 place-items-center rounded-full text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--forest)] sm:size-11 ${isSelected ? 'bg-[var(--forest)] text-white' : isToday ? 'border-2 border-[var(--forest)] text-[var(--forest)]' : 'text-[var(--ink)] hover:bg-[var(--lime)]'}`}
                   >
                     <span>{date.getDate()}</span>
-                    {eventCount ? (
+                    {eventPetIds ? (
                       <span
                         aria-hidden="true"
-                        className={`absolute bottom-1 size-1.5 rounded-full ${isSelected ? 'bg-[var(--lime)]' : 'bg-[var(--forest)]'}`}
-                      />
+                        className="absolute bottom-1 flex max-w-8 items-center justify-center gap-0.5"
+                      >
+                        {[...eventPetIds].map((petId) => (
+                          <span
+                            key={petId}
+                            className="size-1.5 rounded-full ring-1 ring-white"
+                            style={{
+                              backgroundColor:
+                                petColorById.get(petId),
+                            }}
+                          />
+                        ))}
+                      </span>
                     ) : null}
                   </button>
                 </div>
@@ -406,11 +437,31 @@ export function CareCalendar({
               selectedEvents.map((event) => (
                 <article
                   key={event.id}
-                  className="border-l-4 border-[var(--lime)] bg-[var(--cream)] px-3 py-3"
+                  className="border-l-2 bg-[var(--cream)] px-3 py-3"
+                  style={{
+                    borderLeftColor: petColorById.get(
+                      event.petId,
+                    ),
+                  }}
                 >
-                  <p className="font-bold text-[var(--forest)]">
-                    {event.name}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="font-bold text-[var(--forest)]">
+                      {event.name}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--ink)]/65">
+                      <span
+                        aria-hidden="true"
+                        className="size-2 rounded-full"
+                        style={{
+                          backgroundColor: petColorById.get(
+                            event.petId,
+                          ),
+                        }}
+                      />
+                      {petNameById.get(event.petId) ??
+                        'Питомец'}
+                    </span>
+                  </div>
                   <p className="mt-1 text-sm text-[var(--ink)]/60">
                     {eventTypes.find(
                       (item) => item.value === event.type,

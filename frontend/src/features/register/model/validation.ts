@@ -9,32 +9,35 @@ const FULL_NAME_PATTERN = /^[а-яА-Яa-zA-Z0-9 _-]{2,200}$/;
 export const registerSchema = z.object({
   login: z
     .string()
-    .min(6, `Email must be at least 6 characters long`),
+    .min(
+      6,
+      'Электронная почта должна содержать не менее 6 символов',
+    ),
   password: z
     .string()
     .min(
       PASSWORD_MIN_LENGTH,
-      `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters`,
+      `Пароль должен содержать от ${PASSWORD_MIN_LENGTH} до ${PASSWORD_MAX_LENGTH} символов`,
     )
     .max(
       PASSWORD_MAX_LENGTH,
-      `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters`,
+      `Пароль должен содержать от ${PASSWORD_MIN_LENGTH} до ${PASSWORD_MAX_LENGTH} символов`,
     )
     .regex(
       /[A-Za-z]/,
-      'Password must contain at least one letter',
+      'Пароль должен содержать хотя бы одну букву',
     )
     .regex(
       /\d/,
-      'Password must contain at least one digit',
+      'Пароль должен содержать хотя бы одну цифру',
     ),
   fullName: z
     .string()
     .trim()
-    .min(1, 'Full name is required')
+    .min(1, 'Укажите имя')
     .regex(
       FULL_NAME_PATTERN,
-      'Full name must be 2-200 characters and contain only letters, digits, spaces, underscores or hyphens',
+      'Имя должно содержать от 2 до 200 символов: буквы, цифры, пробелы, «_» или «-».',
     ),
 });
 

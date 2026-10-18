@@ -31,6 +31,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
 const numberFormatter = new Intl.NumberFormat('ru-RU', {
   maximumFractionDigits: 2,
 });
+const WEIGHT_CATEGORY_NAME = 'Вес';
 
 const unitLabels: Record<Category['unit'], string> = {
   none: '',
@@ -51,6 +52,10 @@ function formatDate(value: number | null | undefined) {
 
 function formatDateTime(value: number) {
   return dateTimeFormatter.format(new Date(value * 1000));
+}
+
+function formatWeight(grams: number) {
+  return `${numberFormatter.format(grams / 1000)} кг`;
 }
 
 function pluralize(
@@ -260,6 +265,11 @@ export function PetHome({
     size: 100,
     q: '',
   });
+  const weightCategories = useGetCategoriesQuery({
+    page: 0,
+    size: 20,
+    q: WEIGHT_CATEGORY_NAME,
+  });
 
   const categoryById = useMemo(
     () =>
@@ -272,6 +282,9 @@ export function PetHome({
     [categories.data?.items],
   );
   const latestFood = foods.data?.items[0];
+  const weightCategory = weightCategories.data?.items.find(
+    (category) => category.name === WEIGHT_CATEGORY_NAME,
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1600px]">
@@ -451,14 +464,18 @@ export function PetHome({
           <h2 className="text-xl font-black text-[var(--forest)]">
             Последние измерения
           </h2>
-          {states.isPending || categories.isPending ? (
+          {states.isPending ||
+          categories.isPending ||
+          weightCategories.isPending ? (
             <EmptyLine>Загружаем измерения…</EmptyLine>
           ) : states.data?.items.length ? (
             <ol className="mt-4 divide-y divide-[var(--forest)]/10">
               {states.data.items.map((state) => {
                 const category = categoryById.get(
-                  state.catId,
+                  state.categoryId,
                 );
+                const isWeight =
+                  state.categoryId === weightCategory?.id;
                 return (
                   <li
                     key={state.id}
@@ -466,19 +483,30 @@ export function PetHome({
                   >
                     <div className="min-w-0">
                       <p className="truncate font-bold text-[var(--ink)]">
-                        {category?.name ?? 'Показатель'}
+                        {isWeight
+                          ? WEIGHT_CATEGORY_NAME
+                          : (category?.name ??
+                            'Показатель')}
                       </p>
                       <p className="mt-0.5 text-xs text-[var(--ink)]/50">
                         {formatDateTime(state.time)}
                       </p>
                     </div>
                     <p className="shrink-0 text-lg font-black text-[var(--forest)]">
-                      {numberFormatter.format(state.value)}{' '}
-                      <span className="text-xs font-bold">
-                        {category
-                          ? unitLabels[category.unit]
-                          : ''}
-                      </span>
+                      {isWeight ? (
+                        formatWeight(state.value)
+                      ) : (
+                        <>
+                          {numberFormatter.format(
+                            state.value,
+                          )}{' '}
+                          <span className="text-xs font-bold">
+                            {category
+                              ? unitLabels[category.unit]
+                              : ''}
+                          </span>
+                        </>
+                      )}
                     </p>
                   </li>
                 );

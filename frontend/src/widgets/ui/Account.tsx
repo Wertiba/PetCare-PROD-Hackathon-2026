@@ -63,7 +63,7 @@ export function Account({ activeTab }: AccountProps) {
             href="/dashboard"
             className="group flex items-center gap-3 text-[var(--forest)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--forest)]"
           >
-            <span className="grid size-12 place-items-center bg-[var(--cream)] transition-transform group-hover:-rotate-6">
+            <span className="grid size-12 place-items-center rounded-2xl bg-[var(--forest)] transition-transform group-hover:-rotate-6">
               <Image
                 src="/images/petcare-mark.svg"
                 alt=""
@@ -72,7 +72,7 @@ export function Account({ activeTab }: AccountProps) {
                 className="size-full object-contain"
               />
             </span>
-            <span className="text-lg font-black tracking-tight">
+            <span className="hidden text-lg font-black tracking-tight sm:inline">
               PetCare
             </span>
           </Link>
