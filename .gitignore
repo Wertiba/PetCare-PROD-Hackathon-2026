@@ -4,3 +4,11 @@
 .idea/
 /docker-compose.local.yaml
 /local/
+
+# AI assistant instructions and working notes stay local
+AGENTS.md
+CLAUDE.md
+.claude/
+/frontend/agents/
+/BUGFIX_REPORT.md
+/backend/docs/notifications-review.md
