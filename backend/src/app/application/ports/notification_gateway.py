@@ -30,6 +30,10 @@ class NotificationGateway(Protocol):
         """Conditional UPDATE ... WHERE delivered_at IS NULL. True only when this worker claimed the row."""
         ...
 
+    async def release_delivery(self, notification_id: NotificationId, claimed_at: float) -> None:
+        """SET delivered_at = NULL only when it still equals claimed_at. Commits."""
+        ...
+
     async def count_by_user_id(
         self,
         user_id: UserId,

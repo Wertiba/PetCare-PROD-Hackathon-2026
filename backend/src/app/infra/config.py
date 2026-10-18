@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.engine import URL
 
 
@@ -82,6 +82,19 @@ class WebPushConfig(BaseModel):
     public_key: str = Field(alias="VAPID_PUBLIC_KEY", default="")
     private_key: str = Field(alias="VAPID_PRIVATE_KEY", default="", repr=False)
     subject: str = Field(alias="VAPID_SUBJECT", default="")
+    allowed_hosts: str = Field(
+        alias="WEB_PUSH_ALLOWED_HOSTS",
+        default="fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com",
+    )
+    timeout: float = Field(alias="WEB_PUSH_TIMEOUT", default=10, gt=0)
+
+    @field_validator("subject")
+    @classmethod
+    def vapid_subject(cls, value: str) -> str:
+        stripped = value.strip()
+        if stripped and not stripped.startswith(("mailto:", "https://")):
+            raise ValueError("VAPID_SUBJECT must start with mailto: or https://")
+        return value
 
     def configured(self) -> bool:
         return bool(self.public_key.strip() and self.private_key.strip() and self.subject.strip())

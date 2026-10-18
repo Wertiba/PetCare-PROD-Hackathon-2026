@@ -23,6 +23,10 @@ for _key, _value in {
     os.environ.setdefault(_key, _value)
 # Background dispatch must not start during tests.
 os.environ["NOTIFICATIONS_WORKER_ENABLED"] = "false"
+# Fixture endpoints use push.example.com. Production suffixes stay allowlisted too.
+os.environ["WEB_PUSH_ALLOWED_HOSTS"] = (
+    "fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com,example.com"
+)
 import pytest
 from dishka import Provider, Scope, provide
 from sqlalchemy import event

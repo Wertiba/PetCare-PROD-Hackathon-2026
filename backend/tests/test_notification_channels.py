@@ -1,3 +1,4 @@
+import os
 import uuid
 from time import time
 from types import SimpleNamespace
@@ -5,8 +6,10 @@ from types import SimpleNamespace
 import pytest
 from dishka import Provider, Scope, provide
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from app.application.notifications.delivery import DispatchDueNotifications
+from app.application.notifications.dto import ChannelDeliveryResult
 from app.application.ports.avatar_generator import AvatarGenerator
 from app.application.ports.web_push import WebPushMessage, WebPushSender
 from app.bootstrap import build_container
@@ -43,6 +46,13 @@ class FakeWebPush:
         if not self.enabled:
             raise WebPushNotConfiguredError
         return self.key
+
+    def allows_endpoint(self, endpoint: str) -> bool:
+        hosts = os.environ.get(
+            "WEB_PUSH_ALLOWED_HOSTS",
+            "fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com,example.com",
+        )
+        return PyWebPushSender(WebPushConfig(WEB_PUSH_ALLOWED_HOSTS=hosts)).allows_endpoint(endpoint)
 
     async def send(self, *, endpoint: str, p256dh: str, auth: str, message: WebPushMessage) -> None:
         if endpoint in self.gone:
@@ -202,13 +212,14 @@ async def test_failed_subscription_does_not_block_the_other(client, auth, pet_id
     await _enable_web_push(db_session_factory, user_id, [ENDPOINT_A, ENDPOINT_B])
     webpush = FakeWebPush()
     webpush.fail.add(ENDPOINT_B)
-    await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    outcomes = await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert outcomes == [ChannelDeliveryResult(channel="web_push", ok=True, error="partial_failure")]
     assert {item[0] for item in webpush.sent} == {ENDPOINT_A}
     assert await _subscription_user(db_session_factory, ENDPOINT_B) == user_id
     body = client.get(f"/api/v1/notifications/{created['id']}", headers=auth).json()
     assert body["status"] == "pending"
     assert body["deliveredAt"] is not None
-    await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
     assert len(webpush.sent) == 1
 
 
@@ -220,7 +231,12 @@ async def test_web_push_sender_turns_410_into_gone(monkeypatch):
 
     monkeypatch.setattr("app.infra.webpush.sender.webpush_async", fail)
     sender = PyWebPushSender(
-        WebPushConfig(VAPID_PUBLIC_KEY="pub", VAPID_PRIVATE_KEY="priv", VAPID_SUBJECT="mailto:pet@example.com")
+        WebPushConfig(
+            VAPID_PUBLIC_KEY="pub",
+            VAPID_PRIVATE_KEY="priv",
+            VAPID_SUBJECT="mailto:pet@example.com",
+            WEB_PUSH_ALLOWED_HOSTS="example.com",
+        )
     )
     with pytest.raises(WebPushSubscriptionGoneError):
         await sender.send(
@@ -228,6 +244,189 @@ async def test_web_push_sender_turns_410_into_gone(monkeypatch):
             p256dh="p",
             auth="a",
             message=WebPushMessage(title="Напоминание", body="текст", notification_id="1", event_id="2", pet_id="3"),
+        )
+
+
+async def test_dispatcher_waits_until_web_push_can_send(client, auth, pet_id, db_session_factory):
+    user_id = client.get("/api/v1/users/me", headers=auth).json()["id"]
+    notification_id = _due_notification(client, auth, pet_id, name="Прогулка")
+    webpush = FakeWebPush()
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
+    assert _delivered_at(client, auth, notification_id) is None
+
+    await _set_push_enabled(db_session_factory, user_id, enabled=False)
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
+    assert _delivered_at(client, auth, notification_id) is None
+
+    await _set_push_enabled(db_session_factory, user_id, enabled=True)
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
+    assert _delivered_at(client, auth, notification_id) is None
+
+    await _add_subscriptions(db_session_factory, user_id, [ENDPOINT_A])
+    outcomes = await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert outcomes == [ChannelDeliveryResult(channel="web_push", ok=True, error=None)]
+    assert [item[0] for item in webpush.sent] == [ENDPOINT_A]
+    assert _delivered_at(client, auth, notification_id) is not None
+
+
+async def test_unconfigured_web_push_does_not_claim(client, auth, pet_id, db_session_factory):
+    user_id = client.get("/api/v1/users/me", headers=auth).json()["id"]
+    notification_id = _due_notification(client, auth, pet_id, name="Вода")
+    await _enable_web_push(db_session_factory, user_id, [ENDPOINT_A])
+    webpush = FakeWebPush()
+    webpush.enabled = False
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
+    assert webpush.sent == []
+    assert _delivered_at(client, auth, notification_id) is None
+    webpush.enabled = True
+    outcomes = await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert outcomes[0].ok is True
+    assert _delivered_at(client, auth, notification_id) is not None
+
+
+async def test_total_push_failure_is_retried(client, auth, pet_id, db_session_factory):
+    user_id = client.get("/api/v1/users/me", headers=auth).json()["id"]
+    notification_id = _due_notification(client, auth, pet_id, name="Кормление")
+    await _enable_web_push(db_session_factory, user_id, [ENDPOINT_A, ENDPOINT_B])
+    webpush = FakeWebPush()
+    webpush.fail.update({ENDPOINT_A, ENDPOINT_B})
+    failed = await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert failed == [ChannelDeliveryResult(channel="web_push", ok=False, error="delivery_failed")]
+    assert webpush.sent == []
+    assert _delivered_at(client, auth, notification_id) is None
+    webpush.fail.clear()
+    delivered = await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert delivered == [ChannelDeliveryResult(channel="web_push", ok=True, error=None)]
+    assert {item[0] for item in webpush.sent} == {ENDPOINT_A, ENDPOINT_B}
+    assert _delivered_at(client, auth, notification_id) is not None
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
+
+
+async def test_revoked_subscriptions_stay_delivered(client, auth, pet_id, db_session_factory):
+    user_id = client.get("/api/v1/users/me", headers=auth).json()["id"]
+    notification_id = _due_notification(client, auth, pet_id, name="Визит")
+    await _enable_web_push(db_session_factory, user_id, [ENDPOINT_A])
+    webpush = FakeWebPush()
+    webpush.gone.add(ENDPOINT_A)
+    outcomes = await _dispatch(db_session_factory, webpush, now=time(), lateness=86400)
+    assert outcomes == [ChannelDeliveryResult(channel="web_push", ok=False, error="subscription_gone")]
+    assert webpush.sent == []
+    assert await _subscription_user(db_session_factory, ENDPOINT_A) is None
+    assert _delivered_at(client, auth, notification_id) is not None
+    assert await _dispatch(db_session_factory, webpush, now=time(), lateness=86400) == []
+
+
+async def test_subscription_endpoint_is_https_and_allowlisted(client, auth):
+    http_endpoint = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "http://fcm.googleapis.com/push", "keys": {"p256dh": "p", "auth": "a"}},
+        headers=auth,
+    )
+    assert http_endpoint.status_code == 422
+    assert http_endpoint.json()["fieldErrors"][0]["field"] == "endpoint"
+    foreign = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "https://push.evil.test/subscription", "keys": {"p256dh": "p", "auth": "a"}},
+        headers=auth,
+    )
+    assert foreign.status_code == 422
+    assert foreign.json()["details"] == {"field": "endpoint"}
+    lookalike = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "https://notfcm.googleapis.com/push", "keys": {"p256dh": "p", "auth": "a"}},
+        headers=auth,
+    )
+    assert lookalike.status_code == 422
+    assert lookalike.json()["details"] == {"field": "endpoint"}
+    accepted = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "https://updates.fcm.googleapis.com/subscription", "keys": {"p256dh": "p", "auth": "a"}},
+        headers=auth,
+    )
+    assert accepted.status_code == 204, accepted.text
+
+
+async def test_web_push_keys_longer_than_255_are_rejected(client, auth):
+    too_long = "k" * 256
+    p256 = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "https://fcm.googleapis.com/keys", "keys": {"p256dh": too_long, "auth": "a"}},
+        headers=auth,
+    )
+    assert p256.status_code == 422
+    assert p256.json()["fieldErrors"][0]["field"] == "keys.p256dh"
+    auth_key = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "https://fcm.googleapis.com/keys", "keys": {"p256dh": "p", "auth": too_long}},
+        headers=auth,
+    )
+    assert auth_key.status_code == 422
+    assert auth_key.json()["fieldErrors"][0]["field"] == "keys.auth"
+    accepted = client.post(
+        "/api/v1/notifications/web-push/subscriptions",
+        json={"endpoint": "https://fcm.googleapis.com/keys", "keys": {"p256dh": "p" * 255, "auth": "a" * 255}},
+        headers=auth,
+    )
+    assert accepted.status_code == 204, accepted.text
+
+
+def test_vapid_subject_must_be_mailto_or_https():
+    WebPushConfig(VAPID_SUBJECT="")
+    WebPushConfig(VAPID_SUBJECT="mailto:pet@example.com")
+    WebPushConfig(VAPID_SUBJECT="https://pet.example.com")
+    assert WebPushConfig(VAPID_PUBLIC_KEY="p", VAPID_PRIVATE_KEY="k", VAPID_SUBJECT="").configured() is False
+    assert WebPushConfig(VAPID_PUBLIC_KEY="p", VAPID_PRIVATE_KEY="k", VAPID_SUBJECT="mailto:a@b.c").configured() is True
+    with pytest.raises(ValidationError):
+        WebPushConfig(VAPID_SUBJECT="pet@example.com")
+    with pytest.raises(ValidationError):
+        WebPushConfig(VAPID_SUBJECT="http://pet.example.com")
+
+
+def test_web_push_timeout_must_be_positive():
+    assert WebPushConfig().timeout == 10
+    with pytest.raises(ValidationError):
+        WebPushConfig(WEB_PUSH_TIMEOUT=0)
+
+
+async def test_web_push_sender_passes_timeout(monkeypatch):
+    captured: dict = {}
+
+    async def ok(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr("app.infra.webpush.sender.webpush_async", ok)
+    sender = PyWebPushSender(
+        WebPushConfig(
+            VAPID_PUBLIC_KEY="pub",
+            VAPID_PRIVATE_KEY="priv",
+            VAPID_SUBJECT="mailto:pet@example.com",
+            WEB_PUSH_TIMEOUT=4.5,
+            WEB_PUSH_ALLOWED_HOSTS="example.com",
+        )
+    )
+    await sender.send(
+        endpoint=ENDPOINT_A,
+        p256dh="p",
+        auth="a",
+        message=WebPushMessage(title="Напоминание", body="текст"),
+    )
+    assert captured["timeout"] == 4.5
+
+
+async def test_sender_drops_endpoint_outside_allowlist(monkeypatch):
+    async def unexpected(**kwargs):
+        raise AssertionError(kwargs["subscription_info"]["endpoint"])
+
+    monkeypatch.setattr("app.infra.webpush.sender.webpush_async", unexpected)
+    sender = PyWebPushSender(
+        WebPushConfig(VAPID_PUBLIC_KEY="pub", VAPID_PRIVATE_KEY="priv", VAPID_SUBJECT="mailto:pet@example.com")
+    )
+    with pytest.raises(WebPushSubscriptionGoneError):
+        await sender.send(
+            endpoint="https://evil.example/push",
+            p256dh="p",
+            auth="a",
+            message=WebPushMessage(title="Напоминание", body="текст"),
         )
 
 
@@ -245,7 +444,37 @@ async def _subscription_user(db_session_factory, endpoint: str) -> str | None:
         return None if row is None else str(row.user_id)
 
 
-async def _dispatch(db_session_factory, webpush, *, now: float, lateness: int) -> None:
+def _due_notification(client, auth, pet_id: str, *, name: str) -> str:
+    event_id = client.post(
+        "/api/v1/events", json={"petId": pet_id, "name": name, "schedule": time() + 60}, headers=auth
+    ).json()["id"]
+    return client.post("/api/v1/notifications", json={"eventId": event_id, "time": time() - 5}, headers=auth).json()[
+        "id"
+    ]
+
+
+def _delivered_at(client, auth, notification_id: str):
+    return client.get(f"/api/v1/notifications/{notification_id}", headers=auth).json()["deliveredAt"]
+
+
+async def _set_push_enabled(db_session_factory, user_id: str, *, enabled: bool) -> None:
+    async with db_session_factory() as session:
+        existing = await SqlAlchemyNotificationSettingsGateway(session).get_by_user_id(uuid.UUID(user_id))
+        if existing is None:
+            session.add(NotificationSettings(user_id=uuid.UUID(user_id), web_push_enabled=enabled))
+        else:
+            existing.web_push_enabled = enabled
+        await session.commit()
+
+
+async def _add_subscriptions(db_session_factory, user_id: str, endpoints: list[str]) -> None:
+    async with db_session_factory() as session:
+        for endpoint in endpoints:
+            session.add(WebPushSubscription(user_id=uuid.UUID(user_id), endpoint=endpoint, p256dh="p256", auth="auth"))
+        await session.commit()
+
+
+async def _dispatch(db_session_factory, webpush, *, now: float, lateness: int) -> list[ChannelDeliveryResult]:
     async with db_session_factory() as session:
         dispatcher = DispatchDueNotifications(
             notification_gateway=SqlAlchemyNotificationGateway(session),
@@ -257,12 +486,16 @@ async def _dispatch(db_session_factory, webpush, *, now: float, lateness: int) -
         reminders = await dispatcher.collect(now=now, earliest=now - lateness)
         if session.in_transaction():
             await session.rollback()
+    outcomes: list[ChannelDeliveryResult] = []
     for reminder in reminders:
         async with db_session_factory() as session:
-            await DispatchDueNotifications(
-                notification_gateway=SqlAlchemyNotificationGateway(session),
-                settings_gateway=SqlAlchemyNotificationSettingsGateway(session),
-                subscription_gateway=SqlAlchemyWebPushSubscriptionGateway(session),
-                uow=SqlAlchemyUnitOfWork(session),
-                webpush=webpush,
-            ).deliver(reminder, now=now)
+            outcomes.extend(
+                await DispatchDueNotifications(
+                    notification_gateway=SqlAlchemyNotificationGateway(session),
+                    settings_gateway=SqlAlchemyNotificationSettingsGateway(session),
+                    subscription_gateway=SqlAlchemyWebPushSubscriptionGateway(session),
+                    uow=SqlAlchemyUnitOfWork(session),
+                    webpush=webpush,
+                ).deliver(reminder, now=now)
+            )
+    return outcomes

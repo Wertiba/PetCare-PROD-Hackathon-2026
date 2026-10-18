@@ -5362,7 +5362,7 @@
               }
             ],
             "title": "Deliveredat",
-            "description": "When an external channel accepted the reminder. Null until then. Status is unchanged."
+            "description": "When at least one device accepted the push, or the remaining subscriptions were all revoked. Null until then. Status is unchanged."
           }
         },
         "type": "object",
@@ -6483,10 +6483,12 @@
         "properties": {
           "p256dh": {
             "type": "string",
+            "maxLength": 255,
             "title": "P256Dh"
           },
           "auth": {
             "type": "string",
+            "maxLength": 255,
             "title": "Auth"
           }
         },
@@ -6514,6 +6516,7 @@
         "properties": {
           "endpoint": {
             "type": "string",
+            "maxLength": 2048,
             "title": "Endpoint"
           },
           "keys": {

@@ -12,6 +12,7 @@ from app.domain.foods.errors import FoodNotFoundError
 from app.domain.notes.errors import NoteNotFoundError
 from app.domain.notifications.errors import (
     NotificationNotFoundError,
+    WebPushEndpointNotAllowedError,
     WebPushEndpointRequiredError,
     WebPushNotConfiguredError,
 )
@@ -176,6 +177,10 @@ DOMAIN_TO_API: dict[type, callable] = {
         message="Notification not found",
     ),
     WebPushNotConfiguredError: lambda path, exc=None: WebPushNotConfigured(path=path),
+    WebPushEndpointNotAllowedError: lambda path, exc=None: ValidationFailed(
+        path=path,
+        details={"field": "endpoint"},
+    ),
     WebPushEndpointRequiredError: lambda path, exc=None: ValidationFailed(
         path=path,
         details={"field": "endpoint"},

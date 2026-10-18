@@ -6,7 +6,11 @@ from app.application.ports.notification_settings_gateway import NotificationSett
 from app.application.ports.unit_of_work import UnitOfWork
 from app.application.ports.web_push import WebPushSender
 from app.application.ports.web_push_subscription_gateway import WebPushSubscriptionGateway
-from app.domain.notifications.errors import WebPushEndpointRequiredError, WebPushNotConfiguredError
+from app.domain.notifications.errors import (
+    WebPushEndpointNotAllowedError,
+    WebPushEndpointRequiredError,
+    WebPushNotConfiguredError,
+)
 from app.domain.notifications.settings import NotificationSettings, WebPushSubscription
 from app.domain.users.ids import UserId
 
@@ -66,8 +70,13 @@ class _SubscriptionContext:
     subscription_gateway: WebPushSubscriptionGateway
 
 
+@dataclass
 class SaveWebPushSubscription(_SubscriptionContext):
+    webpush: WebPushSender
+
     async def __call__(self, user_id: UserId, endpoint: str, p256dh: str, auth: str) -> None:
+        if not self.webpush.allows_endpoint(endpoint):
+            raise WebPushEndpointNotAllowedError
         existing = await self.subscription_gateway.get_by_endpoint(endpoint)
         if existing is None:
             await self.uow.add(WebPushSubscription(user_id=user_id, endpoint=endpoint, p256dh=p256dh, auth=auth))

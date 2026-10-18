@@ -41,7 +41,11 @@ class NotificationReadResponse(PyModel):
     time: float = Field(description="Unix seconds in UTC; fractional seconds are supported.")
     createdAt: float = Field(description="Unix seconds in UTC; fractional seconds are supported.")
     deliveredAt: float | None = Field(
-        None, description="When an external channel accepted the reminder. Null until then. Status is unchanged."
+        None,
+        description=(
+            "When at least one device accepted the push, or the remaining subscriptions were all revoked. "
+            "Null until then. Status is unchanged."
+        ),
     )
 
 
@@ -62,8 +66,8 @@ class NotificationSettingsPatchBody(PyModel):
 
 
 class WebPushKeysBody(PyModel):
-    p256dh: str
-    auth: str
+    p256dh: str = Field(max_length=255)
+    auth: str = Field(max_length=255)
 
     @field_validator("p256dh", "auth")
     @classmethod
@@ -75,17 +79,17 @@ class WebPushKeysBody(PyModel):
 
 
 class WebPushSubscriptionBody(PyModel):
-    endpoint: str
+    endpoint: str = Field(max_length=2048)
     keys: WebPushKeysBody
     expirationTime: float | None = None
 
     @field_validator("endpoint")
     @classmethod
-    def http_endpoint(cls, value: str) -> str:
+    def https_endpoint(cls, value: str) -> str:
         stripped = value.strip()
         parsed = urlsplit(stripped)
-        if parsed.scheme not in {"https", "http"} or not parsed.netloc:
-            raise ValueError("endpoint must be an http(s) URL")
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("endpoint must be an https URL")
         return stripped
 
 

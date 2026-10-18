@@ -90,10 +90,11 @@ async def _send_web_push(
         await uow.delete(subscription)
     if removed:
         await uow.commit()
+    if delivered:
+        error = "partial_failure" if failed else None
+        return ChannelDeliveryResult(channel=WEB_PUSH, ok=True, error=error)
     if failed:
         return ChannelDeliveryResult(channel=WEB_PUSH, ok=False, error="delivery_failed")
-    if delivered:
-        return ChannelDeliveryResult(channel=WEB_PUSH, ok=True)
     return ChannelDeliveryResult(channel=WEB_PUSH, ok=False, error="subscription_gone")
 
 
@@ -115,17 +116,19 @@ class DispatchDueNotifications:
         return reminders
 
     async def deliver(self, reminder: DueReminder, *, now: float) -> list[ChannelDeliveryResult]:
+        if not self.webpush.configured():
+            return []
         claimed = await self.notification_gateway.claim_delivery(reminder.notification_id, now)
         if not claimed:
             return []
         settings = await self.settings_gateway.get_by_user_id(reminder.user_id)
-        if settings is None:
-            return []
         subscriptions = []
-        if settings.web_push_enabled:
+        if settings is not None and settings.web_push_enabled:
             subscriptions = await self.subscription_gateway.list_by_user_id(reminder.user_id)
+        if settings is None or not settings.web_push_enabled:
+            return []
         title, body = reminder_parts(reminder.event_name, reminder.pet_name, reminder.time)
-        return await send_external(
+        results = await send_external(
             settings=settings,
             subscriptions=subscriptions,
             webpush=self.webpush,
@@ -139,6 +142,10 @@ class DispatchDueNotifications:
                 url="/",
             ),
         )
+        # Total failure only. A later tick retries until the reminder is older than MAX_LATENESS.
+        if any(result.error == "delivery_failed" for result in results):
+            await self.notification_gateway.release_delivery(reminder.notification_id, now)
+        return results
 
 
 @dataclass

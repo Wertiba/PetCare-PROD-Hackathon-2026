@@ -15,3 +15,7 @@ class WebPushSubscriptionGoneError(EntityError):
 
 class WebPushEndpointRequiredError(EntityError):
     pass
+
+
+class WebPushEndpointNotAllowedError(EntityError):
+    pass

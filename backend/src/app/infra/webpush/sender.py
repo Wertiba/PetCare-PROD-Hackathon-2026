@@ -1,4 +1,5 @@
 import json
+from urllib.parse import urlsplit
 
 from py_vapid import Vapid
 from pywebpush import WebPushException, webpush_async
@@ -25,9 +26,14 @@ class PyWebPushSender(WebPushSender):
             raise WebPushNotConfiguredError
         return self._config.public_key.strip()
 
+    def allows_endpoint(self, endpoint: str) -> bool:
+        return _endpoint_allowed(endpoint, self._config.allowed_hosts)
+
     async def send(self, *, endpoint: str, p256dh: str, auth: str, message: WebPushMessage) -> None:
         if not self.configured():
             raise WebPushNotConfiguredError
+        if not self.allows_endpoint(endpoint):
+            raise WebPushSubscriptionGoneError
         data = json.dumps(
             {
                 "title": message.title,
@@ -46,6 +52,7 @@ class PyWebPushSender(WebPushSender):
                 vapid_private_key=self._private_key(),
                 vapid_claims={"sub": self._config.subject.strip()},
                 ttl=3600,
+                timeout=self._config.timeout,
             )
         except WebPushException as exc:
             if exc.status_code in _GONE:
@@ -61,3 +68,15 @@ class PyWebPushSender(WebPushSender):
         if "BEGIN" in key:
             return Vapid.from_pem(key.encode())
         return key
+
+
+def _endpoint_allowed(endpoint: str, allowed_hosts: str) -> bool:
+    parsed = urlsplit(endpoint.strip())
+    host = (parsed.hostname or "").lower().rstrip(".")
+    if parsed.scheme != "https" or not host:
+        return False
+    for suffix in allowed_hosts.split(","):
+        candidate = suffix.strip().lower().rstrip(".")
+        if candidate and (host == candidate or host.endswith("." + candidate)):
+            return True
+    return False
