@@ -24,6 +24,9 @@ for _key, _value in {
     os.environ.setdefault(_key, _value)
 # Background dispatch must not start during tests.
 os.environ["NOTIFICATIONS_WORKER_ENABLED"] = "false"
+# CI project variables reach this job too: tests build their own Web Push config.
+for _key in ("VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"):
+    os.environ.pop(_key, None)
 # Fixture endpoints use push.example.com. Production suffixes stay allowlisted too.
 os.environ["WEB_PUSH_ALLOWED_HOSTS"] = (
     "fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com,example.com"
