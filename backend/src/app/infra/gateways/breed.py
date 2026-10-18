@@ -21,12 +21,20 @@ class SqlAlchemyBreedGateway(BreedGateway):
         except SQLAlchemyError as exc:
             raise ApplicationError("Database error") from exc
 
+    async def get_by_name(self, animal_id: AnimalId, name: str) -> Breed | None:
+        stmt = select(Breed).where(Breed.animal_id == animal_id, func.lower(Breed.name) == name.lower()).limit(1)
+        try:
+            result = await self.session.execute(stmt)
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+
     async def get_all(
         self, offset: int, limit: int, *, animal_id: AnimalId | None = None, name: str | None = None
     ) -> list[Breed]:
         # Seeded breeds (created_by IS NULL) go first: they are the defaults offered on pet registration.
         stmt = self._apply_criteria(select(Breed), animal_id=animal_id, name=name)
-        stmt = stmt.order_by(Breed.created_by.is_not(None), Breed.name).offset(offset).limit(limit)
+        stmt = stmt.order_by(Breed.created_by.is_not(None), Breed.name, Breed.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
@@ -46,5 +54,5 @@ class SqlAlchemyBreedGateway(BreedGateway):
         if animal_id is not None:
             stmt = stmt.where(Breed.animal_id == animal_id)
         if name:
-            stmt = stmt.where(Breed.name.ilike(f"%{name}%"))
+            stmt = stmt.where(Breed.name.icontains(name, autoescape=True))
         return stmt

@@ -104,3 +104,25 @@ def test_breed_search_by_name(client, auth):
 def test_requires_auth(client):
     assert client.get("/api/v1/animals").status_code == 401
     assert client.get("/api/v1/breeds").status_code == 401
+
+
+@pytest.mark.req("7.1")
+def test_names_differing_only_in_case_are_duplicates(client, admin):
+    ferret = client.post("/api/v1/animals", json={"name": "Ferret"}, headers=admin).json()
+    assert client.post("/api/v1/animals", json={"name": "FERRET"}, headers=admin).status_code == 409
+    renamed = client.patch(f"/api/v1/animals/{ferret['id']}", json={"name": "ferret"}, headers=admin)
+    assert renamed.status_code == 200
+    breed = client.post("/api/v1/breeds", json={"animalId": ferret["id"], "name": "Sable"}, headers=admin).json()
+    assert (
+        client.post("/api/v1/breeds", json={"animalId": ferret["id"], "name": "sable"}, headers=admin).status_code
+        == 409
+    )
+    other = client.post("/api/v1/breeds", json={"animalId": ferret["id"], "name": "Albino"}, headers=admin).json()
+    assert client.patch(f"/api/v1/breeds/{other['id']}", json={"name": "SABLE"}, headers=admin).status_code == 409
+    assert client.patch(f"/api/v1/breeds/{breed['id']}", json={"name": "SABLE"}, headers=admin).status_code == 200
+
+
+def test_search_treats_like_wildcards_literally(client, auth):
+    for q in ("_", "%"):
+        assert client.get("/api/v1/animals", params={"q": q}, headers=auth).json()["total"] == 0
+        assert client.get("/api/v1/breeds", params={"q": q}, headers=auth).json()["total"] == 0

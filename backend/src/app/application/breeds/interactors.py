@@ -3,6 +3,7 @@ from typing import Any
 
 from app.application.breeds.dto import BreedCreateData, BreedResult, BreedUpdateData
 from app.application.changes import apply_changes
+from app.application.exceptions import DuplicateError
 from app.application.pagination import Page, Pagination
 from app.application.ports.animal_gateway import AnimalGateway
 from app.application.ports.breed_gateway import BreedGateway
@@ -44,6 +45,12 @@ class _BreedContext:
         if await self.animal_gateway.get_by_id(animal_id) is None:
             raise RelatedAnimalNotFoundError
 
+    async def _ensure_name_free(self, animal_id: AnimalId, name: str, breed_id: BreedId | None = None) -> None:
+        # The unique constraint is case-sensitive, so "мейн-кун" would otherwise sit next to "Мейн-кун".
+        existing = await self.breed_gateway.get_by_name(animal_id, name)
+        if existing is not None and existing.id != breed_id:
+            raise DuplicateError("Breed with this name already exists")
+
 
 class ListBreeds(_BreedContext):
     async def __call__(
@@ -66,6 +73,7 @@ class CreateBreed(_BreedContext):
     async def __call__(self, user_id: UserId, data: BreedCreateData) -> BreedResult:
         await require_admin(self.user_gateway, user_id)
         await self._require_animal(data.animalId)
+        await self._ensure_name_free(data.animalId, data.name)
         breed = Breed(animal_id=data.animalId, name=data.name, created_by=user_id)
         await self.uow.add(breed)
         result = self._to_read_response(breed)
@@ -85,6 +93,9 @@ class UpdateBreed(_BreedContext):
             await self._require_animal(provided["animalId"])
             values["animal_id"] = provided["animalId"]
         if values:
+            await self._ensure_name_free(
+                values.get("animal_id", breed.animal_id), values.get("name", breed.name), breed.id
+            )
             apply_changes(breed, values)
         result = self._to_read_response(breed)
         await self.uow.commit()
