@@ -1446,7 +1446,7 @@
           "Pets"
         ],
         "summary": "Generate Avatar",
-        "description": "Build a stylized avatar from the pet's photo. Does not change avatarSource.",
+        "description": "Build a stylized avatar from the pet's photo. Does not change avatarSource.\n\nOptional `prompt` is a short look wish. Requests to do anything else are rejected.",
         "operationId": "generate_avatar_api_v1_pets__pet_id__avatar_generate_post",
         "parameters": [
           {
@@ -1458,6 +1458,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AvatarGenerateBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1480,7 +1497,7 @@
             }
           },
           "422": {
-            "description": "PET_PHOTO_REQUIRED",
+            "description": "PET_PHOTO_REQUIRED or AVATAR_PROMPT_REJECTED",
             "content": {
               "application/json": {
                 "schema": {
@@ -4271,6 +4288,25 @@
         },
         "type": "object",
         "title": "AnimalUpdateBody"
+      },
+      "AvatarGenerateBody": {
+        "properties": {
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "Optional short wish about the avatar look: color, accessory, background, mood."
+          }
+        },
+        "type": "object",
+        "title": "AvatarGenerateBody"
       },
       "AvatarSource": {
         "type": "string",

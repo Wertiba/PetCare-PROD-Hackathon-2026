@@ -3,6 +3,7 @@ import base64
 import httpx
 
 from app.application.ports.avatar_generator import AvatarGenerator, GeneratedImage
+from app.domain.pets.avatar_prompt import compose_avatar_prompt
 from app.domain.pets.errors import AvatarGenerationFailedError, AvatarGenerationUnavailableError
 from app.infra.logger import Logger
 
@@ -49,7 +50,7 @@ class SpiritAvatarGenerator(AvatarGenerator):
         self.timeout = timeout
         self._client = client
 
-    async def generate(self, image: bytes, content_type: str) -> GeneratedImage:
+    async def generate(self, image: bytes, content_type: str, *, style: str | None = None) -> GeneratedImage:
         if not self.api_key.strip():
             raise AvatarGenerationUnavailableError
         body = {
@@ -58,7 +59,7 @@ class SpiritAvatarGenerator(AvatarGenerator):
                 {
                     "role": "user",
                     "content": [
-                        {"type": "input_text", "text": PROMPT},
+                        {"type": "input_text", "text": compose_avatar_prompt(PROMPT, style)},
                         {
                             "type": "input_image",
                             "image_url": f"data:{content_type};base64,{base64.b64encode(image).decode('ascii')}",

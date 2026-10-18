@@ -45,16 +45,19 @@ from app.main import create_app
 class FakeAvatarGenerator:
     def __init__(self) -> None:
         self.calls: list[tuple[bytes, str]] = []
+        self.styles: list[str | None] = []
         self.error: Exception | None = None
         self.image = GeneratedImage(content=b"generated-avatar", content_type="image/png", extension=".png")
 
     def reset(self) -> None:
         self.calls.clear()
+        self.styles.clear()
         self.error = None
         self.image = GeneratedImage(content=b"generated-avatar", content_type="image/png", extension=".png")
 
-    async def generate(self, image: bytes, content_type: str) -> GeneratedImage:
+    async def generate(self, image: bytes, content_type: str, *, style: str | None = None) -> GeneratedImage:
         self.calls.append((image, content_type))
+        self.styles.append(style)
         if self.error is not None:
             raise self.error
         return self.image

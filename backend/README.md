@@ -123,7 +123,7 @@ uv run python -m app.run
 | POST | `/api/v1/pets/{petId}/photo/upload-url` | Подписанная ссылка, чтобы браузер загрузил jpeg/png/webp (до 5 МБ) напрямую. В базе ничего не меняет |
 | POST | `/api/v1/pets/{petId}/photo/confirm` | Принять объект `{key}` после прямой загрузки. Новое фото сбрасывает сгенерированный аватар |
 | DELETE | `/api/v1/pets/{petId}/photo` | Удалить фото и аватар, собранный из него |
-| POST | `/api/v1/pets/{petId}/avatar/generate` | Стилизованный аватар по уже загруженному фото. `avatarSource` не меняется |
+| POST | `/api/v1/pets/{petId}/avatar/generate` | Стилизованный аватар по уже загруженному фото. Необязательный `prompt` — короткое пожелание по внешнему виду. `avatarSource` не меняется |
 | PUT | `/api/v1/pets/{petId}/avatar` | Какую картинку показывать: `{"source": "photo"}` или `{"source": "generated"}` |
 | DELETE | `/api/v1/pets/{petId}/avatar/generated` | Удалить только сгенерированный аватар. Если он был выбран, показ возвращается на фото |
 | GET | `/api/v1/pets/{petId}/report` | PDF-отчёт: ближайшие процедуры, прививки и обработки, активность по месяцам, график веса, самочувствие, корма и заключения врачей |
@@ -177,7 +177,7 @@ Web Push не меняет `status`: фронт по-прежнему опраш
 | POST | `/api/v1/pets/{petId}/photo/upload-url` | Подписанный `PUT` для прямой загрузки. В базе ничего не меняет |
 | POST | `/api/v1/pets/{petId}/photo/confirm` | Принять загруженный `{key}` |
 | DELETE | `/api/v1/pets/{petId}/photo` | Удалить фото и аватар из него |
-| POST | `/api/v1/pets/{petId}/avatar/generate` | Аватар по загруженному фото. Выбор не меняет |
+| POST | `/api/v1/pets/{petId}/avatar/generate` | Аватар по загруженному фото. Необязательный `prompt` только про внешний вид. Выбор не меняет |
 | PUT | `/api/v1/pets/{petId}/avatar` | `{"source": "photo"}` или `{"source": "generated"}` |
 | DELETE | `/api/v1/pets/{petId}/avatar/generated` | Удалить только аватар. Показ возвращается на фото |
 

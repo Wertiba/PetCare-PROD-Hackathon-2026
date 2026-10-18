@@ -86,6 +86,14 @@ class PetPhotoConfirmBody(PyModel):
     key: str
 
 
+class AvatarGenerateBody(PyModel):
+    prompt: str | None = Field(
+        None,
+        max_length=120,
+        description="Optional short wish about the avatar look: color, accessory, background, mood.",
+    )
+
+
 class PetReadResponse(PyModel):
     id: PetId
     userId: UserId

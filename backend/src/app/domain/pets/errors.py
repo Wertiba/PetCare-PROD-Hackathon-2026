@@ -35,3 +35,7 @@ class AvatarGenerationFailedError(EntityError):
 
 class AvatarGenerationUnavailableError(EntityError):
     pass
+
+
+class AvatarPromptRejectedError(EntityError):
+    """The extra text is not a short description of how the avatar should look."""

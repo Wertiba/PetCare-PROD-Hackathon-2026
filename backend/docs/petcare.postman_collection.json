@@ -786,7 +786,12 @@
           "name": "Generate Avatar",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/pets/{{petId}}/avatar/generate",
               "host": [
@@ -802,7 +807,11 @@
               ],
               "query": []
             },
-            "description": "Build a stylized avatar from the pet's photo. Does not change avatarSource."
+            "description": "Build a stylized avatar from the pet's photo. Does not change avatarSource.\n\nOptional `prompt` is a short look wish. Requests to do anything else are rejected.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
           }
         },
         {

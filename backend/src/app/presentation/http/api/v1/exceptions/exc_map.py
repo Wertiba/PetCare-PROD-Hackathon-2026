@@ -19,6 +19,7 @@ from app.domain.notifications.errors import (
 from app.domain.pets.errors import (
     AvatarGenerationFailedError,
     AvatarGenerationUnavailableError,
+    AvatarPromptRejectedError,
     FileTooLargeError,
     GeneratedAvatarMissingError,
     PetNotFoundError,
@@ -41,6 +42,7 @@ from app.presentation.http.api.v1.exceptions.api_exs import (
     AnimalNotFoundRef,
     AvatarGenerationFailed,
     AvatarGenerationUnavailable,
+    AvatarPromptRejected,
     BreedNotFound,
     CategoryInUse,
     CategoryNotFoundRef,
@@ -133,6 +135,10 @@ DOMAIN_TO_API: dict[type, callable] = {
     ),
     AvatarGenerationUnavailableError: lambda path, exc=None: AvatarGenerationUnavailable(
         path=path,
+    ),
+    AvatarPromptRejectedError: lambda path, exc=None: AvatarPromptRejected(
+        path=path,
+        details={"field": "prompt"},
     ),
     RelatedPetNotFoundError: lambda path, exc=None: PetNotFoundRef(
         path=path,
