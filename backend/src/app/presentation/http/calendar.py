@@ -25,7 +25,7 @@ _RRULES = {
 }
 
 
-def render_calendar(items: Sequence[EventCalendarItem], *, alarm_minutes: int, now: float) -> str:
+def render_calendar(items: Sequence[EventCalendarItem], *, alarm_minutes: int, now: float, until: float) -> str:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -35,12 +35,12 @@ def render_calendar(items: Sequence[EventCalendarItem], *, alarm_minutes: int, n
         "X-WR-CALNAME:PetCare",
     ]
     for item in items:
-        lines.extend(_event_lines(item, alarm_minutes=alarm_minutes, now=now))
+        lines.extend(_event_lines(item, alarm_minutes=alarm_minutes, now=now, until=until))
     lines.append("END:VCALENDAR")
     return _CRLF.join(_fold(line) for line in lines) + _CRLF
 
 
-def _event_lines(item: EventCalendarItem, *, alarm_minutes: int, now: float) -> list[str]:
+def _event_lines(item: EventCalendarItem, *, alarm_minutes: int, now: float, until: float) -> list[str]:
     label = _TYPE_LABELS.get(item.type, item.type.value)
     summary = _escape_text(f"{item.petName}: {item.name}")
     description = label if not item.description else f"{label}\n\n{item.description}"
@@ -57,7 +57,8 @@ def _event_lines(item: EventCalendarItem, *, alarm_minutes: int, now: float) -> 
     ]
     rule = _RRULES.get(item.period)
     if rule is not None:
-        lines.append(f"RRULE:{rule}")
+        # DTSTART is UTC, so the series end must be UTC with Z (RFC 5545).
+        lines.append(f"RRULE:{rule};UNTIL={_format_utc(until)}")
     if alarm_minutes > 0:
         lines.extend(
             [

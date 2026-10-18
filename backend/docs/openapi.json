@@ -2726,6 +2726,24 @@
               "title": "Alarmminutes"
             },
             "description": "Reminder this many minutes before the event; 0 omits it"
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds in UTC; fractional seconds are supported.",
+              "title": "Until"
+            },
+            "description": "Unix seconds in UTC; fractional seconds are supported."
           }
         ],
         "responses": {
