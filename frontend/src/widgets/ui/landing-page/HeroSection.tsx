@@ -30,7 +30,7 @@ export default function HeroSection() {
               <span className="block">Забота</span>
               <span className="block">начинается</span>
               <span className="block text-[var(--ink)]">
-                с мелочей.
+                с&nbsp;мелочей
               </span>
             </h1>
           </div>

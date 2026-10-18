@@ -29,7 +29,7 @@ export default function FinalCTA() {
             <h2 className="max-w-[850px] text-[clamp(4.2rem,7.8vw,9.5rem)] font-black leading-[0.76] tracking-[-0.075em] text-[var(--forest)]">
               Держите важное
               <span className="block text-[var(--ink)]">
-                рядом.
+                рядом
               </span>
             </h2>
             <div className="mt-[clamp(5rem,8vw,7rem)] flex flex-col items-start gap-7 sm:flex-row sm:items-end sm:justify-between">

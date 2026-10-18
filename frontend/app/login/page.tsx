@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <AuthShell
       eyebrow="С возвращением"
-      title="Всё важное — рядом."
+      title={'Всё важное\u00A0— рядом'}
       description="Войдите, чтобы продолжить заботу о питомце без лишних поисков и напоминаний."
     >
       <div className="space-y-8">
