@@ -12,3 +12,5 @@ CLAUDE.md
 /frontend/agents/
 /BUGFIX_REPORT.md
 /backend/docs/notifications-review.md
+.sage-api-key
+.sage-api-key.deploy

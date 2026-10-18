@@ -1,3 +1,4 @@
+import logging
 from uuid import uuid4
 
 from fastapi import FastAPI, Request, status
@@ -6,14 +7,14 @@ from fastapi.responses import JSONResponse
 
 from app.application.exceptions import ApplicationError, DuplicateError
 from app.domain.users.errors import EntityError
-from app.infra.logger import Logger
 from app.presentation.http.api.v1.exceptions import APIException, Conflict
 from app.presentation.http.api.v1.exceptions.exc_map import DOMAIN_TO_API
 from app.presentation.http.loc2field import loc_to_field, priority, rejected_value
+from app.presentation.http.middleware.observability import request_log_context
 from app.presentation.http.middleware.trace_id import get_trace_id
 from app.presentation.http.schemas.responses import FieldError, ValidationErrorResponse
 
-logger = Logger.get_logger()
+logger = logging.getLogger(__name__)
 
 
 def _json(api_exc: APIException) -> JSONResponse:
@@ -35,7 +36,7 @@ def register_exception_handlers(app: FastAPI):
         if factory:
             api_exc = factory(request.url.path, exc)  # noqa
         else:
-            logger.warning("Unmapped domain error {} on {}", type(exc).__name__, request.url.path)
+            logger.warning("unmapped_domain_error", extra=request_log_context(request), exc_info=exc)
             api_exc = APIException(
                 path=request.url.path,
                 message="Domain error",
@@ -45,17 +46,16 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(DuplicateError)
     async def handle_duplicate(request: Request, exc: DuplicateError):  # noqa: RUF029
-        logger.info("Duplicate on {}: {}", request.url.path, exc)
         return _json(Conflict(path=request.url.path))
 
     @app.exception_handler(ApplicationError)
     async def handle_application_error(request: Request, exc: ApplicationError):  # noqa: RUF029
-        logger.opt(exception=exc).error("Application error on {} {}", request.method, request.url.path)
+        logger.error("application_error", extra=request_log_context(request), exc_info=exc)
         return _json(APIException(path=request.url.path))
 
     @app.exception_handler(Exception)
     async def handle_unexpected(request: Request, exc: Exception):  # noqa: RUF029
-        logger.opt(exception=exc).error("Unhandled error on {} {}", request.method, request.url.path)
+        # ObservabilityMiddleware records this failure while its trace context is active.
         return _json(APIException(path=request.url.path))
 
     @app.exception_handler(RequestValidationError)

@@ -46,8 +46,6 @@ services:
     environment:
       APP_NAME:
       DB_DRIVER:
-      DB_ECHO:
-      DB_ECHO_POOL:
       DB_POOL_SIZE:
       DB_MAX_OVERFLOW:
       DB_HOST: postgres
@@ -66,10 +64,9 @@ services:
       APP_COOKIE_SECURE:
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-https://${DOMAIN}}
       LOG_CONSOLE_LEVEL:
-      LOG_CONSOLE_ENQUEUE:
-      LOG_CONSOLE_BACKTRACE:
-      LOG_CONSOLE_DIAGNOSE:
-      LOG_CONSOLE_FORMAT:
+      LOG_ENV: ${LOG_ENV:-prod}
+      LOG_SYSTEM: ${LOG_SYSTEM:-petcare}
+      LOG_INST:
       S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://rustfs:9000}
       S3_PUBLIC_ENDPOINT_URL: ${S3_PUBLIC_ENDPOINT_URL:-https://${DOMAIN}}
       S3_BUCKET: ${S3_BUCKET:-media}
@@ -102,8 +99,36 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
-      sage.agent.logs: "true"
+      sage.agent.logs: "false"
+      petcare.vector.logs: "true"
+
+  vector:
+    image: timberio/vector:0.59.0-debian
+    command: ["--config", "/etc/vector/vector.yaml"]
+    volumes:
+      - ./deploy/vector.yaml:/etc/vector/vector.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - vector_data:/var/lib/vector
+    restart: unless-stopped
+    stop_grace_period: 60s
+    environment:
+      VECTOR_DANGEROUSLY_ALLOW_ENV_VAR_INTERPOLATION: "true"
+      SAGE_GROUP: ${SAGE_GROUP:?Set sage group}
+      SAGE_API_KEY: ${SAGE_API_KEY:?Set sage api key}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      sage.agent.logs: "false"
 
   rustfs:
     image: rustfs/rustfs:1.0.2
@@ -175,3 +200,4 @@ volumes:
   caddy_config:
   rustfs_data:
   postgres_data:
+  vector_data:

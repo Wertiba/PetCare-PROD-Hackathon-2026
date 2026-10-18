@@ -16,8 +16,6 @@ class DatabaseProvider(Provider):
     async def database(self, config: DatabaseConfig) -> AsyncIterator[DatabaseHelper]:
         database = DatabaseHelper(
             url=build_postgres_url(config),
-            echo=config.echo,
-            echo_pool=config.echo_pool,
             pool_size=config.pool_size,
             max_overflow=config.max_overflow,
         )

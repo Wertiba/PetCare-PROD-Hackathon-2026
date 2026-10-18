@@ -1,3 +1,6 @@
+import socket
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.engine import URL
 
@@ -18,8 +21,6 @@ class DatabaseConfig(BaseModel):
     password: str = Field(alias="DB_PASSWORD", repr=False)
     port: int = Field(alias="DB_PORT", default=5432)
     driver: str = Field(alias="DB_DRIVER", default="postgresql+asyncpg")
-    echo: bool = Field(alias="DB_ECHO", default=False)
-    echo_pool: bool = Field(alias="DB_ECHO_POOL", default=False)
     pool_size: int = Field(alias="DB_POOL_SIZE", default=50)
     max_overflow: int = Field(alias="DB_MAX_OVERFLOW", default=10)
 
@@ -48,17 +49,14 @@ class HttpConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    level: str = Field(alias="LOG_CONSOLE_LEVEL", default="INFO")
-    enqueue: bool = Field(alias="LOG_CONSOLE_ENQUEUE", default=True)
-    backtrace: bool = Field(alias="LOG_CONSOLE_BACKTRACE", default=True)
-    diagnose: bool = Field(alias="LOG_CONSOLE_DIAGNOSE", default=True)
-    format: str = Field(
-        alias="LOG_CONSOLE_FORMAT",
-        default=(
-            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | "
-            "<magenta>{extra[trace_id]}</magenta> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:"
-            "<cyan>{line}</cyan> | <level>{message}</level>"
-        ),
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(alias="LOG_CONSOLE_LEVEL", default="INFO")
+    env: str = Field(alias="LOG_ENV", default="dev", pattern=r"^[a-z][a-z0-9_-]*$", validate_default=True)
+    system: str = Field(alias="LOG_SYSTEM", default="petcare", pattern=r"^[a-z][a-z0-9_-]*$", validate_default=True)
+    inst: str = Field(
+        alias="LOG_INST",
+        default_factory=socket.gethostname,
+        pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+        validate_default=True,
     )
 
 

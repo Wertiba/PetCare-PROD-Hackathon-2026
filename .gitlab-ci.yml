@@ -128,6 +128,8 @@ deploy-production:
       : "${RUSTFS_ROOT_SECRET_KEY:?Set RUSTFS_ROOT_SECRET_KEY}"
       : "${PHOTOS_ACCESS_KEY:?Set PHOTOS_ACCESS_KEY}"
       : "${PHOTOS_SECRET_KEY:?Set PHOTOS_SECRET_KEY}"
+      : "${SAGE_API_KEY:?Set SAGE_API_KEY to the Spirit API key for Sage log ingestion}"
+      : "${SAGE_GROUP:?Set SAGE_GROUP to the Sage log group}"
       printf '%s\n' \
         "FRONTEND_IMAGE=$SPIRIT_REGISTRY/$TENANT/frontend:$CI_COMMIT_SHA" \
         "BACKEND_IMAGE=$SPIRIT_REGISTRY/$TENANT/backend:$CI_COMMIT_SHA" \
@@ -137,13 +139,15 @@ deploy-production:
         "RUSTFS_ROOT_ACCESS_KEY=$RUSTFS_ROOT_ACCESS_KEY" \
         "RUSTFS_ROOT_SECRET_KEY=$RUSTFS_ROOT_SECRET_KEY" \
         "PHOTOS_ACCESS_KEY=$PHOTOS_ACCESS_KEY" \
-        "PHOTOS_SECRET_KEY=$PHOTOS_SECRET_KEY" > .env.deploy
+        "PHOTOS_SECRET_KEY=$PHOTOS_SECRET_KEY" \
+        "SAGE_GROUP=$SAGE_GROUP" \
+        "SAGE_API_KEY=$SAGE_API_KEY" > .env.deploy
       for setting_name in \
         APP_NAME ADMIN_LOGIN ADMIN_PASSWORD ADMIN_FULL_NAME \
         APP_SECURITY_ACCESS_TOKEN_EXPIRATION APP_SECURITY_REFRESH_TOKEN_EXPIRATION \
         APP_SECURITY_PASSWORD_SCHEME APP_SECURITY_ALGORITHM APP_COOKIE_SECURE APP_CORS_ALLOWED_ORIGINS \
-        DB_DRIVER DB_ECHO DB_ECHO_POOL DB_POOL_SIZE DB_MAX_OVERFLOW \
-        LOG_CONSOLE_LEVEL LOG_CONSOLE_ENQUEUE LOG_CONSOLE_BACKTRACE LOG_CONSOLE_DIAGNOSE LOG_CONSOLE_FORMAT \
+        DB_DRIVER DB_POOL_SIZE DB_MAX_OVERFLOW \
+        LOG_CONSOLE_LEVEL LOG_ENV LOG_SYSTEM LOG_INST \
         S3_ENDPOINT_URL S3_PUBLIC_ENDPOINT_URL S3_BUCKET S3_REGION S3_PRESIGNED_TTL \
         LLM_PROXY_URL LLM_PROXY_API_KEY LLM_AVATAR_MODEL LLM_IMAGE_TOOL_MODEL LLM_AVATAR_TIMEOUT \
         NOTIFICATIONS_WORKER_ENABLED NOTIFICATIONS_DISPATCH_INTERVAL NOTIFICATIONS_MAX_LATENESS \
@@ -155,6 +159,7 @@ deploy-production:
     - ssh -o StrictHostKeyChecking=no "$target" "mkdir -p petcare/deploy"
     - scp -o StrictHostKeyChecking=no docker-compose.yaml "$target:petcare/docker-compose.yaml"
     - scp -o StrictHostKeyChecking=no deploy/Caddyfile "$target:petcare/deploy/Caddyfile"
+    - scp -o StrictHostKeyChecking=no deploy/vector.yaml "$target:petcare/deploy/vector.yaml"
     - scp -o StrictHostKeyChecking=no .env.deploy "$target:petcare/.env"
     - |
       ssh -o StrictHostKeyChecking=no "$target" '
@@ -174,6 +179,9 @@ deploy-production:
         sudo -n /usr/local/bin/dp auth service-acc --key-file "$key_file"
         sudo -n /usr/local/bin/dp auth configure-docker
         cd petcare
+        chmod 600 .env
         sudo -n docker compose pull
         sudo -n docker compose up -d --force-recreate --wait --wait-timeout 300
       ' < "$SPIRIT_DOCKER_SA_KEY"
+  after_script:
+    - rm -f .env.deploy

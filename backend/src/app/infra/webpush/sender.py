@@ -1,4 +1,5 @@
 import json
+import logging
 from urllib.parse import urlsplit
 
 from py_vapid import Vapid
@@ -8,9 +9,8 @@ from app.application.exceptions import WebPushDeliveryError
 from app.application.ports.web_push import WebPushMessage, WebPushSender
 from app.domain.notifications.errors import WebPushNotConfiguredError, WebPushSubscriptionGoneError
 from app.infra.config import WebPushConfig
-from app.infra.logger import Logger
 
-logger = Logger.get_logger()
+logger = logging.getLogger(__name__)
 _GONE = frozenset({404, 410})
 
 
@@ -57,10 +57,27 @@ class PyWebPushSender(WebPushSender):
         except WebPushException as exc:
             if exc.status_code in _GONE:
                 raise WebPushSubscriptionGoneError from exc
-            logger.warning("Web Push rejected endpoint status {}", exc.status_code)
+            logger.warning(
+                "web_push_rejected",
+                extra={
+                    "notification_id": message.notification_id,
+                    "event_id": message.event_id,
+                    "pet_id": message.pet_id,
+                    "status_code": exc.status_code,
+                },
+                exc_info=exc,
+            )
             raise WebPushDeliveryError("Web Push delivery failed") from exc
         except Exception as exc:
-            logger.opt(exception=exc).error("Web Push delivery failed")
+            logger.error(
+                "web_push_failed",
+                extra={
+                    "notification_id": message.notification_id,
+                    "event_id": message.event_id,
+                    "pet_id": message.pet_id,
+                },
+                exc_info=exc,
+            )
             raise WebPushDeliveryError("Web Push delivery failed") from exc
 
     def _private_key(self) -> Vapid | str:

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from dishka import AsyncContainer
@@ -16,17 +17,18 @@ from app.presentation.http.api.v1.exceptions.handlers import register_exception_
 from app.presentation.http.middleware.observability import ObservabilityMiddleware
 from app.presentation.http.middleware.trace_id import TraceIdMiddleware
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     container = app.state.dishka_container
-    logger = await container.get(Logger)
     stop = asyncio.Event()
     tasks: list[asyncio.Task[None]] = []
     try:
         start_mappers()
         tasks = await start_notification_workers(container, stop)
-        logger.get_logger().info("PetCare API started")
+        logger.info("application_started")
         yield
     finally:
         stop.set()
@@ -35,7 +37,7 @@ async def lifespan(app: FastAPI):
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
         await container.close()
-        logger.get_logger().info("PetCare API stopped")
+        logger.info("application_stopped")
 
 
 def create_app(container: AsyncContainer | None = None) -> FastAPI:

@@ -1,0 +1,41 @@
+data_dir: /var/lib/vector
+
+sources:
+  backend:
+    type: docker_logs
+    include_labels:
+      - petcare.vector.logs=true
+
+transforms:
+  sage_events:
+    type: remap
+    inputs: [backend]
+    drop_on_error: true
+    source: '. = parse_json!(.message)'
+
+sinks:
+  sage:
+    type: http
+    inputs: [sage_events]
+    uri: https://sage.spirit.t-education.com/api/${SAGE_GROUP}/multiline
+    method: post
+    framing:
+      method: newline_delimited
+    encoding:
+      codec: json
+    request:
+      headers:
+        Authorization: "JWT ${SAGE_API_KEY}"
+        Content-Type: application/x-ndjson
+      timeout_secs: 30
+    batch:
+      max_events: 100
+      max_bytes: 1000000
+      timeout_secs: 1
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
+    # This ingestion endpoint rejects GET/HEAD; they cannot check its health.
+    healthcheck:
+      enabled: false

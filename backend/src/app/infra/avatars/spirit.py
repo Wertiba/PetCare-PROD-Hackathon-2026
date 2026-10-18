@@ -1,11 +1,11 @@
 import base64
+import logging
 
 import httpx
 
 from app.application.ports.avatar_generator import AvatarGenerator, GeneratedImage
 from app.domain.pets.avatar_prompt import compose_avatar_prompt
 from app.domain.pets.errors import AvatarGenerationFailedError, AvatarGenerationUnavailableError
-from app.infra.logger import Logger
 
 DEFAULT_BASE_URL = "https://llm-proxy.spirit.t-education.com"
 DEFAULT_MODEL = "openai/gpt-5.6-sol"
@@ -29,7 +29,7 @@ PROMPT = (
 )
 _CONTENT_TYPES = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "webp": "image/webp"}
 
-logger = Logger.get_logger()
+logger = logging.getLogger(__name__)
 
 
 class SpiritAvatarGenerator(AvatarGenerator):
@@ -86,18 +86,18 @@ class SpiritAvatarGenerator(AvatarGenerator):
             response.raise_for_status()
         except httpx.HTTPError as exc:
             status_code = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
-            _log_failure(status_code)
+            _log_failure(status_code, "provider_http_error", exc)
             raise AvatarGenerationFailedError from exc
         try:
             payload = response.json()
         except ValueError as exc:
-            _log_failure(response.status_code)
+            _log_failure(response.status_code, "invalid_json", exc)
             raise AvatarGenerationFailedError from exc
         return _image_from_output(payload, response.status_code)
 
 
-def _log_failure(status_code: int | None) -> None:
-    logger.warning("Avatar generation failed, status={}", status_code)
+def _log_failure(status_code: int | None, reason: str, error: Exception | None = None) -> None:
+    logger.warning("avatar_generation_failed", extra={"status_code": status_code, "reason": reason}, exc_info=error)
 
 
 def _image_from_output(payload: object, status_code: int) -> GeneratedImage:
@@ -111,15 +111,15 @@ def _image_from_output(payload: object, status_code: int) -> GeneratedImage:
                 output_format = str(item.get("output_format") or "png")
                 break
     if not isinstance(image_b64, str) or not image_b64:
-        _log_failure(status_code)
+        _log_failure(status_code, "missing_image")
         raise AvatarGenerationFailedError
     try:
         content = base64.b64decode(image_b64, validate=False)
     except (ValueError, TypeError) as exc:
-        _log_failure(status_code)
+        _log_failure(status_code, "invalid_image_encoding", exc)
         raise AvatarGenerationFailedError from exc
     if not content:
-        _log_failure(status_code)
+        _log_failure(status_code, "empty_image")
         raise AvatarGenerationFailedError
     fmt = output_format.lower().strip().lstrip(".") or "png"
     return GeneratedImage(

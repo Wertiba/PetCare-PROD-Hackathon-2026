@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from time import time
 
 from dishka import AsyncContainer
@@ -11,9 +12,8 @@ from app.infra.database.unit_of_work import SqlAlchemyUnitOfWork
 from app.infra.gateways.notification import SqlAlchemyNotificationGateway
 from app.infra.gateways.notification_settings import SqlAlchemyNotificationSettingsGateway
 from app.infra.gateways.web_push_subscription import SqlAlchemyWebPushSubscriptionGateway
-from app.infra.logger import Logger
 
-logger = Logger.get_logger()
+logger = logging.getLogger(__name__)
 
 
 def _dispatcher(session, webpush: WebPushSender) -> DispatchDueNotifications:
@@ -38,7 +38,7 @@ async def run_notification_dispatch(
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            logger.opt(exception=exc).error("Notification dispatch failed")
+            logger.error("notification_poll_failed", extra={"retry_after_secs": config.dispatch_interval}, exc_info=exc)
         if await _wait(stop, config.dispatch_interval):
             return
 
@@ -65,15 +65,33 @@ async def _dispatch_once(
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            logger.opt(exception=exc).error("Notification {} dispatch failed", reminder.notification_id)
+            logger.error(
+                "notification_dispatch_failed",
+                extra={
+                    "notification_id": reminder.notification_id,
+                    "event_id": reminder.event_id,
+                    "pet_id": reminder.pet_id,
+                },
+                exc_info=exc,
+            )
             continue
         for outcome in outcomes:
+            context = {
+                "notification_id": reminder.notification_id,
+                "event_id": reminder.event_id,
+                "pet_id": reminder.pet_id,
+                "channel": outcome.channel,
+            }
             if outcome.ok:
-                logger.info("Delivered notification {} via {}", reminder.notification_id, outcome.channel)
+                logger.info("notification_delivered", extra=context)
             else:
-                logger.error(
-                    "Notification {} via {} failed: {}", reminder.notification_id, outcome.channel, outcome.error
+                # The application returns fixed result codes, never provider text.
+                reason = (
+                    outcome.error
+                    if outcome.error in {"not_configured", "no_subscriptions", "delivery_failed", "subscription_gone"}
+                    else "unknown"
                 )
+                logger.error("notification_delivery_failed", extra={**context, "reason": reason})
 
 
 async def _wait(stop: asyncio.Event, seconds: float) -> bool:
