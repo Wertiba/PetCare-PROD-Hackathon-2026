@@ -298,7 +298,10 @@ export function CreateFoodForm({
         ) : null}
       </fieldset>
 
-      <details className="group rounded-sm border border-[var(--forest)]/20 bg-white px-4 py-3">
+      <details
+        open={errors.ingredients ? true : undefined}
+        className="group rounded-sm border border-[var(--forest)]/20 bg-white px-4 py-3"
+      >
         <summary className="cursor-pointer text-sm font-semibold text-[var(--forest)] marker:text-[var(--forest)]/50">
           Состав корма
         </summary>
@@ -309,6 +312,7 @@ export function CreateFoodForm({
             type="text"
             placeholder="Курица, рис, морковь"
             autoComplete="off"
+            error={errors.ingredients?.message}
             {...register('ingredients')}
           />
         </div>
