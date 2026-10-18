@@ -22,6 +22,11 @@ const toDateInputValue = (timestamp: number | null) =>
     ? new Date(timestamp * 1000).toISOString().slice(0, 10)
     : '';
 
+const validateBirthDate = (value: string) =>
+  !value ||
+  new Date(value).getTime() <= Date.now() ||
+  'Дата рождения не может быть в будущем';
+
 export function EditPetForm({
   onPendingChange,
   onSuccess,
@@ -44,13 +49,10 @@ export function EditPetForm({
         id: pet.id,
         data: {
           name: values.name.trim(),
-          ...(values.birthDate
-            ? {
-                birthDate:
-                  new Date(values.birthDate).getTime() /
-                  1000,
-              }
-            : {}),
+          // An emptied field clears the birth date instead of keeping the old one.
+          birthDate: values.birthDate
+            ? new Date(values.birthDate).getTime() / 1000
+            : null,
         },
       },
       {
@@ -79,6 +81,10 @@ export function EditPetForm({
           validate: (value) =>
             value.trim().length > 0 ||
             'Укажите кличку питомца',
+          maxLength: {
+            value: 100,
+            message: 'Не больше 100 символов',
+          },
         })}
       />
       <div className="rounded-sm border border-[var(--forest)]/20 bg-white px-4 py-3">
@@ -93,7 +99,10 @@ export function EditPetForm({
       <FormField
         label="Дата рождения"
         type="date"
-        {...register('birthDate')}
+        error={formState.errors.birthDate?.message}
+        {...register('birthDate', {
+          validate: validateBirthDate,
+        })}
       />
       {error ? (
         <p
