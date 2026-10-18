@@ -1,7 +1,7 @@
 const features = [
   {
     number: '01',
-    title: 'Питомец — в центре',
+    title: 'Питомец\u00A0— в\u00A0центре',
     text: 'Профиль, история здоровья и питание связаны с конкретным питомцем — без путаницы.',
     tone: 'bg-[var(--forest)] text-[var(--cream)]',
     accent: 'bg-[var(--lime)] text-[var(--forest)]',
@@ -35,9 +35,9 @@ export default function FeatureShowcase() {
               Что уже есть в PetCare
             </p>
             <h2 className="mt-8 max-w-[720px] text-[clamp(3.4rem,7.4vw,6.25rem)] font-black leading-[0.78] tracking-[-0.07em]">
-              Всё важное —
+              Всё важное&nbsp;—
               <span className="block text-[var(--lime)]">
-                вместе.
+                вместе
               </span>
             </h2>
           </div>

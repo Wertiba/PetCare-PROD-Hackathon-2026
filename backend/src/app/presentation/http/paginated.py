@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class PaginationParams(BaseModel):
-    page: int = Field(0, ge=0, description="Page number")
+    page: int = Field(0, ge=0, le=1_000_000, description="Page number")
     size: int = Field(20, ge=1, le=100, description="Page size")
 
     @property

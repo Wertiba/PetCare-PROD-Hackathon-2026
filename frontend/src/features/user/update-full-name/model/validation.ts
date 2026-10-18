@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const FULL_NAME_PATTERN = /^[а-яА-Яa-zA-Z0-9 _-]{2,200}$/;
+const FULL_NAME_PATTERN = /^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$/;
 
 export const updateFullNameSchema = z.object({
   fullName: z

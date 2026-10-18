@@ -120,14 +120,14 @@ def test_all_persistent_instant_columns_are_numeric():
 
 def test_timestamp_migration_has_explicit_utc_and_reversible_conversions():
     upgrade_output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=upgrade_output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=upgrade_output)
     command.upgrade(config, "0003_care_tracking:0004_epoch_timestamps", sql=True)
     sql = upgrade_output.getvalue()
     assert sql.count("TYPE DOUBLE PRECISION") == 16
     assert sql.count("EXTRACT(EPOCH FROM") == 16
     assert "\"birth_date\"::timestamp AT TIME ZONE 'UTC'" in sql
     downgrade_output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=downgrade_output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=downgrade_output)
     command.downgrade(config, "0004_epoch_timestamps:0003_care_tracking", sql=True)
     sql = downgrade_output.getvalue()
     assert sql.count("to_timestamp(") == 16
@@ -135,7 +135,7 @@ def test_timestamp_migration_has_explicit_utc_and_reversible_conversions():
 
 
 def test_documented_timestamp_fields_are_numbers():
-    schema = json.loads((Path(__file__).parents[1] / "docs/openapi.json").read_text())
+    schema = json.loads((Path(__file__).parents[2] / "docs/openapi.json").read_text())
     fields = {
         "UserReadResponse": ["createdAt", "updatedAt"],
         "PetReadResponse": ["birthDate", "createdAt", "updatedAt"],

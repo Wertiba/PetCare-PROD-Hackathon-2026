@@ -1,11 +1,6 @@
-import { CreatePetForm } from '@src/features/pet/create-pet';
+import { redirect } from 'next/navigation';
 
-const CreatePetPage = () => {
-  return (
-    <div>
-      <CreatePetForm />
-    </div>
-  );
-};
-
-export default CreatePetPage;
+// Early scaffolding page: creating pets and events lives on the dashboard.
+export default function Page() {
+  redirect('/dashboard');
+}

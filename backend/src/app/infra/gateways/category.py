@@ -25,7 +25,7 @@ class SqlAlchemyCategoryGateway(CategoryGateway):
         self, offset: int, limit: int, *, type_: CategoryType | None = None, name: str | None = None
     ) -> list[Category]:
         stmt = self._apply_criteria(select(Category), type_=type_, name=name)
-        stmt = stmt.order_by(Category.created_by.is_not(None), Category.name).offset(offset).limit(limit)
+        stmt = stmt.order_by(Category.created_by.is_not(None), Category.name, Category.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
@@ -45,5 +45,5 @@ class SqlAlchemyCategoryGateway(CategoryGateway):
         if type_ is not None:
             stmt = stmt.where(Category.type == type_)
         if name:
-            stmt = stmt.where(Category.name.ilike(f"%{name}%"))
+            stmt = stmt.where(Category.name.icontains(name, autoescape=True))
         return stmt

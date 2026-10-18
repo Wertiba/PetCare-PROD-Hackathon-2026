@@ -26,6 +26,14 @@ interface PetHomeProps {
 const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
   dateStyle: 'long',
 });
+// Birth dates are stored as UTC midnight; in local time they would show the previous day west of UTC.
+const birthDateFormatter = new Intl.DateTimeFormat(
+  'ru-RU',
+  {
+    dateStyle: 'long',
+    timeZone: 'UTC',
+  },
+);
 const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   dateStyle: 'medium',
   timeStyle: 'short',
@@ -365,7 +373,14 @@ export function PetHome({
               ['Кличка', pet.name],
               ['Вид', pet.animal?.name ?? 'Не указан'],
               ['Порода', pet.breed?.name ?? 'Не указана'],
-              ['Дата рождения', formatDate(pet.birthDate)],
+              [
+                'Дата рождения',
+                pet.birthDate
+                  ? birthDateFormatter.format(
+                      new Date(pet.birthDate * 1000),
+                    )
+                  : 'Не указана',
+              ],
               [
                 'Возраст',
                 formatAge(pet.birthDate, pet.ageMonths),

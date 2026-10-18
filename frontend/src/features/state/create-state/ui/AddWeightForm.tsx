@@ -27,13 +27,13 @@ const units: {
 
 interface AddWeightFormProps {
   petId: Uid;
-  catId: Uid;
+  categoryId: Uid;
   onSuccess?: (state: State) => void;
 }
 
 export function AddWeightForm({
   petId,
-  catId,
+  categoryId,
   onSuccess,
 }: AddWeightFormProps) {
   const { mutate, isPending, error } =
@@ -59,7 +59,7 @@ export function AddWeightForm({
           mutate(
             {
               petId,
-              categoryId: catId,
+              categoryId,
               // The «Вес» category stores whole grams.
               value: Math.round(
                 toNumber(values.value) *

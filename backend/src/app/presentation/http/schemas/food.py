@@ -4,7 +4,7 @@ from pydantic import Field, field_validator
 
 from app.domain.foods.ids import FoodId
 from app.domain.pets.ids import PetId
-from app.presentation.http.schemas.base import PyModel, strip_optional_text, strip_required_text
+from app.presentation.http.schemas.base import INT32_MAX, PyModel, strip_optional_text, strip_required_text
 
 _INGREDIENTS = Field(
     description="Composition; trimmed, blanks and case-insensitive duplicates are dropped",
@@ -37,7 +37,7 @@ class _FoodValidation(PyModel):
 class FoodCreateBody(_FoodValidation):
     petId: PetId
     name: Annotated[str, Field(min_length=1, max_length=255)]
-    weight: Annotated[int | None, Field(ge=0, description="Portion in grams")] = None
+    weight: Annotated[int | None, Field(ge=0, le=INT32_MAX, description="Portion in grams")] = None
     ingredients: Annotated[list[Annotated[str, Field(max_length=100)]], _INGREDIENTS] = []
     isApproach: Annotated[bool | None, _IS_APPROACH] = None
     isTolerability: Annotated[bool | None, _IS_TOLERABILITY] = None
@@ -46,7 +46,7 @@ class FoodCreateBody(_FoodValidation):
 
 class FoodUpdateBody(_FoodValidation):
     name: Annotated[str | None, Field(min_length=1, max_length=255)] = None
-    weight: Annotated[int | None, Field(ge=0, description="Portion in grams")] = None
+    weight: Annotated[int | None, Field(ge=0, le=INT32_MAX, description="Portion in grams")] = None
     ingredients: Annotated[list[Annotated[str, Field(max_length=100)]] | None, _INGREDIENTS] = None
     isApproach: Annotated[bool | None, _IS_APPROACH] = None
     isTolerability: Annotated[bool | None, _IS_TOLERABILITY] = None

@@ -5,11 +5,11 @@ import {
   useUserStore,
 } from '@src/entities/user';
 import { setOnUnauthorized } from '@src/shared/api';
-import { getAccessToken } from '@src/shared/lib';
+import { removeLegacyAccessToken } from '@src/shared/lib';
 import { useEffect } from 'react';
 
 /**
- * Restores the session from the persisted access token on load and keeps the
+ * Restores the session from the httpOnly auth cookies on load and keeps the
  * user store in sync when the session becomes unrecoverable.
  */
 export function SessionProvider({
@@ -28,10 +28,7 @@ export function SessionProvider({
   useEffect(() => {
     setOnUnauthorized(clearUser);
 
-    if (!getAccessToken()) {
-      setSessionRestored();
-      return;
-    }
+    removeLegacyAccessToken();
 
     fetchUser()
       .then(setUser)

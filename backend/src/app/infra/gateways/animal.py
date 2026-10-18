@@ -20,6 +20,14 @@ class SqlAlchemyAnimalGateway(AnimalGateway):
         except SQLAlchemyError as exc:
             raise ApplicationError("Database error") from exc
 
+    async def get_by_name(self, name: str) -> Animal | None:
+        stmt = select(Animal).where(func.lower(Animal.name) == name.lower()).limit(1)
+        try:
+            result = await self.session.execute(stmt)
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as exc:
+            raise ApplicationError("Database error") from exc
+
     async def get_all(self, offset: int, limit: int, *, name: str | None = None) -> list[Animal]:
         # Seeded animals go first (the oldest rows): they are the defaults offered on pet registration.
         stmt = self._apply_criteria(select(Animal), name=name)
@@ -41,5 +49,5 @@ class SqlAlchemyAnimalGateway(AnimalGateway):
     @staticmethod
     def _apply_criteria(stmt: Select, *, name: str | None = None) -> Select:
         if name:
-            stmt = stmt.where(Animal.name.ilike(f"%{name}%"))
+            stmt = stmt.where(Animal.name.icontains(name, autoescape=True))
         return stmt

@@ -53,7 +53,25 @@ export interface FetchBreedsResDto {
 export interface UpdatePetReqDto {
   name?: string;
   breedId?: Uid;
-  birthDate?: Timestamp;
+  birthDate?: Timestamp | null;
+}
+
+export interface CreateAnimalReqDto {
+  name: string;
+}
+
+export interface UpdateAnimalReqDto {
+  name?: string;
+}
+
+export interface CreateBreedReqDto {
+  animalId: Uid;
+  name: string;
+}
+
+export interface UpdateBreedReqDto {
+  animalId?: Uid;
+  name?: string;
 }
 
 export interface CreateAnimalReqDto {

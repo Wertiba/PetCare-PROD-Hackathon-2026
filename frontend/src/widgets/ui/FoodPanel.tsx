@@ -179,7 +179,10 @@ export function FoodPanel({
       verdict.count += 1;
       verdict.liked ??= food.isApproach;
       verdict.suitable ??= food.isTolerability;
-      if (food.consequences) {
+      if (
+        food.consequences &&
+        !verdict.reactions.includes(food.consequences)
+      ) {
         verdict.reactions.push(food.consequences);
       }
       byName.set(key, verdict);

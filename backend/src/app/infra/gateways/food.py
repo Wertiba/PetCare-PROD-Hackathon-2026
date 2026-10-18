@@ -41,7 +41,7 @@ class SqlAlchemyFoodGateway(FoodGateway):
             is_approach=is_approach,
             is_tolerability=is_tolerability,
         )
-        stmt = stmt.order_by(Food.created_at.desc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(Food.created_at.desc(), Food.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())

@@ -14,16 +14,17 @@ __all__ = ["UserRole"]
 class UserRegisterBody(PyModel):
     login: Annotated[str, Field(min_length=1, max_length=255)]
     password: Annotated[str, AfterValidator(check_len_password)]
-    fullName: Annotated[str, Field(pattern="^[а-яА-Яa-zA-Z0-9 _-]{2,200}$")]
+    fullName: Annotated[str, Field(pattern="^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$")]
 
 
 class UserUpdateBody(PyModel):
-    fullName: Annotated[str, Field(pattern="^[а-яА-Яa-zA-Z0-9 _-]{2,200}$")]
+    fullName: Annotated[str, Field(pattern="^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$")]
 
 
 class UserLoginBody(PyModel):
     login: Annotated[str, Field(min_length=1, max_length=255)]
-    password: str
+    # Registration allows at most 72 characters; a longer one overflows the hasher with a 500.
+    password: Annotated[str, Field(max_length=72)]
 
 
 class UserData(PyModel):

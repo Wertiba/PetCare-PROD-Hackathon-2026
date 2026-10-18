@@ -9,12 +9,12 @@ from app.main import app
 
 pytestmark = pytest.mark.req("P.ARCH")
 
-FIXTURES = Path(__file__).parent / "fixtures"
-SOURCE = Path(__file__).parents[1] / "src" / "app"
+FIXTURES = Path(__file__).parents[1] / "fixtures"
+SOURCE = Path(__file__).parents[2] / "src" / "app"
 
 
 def test_openapi_matches_the_documented_api_contract():
-    assert app.openapi() == json.loads((Path(__file__).parents[1] / "docs" / "openapi.json").read_text())
+    assert app.openapi() == json.loads((Path(__file__).parents[2] / "docs" / "openapi.json").read_text())
 
 
 def test_postgres_schema_matches_documented_tables_and_indexes():

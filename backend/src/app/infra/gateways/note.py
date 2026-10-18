@@ -29,7 +29,7 @@ class SqlAlchemyNoteGateway(NoteGateway):
         self, user_id: UserId, offset: int, limit: int, *, pet_id: PetId | None = None, query: str | None = None
     ) -> list[Note]:
         stmt = self._apply_criteria(self._owned(select(Note), user_id), pet_id=pet_id, query=query)
-        stmt = stmt.order_by(Note.created_at.desc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(Note.created_at.desc(), Note.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
@@ -55,5 +55,5 @@ class SqlAlchemyNoteGateway(NoteGateway):
         if pet_id is not None:
             stmt = stmt.where(Note.pet_id == pet_id)
         if query:
-            stmt = stmt.where(Note.content.ilike(f"%{query}%"))
+            stmt = stmt.where(Note.content.icontains(query, autoescape=True))
         return stmt

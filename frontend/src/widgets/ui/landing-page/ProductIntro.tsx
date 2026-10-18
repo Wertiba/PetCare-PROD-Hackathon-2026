@@ -17,7 +17,7 @@ export default function ProductIntro() {
             <span className="block">Забота</span>
             <span className="block">становится</span>
             <span className="block w-fit bg-[var(--lime)] px-2 text-[var(--ink)] shadow-[5px_5px_0_var(--ink)]">
-              проще.
+              проще
             </span>
           </h2>
           <p className="max-w-[360px] border-t border-[var(--ink)] pt-6 text-[clamp(1.1rem,1.4vw,1.25rem)] leading-[1.38] text-[var(--ink)]/75">

@@ -193,11 +193,11 @@ function HealthEntryItem({
 
 function HealthBoard({
   pet,
-  weightCatId,
+  weightCategoryId,
   onOpenReminders,
 }: {
   pet: Pet;
-  weightCatId: Uid | null;
+  weightCategoryId: Uid | null;
   onOpenReminders: (event?: Event) => void;
 }) {
   const [entryType, setEntryType] =
@@ -219,7 +219,7 @@ function HealthBoard({
     page: 0,
     size: 100,
     petId: pet.id,
-    categoryId: weightCatId ?? undefined,
+    categoryId: weightCategoryId ?? undefined,
   });
 
   const eventItems = events.data?.items;
@@ -227,7 +227,7 @@ function HealthBoard({
   const entries = useMemo(() => {
     // States come newest first, so the next item is the previous weighing.
     const weightStates = (stateItems ?? []).filter(
-      (state) => state.categoryId === weightCatId,
+      (state) => state.categoryId === weightCategoryId,
     );
     const result: HealthEntry[] = [
       ...weightStates.map((state, index): HealthEntry => ({
@@ -247,7 +247,7 @@ function HealthBoard({
       })),
     ];
     return result.sort((a, b) => b.time - a.time);
-  }, [eventItems, stateItems, weightCatId]);
+  }, [eventItems, stateItems, weightCategoryId]);
 
   const visible =
     filter === 'all'
@@ -420,10 +420,10 @@ function HealthBoard({
                   setCreatedEvent(event);
                 }}
               />
-            ) : weightCatId ? (
+            ) : weightCategoryId ? (
               <AddWeightForm
                 petId={pet.id}
-                catId={weightCatId}
+                categoryId={weightCategoryId}
                 onSuccess={(state) =>
                   finish(`Вес ${formatWeight(state.value)}`)
                 }
@@ -470,13 +470,15 @@ export function HealthPanel({
   }
 
   const weightCategory = categories.data?.items.find(
-    (item) => item.name === WEIGHT_CATEGORY_NAME,
+    // Categories are shared, so anyone may add another «Вес»: use the built-in one.
+    (item) =>
+      item.isSystem && item.name === WEIGHT_CATEGORY_NAME,
   );
 
   return (
     <HealthBoard
       pet={pet}
-      weightCatId={weightCategory?.id ?? null}
+      weightCategoryId={weightCategory?.id ?? null}
       onOpenReminders={onOpenReminders}
     />
   );

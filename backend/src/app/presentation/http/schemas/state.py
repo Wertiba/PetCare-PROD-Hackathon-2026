@@ -1,12 +1,12 @@
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import AfterValidator, Field, field_validator
 
 from app.domain.categories.enums import CategoryKind, CategoryUnit
 from app.domain.categories.ids import CategoryId
 from app.domain.pets.ids import PetId
 from app.domain.states.ids import StateId
-from app.presentation.http.schemas.base import PyModel, strip_optional_text
+from app.presentation.http.schemas.base import INT32_MAX, PyModel, strip_optional_text, validate_timestamp
 
 
 class _StateNoteValidation(PyModel):
@@ -19,16 +19,18 @@ class _StateNoteValidation(PyModel):
 class StateCreateBody(_StateNoteValidation):
     petId: PetId
     categoryId: CategoryId
-    value: int
-    time: float | None = Field(
+    value: Annotated[int, Field(ge=-INT32_MAX - 1, le=INT32_MAX)]
+    time: Annotated[float, AfterValidator(validate_timestamp)] | None = Field(
         None, description="Defaults to now. Unix seconds in UTC; fractional seconds are supported."
     )
     note: Annotated[str | None, Field(max_length=1000)] = None
 
 
 class StateUpdateBody(_StateNoteValidation):
-    value: int | None = None
-    time: float | None = Field(None, description="Unix seconds in UTC; fractional seconds are supported.")
+    value: Annotated[int, Field(ge=-INT32_MAX - 1, le=INT32_MAX)] | None = None
+    time: Annotated[float, AfterValidator(validate_timestamp)] | None = Field(
+        None, description="Unix seconds in UTC; fractional seconds are supported."
+    )
     note: Annotated[str | None, Field(max_length=1000)] = None
 
     @field_validator("value", "time", mode="before")

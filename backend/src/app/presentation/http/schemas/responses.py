@@ -2,9 +2,15 @@ from time import time
 from typing import Any
 from uuid import uuid4
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from app.presentation.http.schemas.base import PyModel
+
+
+class _EchoModel(BaseModel):
+    """Error payloads echo the rejected input, so they must not run the PyModel input checks on it."""
+
+    model_config = PyModel.model_config
 
 
 class MessageResponse(PyModel):
@@ -15,7 +21,7 @@ class PingResponse(PyModel):
     status: str = "ok"
 
 
-class ErrorResponse(PyModel):
+class ErrorResponse(_EchoModel):
     code: str
     message: str
     traceId: str
@@ -24,13 +30,13 @@ class ErrorResponse(PyModel):
     details: dict[str, Any] | None = None
 
 
-class FieldError(PyModel):
+class FieldError(_EchoModel):
     field: str
     issue: str
     rejectedValue: Any
 
 
-class ValidationErrorResponse(PyModel):
+class ValidationErrorResponse(_EchoModel):
     code: str = "VALIDATION_FAILED"
     message: str = "Some fields are not correct."
     traceId: str = Field(default_factory=lambda: str(uuid4()))

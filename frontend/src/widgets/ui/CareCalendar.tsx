@@ -4,6 +4,7 @@ import {
   type Event,
   type EventPeriod,
   type EventType,
+  eventStatusLabels,
   useGetEventsQuery,
 } from '@src/entities/event';
 import { useGetPetQuery } from '@src/entities/pet';
@@ -212,9 +213,18 @@ export function CareCalendar({
     );
   }, [visibleDate]);
 
+  // The arrows can go past the default range, so keep the shown year among the options.
+  const firstYear = Math.min(
+    now.getFullYear() - 4,
+    visibleDate.getFullYear(),
+  );
+  const lastYear = Math.max(
+    now.getFullYear() + 4,
+    visibleDate.getFullYear(),
+  );
   const years = Array.from(
-    { length: 9 },
-    (_, index) => now.getFullYear() - 4 + index,
+    { length: lastYear - firstYear + 1 },
+    (_, index) => firstYear + index,
   );
   const setMonth = (month: number) => {
     const next = new Date(
@@ -483,10 +493,7 @@ export function CareCalendar({
                     {eventTypes.find(
                       (item) => item.value === event.type,
                     )?.label ?? 'Событие'}{' '}
-                    ·{' '}
-                    {event.status === 'planned'
-                      ? 'Запланировано'
-                      : event.status}
+                    · {eventStatusLabels[event.status]}
                   </p>
                   {event.description ? (
                     <p className="mt-2 text-sm leading-5 text-[var(--ink)]/65">
@@ -755,6 +762,7 @@ function CreateEventDialog({
       setValidationError('Введите название события.');
       return;
     }
+    setValidationError(null);
     createEvent.mutate(
       {
         ...values,
@@ -829,6 +837,7 @@ function CreateEventDialog({
               }
               className={inputClasses}
               placeholder="Например, прививка"
+              maxLength={255}
               autoFocus
             />
           </label>
@@ -889,6 +898,7 @@ function CreateEventDialog({
                 update('description', event.target.value)
               }
               className={inputClasses}
+              maxLength={2000}
               rows={3}
             />
           </label>

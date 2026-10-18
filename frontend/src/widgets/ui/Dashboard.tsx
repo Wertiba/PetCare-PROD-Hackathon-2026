@@ -2,16 +2,17 @@
 
 import {
   type Event,
+  eventStatusLabels,
   useGetEventsQuery,
   useGetUpcomingEventsQuery,
 } from '@src/entities/event';
-import { useGetNotificationsQuery } from '@src/entities/notification';
 import {
   type Pet,
   useGetPetQuery,
 } from '@src/entities/pet';
 import { useGetStatesQuery } from '@src/entities/state';
 import {
+  selectIsSessionRestored,
   selectUser,
   useUserStore,
 } from '@src/entities/user';
@@ -33,6 +34,7 @@ import { ReminderToast } from '@src/widgets/ui/ReminderToast';
 import { motion, useReducedMotion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   useEffect,
   useMemo,
@@ -113,11 +115,12 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
     size: 12,
     petId: pet.id,
   });
-  const reminders = useGetNotificationsQuery({
+  // Nothing creates notification records, so reminders come from the pet's planned events.
+  const reminders = useGetUpcomingEventsQuery({
+    days: 30,
     page: 0,
     size: 20,
     petId: pet.id,
-    due: true,
   });
   const states = useGetStatesQuery({
     page: 0,
@@ -157,9 +160,10 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
             key={item.id}
             className="border-b border-[var(--forest)]/10 pb-3"
           >
-            <b>{item.eventName}</b>
+            <b>{item.name}</b>
             <p className="text-sm text-[var(--ink)]/60">
-              {formatDate(item.time)}
+              {formatDate(item.schedule)}
+              {item.isOverdue ? ' · Просрочено' : ''}
             </p>
           </div>
         ))
@@ -170,7 +174,8 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
           >
             <b>{item.name}</b>
             <p className="text-sm text-[var(--ink)]/60">
-              {formatDate(item.schedule)} · {item.status}
+              {formatDate(item.schedule)} ·{' '}
+              {eventStatusLabels[item.status]}
             </p>
           </div>
         ));
@@ -231,7 +236,11 @@ function Panel({ pet, tool }: { pet: Pet; tool: Tool }) {
 }
 
 export function Dashboard() {
+  const router = useRouter();
   const user = useUserStore(selectUser);
+  const isSessionRestored = useUserStore(
+    selectIsSessionRestored,
+  );
   const petsQuery = useGetPetQuery({ page: 0, size: 100 });
   const logout = useLogoutMutation();
   const deletion = useDeletePetMutation();
@@ -274,6 +283,12 @@ export function Dashboard() {
     setSelectedId(item.id);
     setPetsOpen(false);
   };
+
+  useEffect(() => {
+    if (isSessionRestored && !user) {
+      router.replace('/login');
+    }
+  }, [isSessionRestored, user, router]);
 
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
@@ -618,6 +633,11 @@ export function Dashboard() {
       <main className="p-5 sm:p-8 lg:p-10">
         {petsQuery.isPending ? (
           'Загружаем питомцев…'
+        ) : petsQuery.isError ? (
+          <p role="alert" className="text-red-800">
+            Не удалось загрузить питомцев. Обновите
+            страницу.
+          </p>
         ) : !pet ? (
           <section className="mx-auto max-w-xl rounded-md border-2 border-[var(--forest)] bg-white p-8 shadow-[6px_6px_0_var(--lime)]">
             <h1 className="text-3xl font-black text-[var(--forest)]">
@@ -652,7 +672,10 @@ export function Dashboard() {
             pet={pet}
             onCreate={() => setDialog('create')}
             onEdit={() => setDialog('edit')}
-            onDelete={() => setDialog('delete')}
+            onDelete={() => {
+              deletion.reset();
+              setDialog('delete');
+            }}
           />
         ) : tool === 'health' ? (
           <HealthPanel
@@ -716,6 +739,15 @@ export function Dashboard() {
             Профиль «{pet.name}» будет удалён. Это действие
             нельзя отменить.
           </p>
+          {deletion.isError ? (
+            <p
+              role="alert"
+              className="mt-4 border-l-4 border-red-700 bg-red-50 px-4 py-3 text-sm leading-5 text-red-800"
+            >
+              Не удалось удалить питомца. Попробуйте ещё
+              раз.
+            </p>
+          ) : null}
           <div className="mt-6 flex flex-wrap justify-end gap-3">
             <button
               onClick={() => setDialog(null)}

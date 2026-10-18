@@ -5,13 +5,13 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/health/liveness": {
+    "/api/v1/health/liveness": {
       "get": {
         "tags": [
           "Health"
         ],
         "summary": "Liveness",
-        "operationId": "liveness_health_liveness_get",
+        "operationId": "liveness_api_v1_health_liveness_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -26,13 +26,13 @@
         }
       }
     },
-    "/health/readiness": {
+    "/api/v1/health/readiness": {
       "get": {
         "tags": [
           "Health"
         ],
         "summary": "Readiness",
-        "operationId": "readiness_health_readiness_get",
+        "operationId": "readiness_api_v1_health_readiness_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -41,7 +41,7 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Readiness Health Readiness Get"
+                  "title": "Response Readiness Api V1 Health Readiness Get"
                 }
               }
             }
@@ -252,7 +252,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -269,6 +270,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -589,7 +591,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -606,6 +609,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -908,6 +912,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -1727,7 +1732,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -1744,6 +1750,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -2105,6 +2112,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -2527,6 +2535,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -2657,6 +2666,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -3100,6 +3110,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -3587,7 +3598,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\x00]*$"
                 },
                 {
                   "type": "null"
@@ -3604,6 +3616,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -3904,6 +3917,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 1000000,
               "minimum": 0,
               "description": "Page number",
               "default": 0,
@@ -4676,7 +4690,7 @@
               }
             ],
             "title": "Doneat",
-            "description": "Actual completion time in fractional Unix seconds (UTC); defaults to now."
+            "description": "Actual completion time in fractional Unix seconds (UTC); defaults to now. Not in the future."
           }
         },
         "type": "object",
@@ -4976,6 +4990,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 2147483647.0,
                 "minimum": 0.0
               },
               {
@@ -5186,6 +5201,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 2147483647.0,
                 "minimum": 0.0
               },
               {
@@ -6148,6 +6164,8 @@
           },
           "value": {
             "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
             "title": "Value"
           },
           "time": {
@@ -6309,7 +6327,9 @@
           "value": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": -2147483648.0
               },
               {
                 "type": "null"
@@ -6399,6 +6419,7 @@
           },
           "password": {
             "type": "string",
+            "maxLength": 72,
             "title": "Password"
           }
         },
@@ -6470,7 +6491,7 @@
           },
           "fullName": {
             "type": "string",
-            "pattern": "^[а-яА-Яa-zA-Z0-9 _-]{2,200}$",
+            "pattern": "^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$",
             "title": "Fullname"
           }
         },
@@ -6494,7 +6515,7 @@
         "properties": {
           "fullName": {
             "type": "string",
-            "pattern": "^[а-яА-Яa-zA-Z0-9 _-]{2,200}$",
+            "pattern": "^[а-яА-ЯёЁa-zA-Z0-9 _-]{2,200}$",
             "title": "Fullname"
           }
         },

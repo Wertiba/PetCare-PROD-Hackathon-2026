@@ -82,13 +82,21 @@ services:
       LLM_AVATAR_MODEL:
       LLM_IMAGE_TOOL_MODEL:
       LLM_AVATAR_TIMEOUT:
+      NOTIFICATIONS_WORKER_ENABLED:
+      NOTIFICATIONS_DISPATCH_INTERVAL:
+      NOTIFICATIONS_MAX_LATENESS:
+      VAPID_PUBLIC_KEY:
+      VAPID_PRIVATE_KEY:
+      VAPID_SUBJECT:
+      WEB_PUSH_ALLOWED_HOSTS:
+      WEB_PUSH_TIMEOUT:
     depends_on:
       postgres:
         condition: service_healthy
       rustfs-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "--location", "--max-time", "2", "--output", "/dev/null", "http://127.0.0.1:8000/health/readiness"]
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "--location", "--max-time", "2", "--output", "/dev/null", "http://127.0.0.1:8000/api/v1/health/readiness"]
       interval: 10s
       timeout: 3s
       retries: 5

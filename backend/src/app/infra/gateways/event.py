@@ -41,7 +41,7 @@ class SqlAlchemyEventGateway(EventGateway):
         stmt = self._apply_criteria(
             self._owned(select(Event), user_id), pet_id=pet_id, status=status, type_=type_, from_=from_, to=to
         )
-        stmt = stmt.order_by(Event.schedule.desc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(Event.schedule.desc(), Event.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
@@ -77,7 +77,7 @@ class SqlAlchemyEventGateway(EventGateway):
     ) -> list[Event]:
         """Planned events due before `until`, overdue ones included, nearest first."""
         stmt = self._upcoming(select(Event), user_id, until, pet_id)
-        stmt = stmt.order_by(Event.schedule.asc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(Event.schedule.asc(), Event.id).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())

@@ -1,11 +1,6 @@
-import PetsList from '@src/widgets/ui/PetsList';
+import { redirect } from 'next/navigation';
 
-const PetsPage = () => {
-  return (
-    <div>
-      <PetsList />
-    </div>
-  );
-};
-
-export default PetsPage;
+// Early scaffolding page: creating pets and events lives on the dashboard.
+export default function Page() {
+  redirect('/dashboard');
+}

@@ -5,11 +5,6 @@ import {
   convertKeys,
   snakeToCamel,
 } from '../lib/case-converter';
-import {
-  clearAccessToken,
-  getAccessToken,
-  setAccessToken,
-} from '../lib/token';
 
 export type UnauthorizedListener = () => void;
 
@@ -30,9 +25,8 @@ let refreshPromise: Promise<boolean> | null = null;
 async function refreshAccessToken(): Promise<boolean> {
   refreshPromise ??= (async () => {
     try {
-      const response = await axios.post<{
-        accessToken: string;
-      }>(
+      // The backend renews the httpOnly accessToken cookie.
+      await axios.post(
         `${API_BASE_URL}${API_V1_PREFIX}/auth/refresh`,
         undefined,
         {
@@ -42,7 +36,6 @@ async function refreshAccessToken(): Promise<boolean> {
           },
         },
       );
-      setAccessToken(response.data.accessToken);
       return true;
     } catch {
       return false;
@@ -76,15 +69,6 @@ const AUTH_ENDPOINTS = [
   '/auth/refresh',
   '/auth/logout',
 ];
-
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
 
 api.interceptors.response.use(
   (response) => {
@@ -120,7 +104,6 @@ api.interceptors.response.use(
         if (refreshed) {
           return api.request(config);
         }
-        clearAccessToken();
         unauthorizedListener?.();
       }
 
