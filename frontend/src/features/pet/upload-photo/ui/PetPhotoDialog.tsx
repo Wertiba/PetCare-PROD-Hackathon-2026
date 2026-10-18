@@ -25,6 +25,7 @@ export function PetPhotoDialog({
   const [choice, setChoice] =
     useState<AvatarChoice>('photo');
   const [file, setFile] = useState<File | null>(null);
+  const [avatarPrompt, setAvatarPrompt] = useState('');
   const [error, setError] = useState<string | null>(null);
   const isPending =
     uploadPhoto.isPending ||
@@ -42,7 +43,10 @@ export function PetPhotoDialog({
       await uploadPhoto.mutateAsync({ petId, file });
 
       if (choice === 'generated') {
-        await generateAvatar.mutateAsync(petId);
+        await generateAvatar.mutateAsync({
+          petId,
+          prompt: avatarPrompt.trim(),
+        });
         await selectAvatar.mutateAsync({
           petId,
           source: 'generated',
@@ -70,18 +74,18 @@ export function PetPhotoDialog({
       onClose={onClose}
     >
       <div className="w-xl max-w-full p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-5 border-b border-[var(--forest)]/15 pb-4">
-          <div>
+        <div className="flex min-w-0 items-start justify-between gap-5 border-b border-[var(--forest)]/15 pb-4">
+          <div className="min-w-0">
             <p className="text-xs font-bold tracking-[.12em] text-[var(--forest)]/60 uppercase">
               Профиль питомца
             </p>
             <h2
               id="pet-photo-dialog-title"
-              className="mt-1 text-2xl font-black text-[var(--forest)]"
+              className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
             >
               Изменить фото
             </h2>
-            <p className="mt-1 text-sm text-[var(--ink)]/60">
+            <p className="mt-1 break-words text-sm text-[var(--ink)]/60">
               Выберите обычное фото или ИИ-аватар на его
               основе.
             </p>
@@ -169,6 +173,29 @@ export function PetPhotoDialog({
               : 'Новое фото заменит текущее изображение питомца.'}
           </p>
         </div>
+
+        {choice === 'generated' ? (
+          <div className="mt-5">
+            <label
+              htmlFor="avatar-prompt"
+              className="block text-sm font-bold text-[var(--forest)]"
+            >
+              Пожелание для ИИ-аватара{' '}
+              <span className="font-normal text-[var(--ink)]/55">
+                (необязательно)
+              </span>
+            </label>
+            <textarea
+              id="avatar-prompt"
+              value={avatarPrompt}
+              onChange={(event) => setAvatarPrompt(event.target.value)}
+              disabled={isPending}
+              rows={3}
+              placeholder="Например: в красном шарфе"
+              className="mt-2 block w-full resize-y border border-[var(--forest)]/45 bg-white px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink)]/40 focus:border-[var(--forest)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        ) : null}
 
         {generateAvatar.isPending ? (
           <div

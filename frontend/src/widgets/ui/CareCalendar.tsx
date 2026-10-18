@@ -690,14 +690,14 @@ function CreateNotificationDialog({
       onClose={onClose}
     >
       <div className="mx-auto w-xl max-w-full p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
-          <div>
-            <p className="text-sm font-semibold text-[var(--ink)]/55">
+        <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div className="min-w-0">
+            <p className="break-words text-sm font-semibold text-[var(--ink)]/55">
               {event.name}
             </p>
             <h2
               id="create-notification-title"
-              className="mt-1 text-2xl font-black text-[var(--forest)]"
+              className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
             >
               Новое уведомление
             </h2>
@@ -706,7 +706,7 @@ function CreateNotificationDialog({
             type="button"
             onClick={onClose}
             aria-label="Закрыть"
-            className="grid size-9 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
           >
             ×
           </button>
@@ -778,14 +778,14 @@ function CreateEventDialog({
       onClose={onClose}
     >
       <div className="mx-auto w-3xl max-w-full p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
-          <div>
-            <p className="text-sm font-semibold text-[var(--ink)]/55">
+        <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div className="min-w-0">
+            <p className="break-words text-sm font-semibold text-[var(--ink)]/55">
               {fullDateFormatter.format(selectedDate)}
             </p>
             <h2
               id="create-event-title"
-              className="mt-1 text-2xl font-black text-[var(--forest)]"
+              className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
             >
               Новое событие
             </h2>
@@ -794,7 +794,7 @@ function CreateEventDialog({
             type="button"
             onClick={onClose}
             aria-label="Закрыть"
-            className="grid size-9 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
           >
             ×
           </button>
@@ -901,7 +901,7 @@ function CreateEventDialog({
                 'Не удалось создать событие. Проверьте данные и повторите попытку.'}
             </p>
           ) : null}
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}

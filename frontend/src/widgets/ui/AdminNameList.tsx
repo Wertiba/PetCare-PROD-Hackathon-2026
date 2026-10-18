@@ -226,14 +226,14 @@ export function AdminConfirmDelete({
       onClose={onClose}
     >
       <div className="mx-auto w-full max-w-md p-5 sm:p-6">
-        <div className="mb-5 flex justify-between border-b border-[var(--forest)]/15 pb-4">
-          <div>
+        <div className="mb-5 flex min-w-0 justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div className="min-w-0">
             <p className="text-xs font-bold tracking-[.12em] text-[var(--forest)]/60 uppercase">
               Администрирование
             </p>
             <h2
               id="admin-delete-title"
-              className="mt-1 text-2xl font-black text-[var(--forest)]"
+              className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
             >
               {title}
             </h2>
@@ -242,7 +242,7 @@ export function AdminConfirmDelete({
             onClick={onClose}
             type="button"
             aria-label="Закрыть"
-            className="size-9 rounded-sm border border-[var(--forest)]"
+            className="size-9 shrink-0 rounded-sm border border-[var(--forest)]"
           >
             ×
           </button>
@@ -253,7 +253,7 @@ export function AdminConfirmDelete({
         <div className="mt-4">
           <AdminError error={error} />
         </div>
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
           <button
             type="button"
             onClick={onClose}

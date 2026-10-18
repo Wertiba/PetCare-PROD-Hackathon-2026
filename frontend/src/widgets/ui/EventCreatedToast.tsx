@@ -109,12 +109,12 @@ export function EventCreatedToast({
         >
           <div className="mx-auto w-xl max-w-full p-5 sm:p-6">
             <div className="border-b border-[var(--forest)]/15 pb-4">
-              <p className="text-sm font-semibold text-[var(--ink)]/55">
+              <p className="break-words text-sm font-semibold text-[var(--ink)]/55">
                 {dialogEvent.name}
               </p>
               <h2
                 id="event-created-notification-title"
-                className="mt-1 text-2xl font-black text-[var(--forest)]"
+                className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
               >
                 Новое уведомление
               </h2>

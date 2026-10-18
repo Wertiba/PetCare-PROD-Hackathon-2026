@@ -51,6 +51,7 @@ export function CreatePetForm({
   const [avatarChoice, setAvatarChoice] =
     useState<AvatarChoice>('none');
   const [photo, setPhoto] = useState<File | null>(null);
+  const [avatarPrompt, setAvatarPrompt] = useState('');
   const [photoError, setPhotoError] = useState<
     string | null
   >(null);
@@ -116,7 +117,10 @@ export function CreatePetForm({
                 });
 
               if (avatarChoice === 'generated') {
-                await generateAvatar.mutateAsync(pet.id);
+                await generateAvatar.mutateAsync({
+                  petId: pet.id,
+                  prompt: avatarPrompt.trim(),
+                });
                 const petWithAvatar =
                   await selectAvatar.mutateAsync({
                     petId: pet.id,
@@ -275,6 +279,28 @@ export function CreatePetForm({
                 ? 'Загрузим фото, затем создадим на его основе ИИ-аватар.'
                 : 'Это изображение будет показано в профиле питомца.'}
             </p>
+          </div>
+        ) : null}
+
+        {avatarChoice === 'generated' ? (
+          <div className="mt-3">
+            <label
+              htmlFor="avatar-prompt"
+              className="block text-sm font-bold text-[var(--forest)]"
+            >
+              Пожелание для ИИ-аватара{' '}
+              <span className="font-normal text-[var(--ink)]/55">
+                (необязательно)
+              </span>
+            </label>
+            <textarea
+              id="avatar-prompt"
+              value={avatarPrompt}
+              onChange={(event) => setAvatarPrompt(event.target.value)}
+              rows={3}
+              placeholder="Например: в красном шарфе"
+              className="mt-2 block w-full resize-y border border-[var(--forest)]/45 bg-white px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink)]/40 focus:border-[var(--forest)] focus:outline-none"
+            />
           </div>
         ) : null}
       </fieldset>
