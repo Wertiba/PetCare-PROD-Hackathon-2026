@@ -430,7 +430,7 @@ export function Dashboard() {
               <section
                 role="dialog"
                 aria-label="Ближайшие события"
-                className="absolute right-0 top-[calc(100%+.65rem)] z-40 w-80 rounded-md border border-[var(--forest)] bg-white p-2 shadow-[4px_4px_0_var(--lime)] sm:w-96"
+                className="fixed inset-x-5 top-20 z-40 rounded-md border border-[var(--forest)] bg-white p-2 shadow-[4px_4px_0_var(--lime)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+.65rem)] sm:w-96"
               >
                 <div className="border-b border-[var(--forest)]/15 px-3 py-3">
                   <h2 className="text-sm font-black text-[var(--forest)]">
@@ -440,7 +440,7 @@ export function Dashboard() {
                     На ближайшие 30 дней
                   </p>
                 </div>
-                <div className="max-h-80 divide-y divide-[var(--forest)]/10 overflow-y-auto">
+                <div className="max-h-[calc(100dvh-8rem)] divide-y divide-[var(--forest)]/10 overflow-y-auto overscroll-contain">
                   {upcomingEvents.isPending ? (
                     <p className="px-3 py-5 text-sm text-[var(--ink)]/60">
                       Загружаем события…

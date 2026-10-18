@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { AccountProfileCard } from './AccountProfileCard';
 import { AccountSettings } from './AccountSettings';
 import { CareCalendar } from './CareCalendar';
 
@@ -137,6 +138,8 @@ export function Account({ activeTab }: AccountProps) {
             })}
           </nav>
         </div>
+
+        <AccountProfileCard />
 
         <section className="mt-7 rounded-md border border-[var(--forest)]/20 bg-white p-5 sm:p-7">
           {activeTab === 'settings' ? (
