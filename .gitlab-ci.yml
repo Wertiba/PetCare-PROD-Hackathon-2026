@@ -61,7 +61,7 @@ test-backend:
     - uv sync --locked
     - >-
       uv run python -m pytest
-      --cov --cov-report=term --cov-report=xml:reports/coverage.xml --cov-report=html
+      --cov --cov-report=term --cov-report=xml:reports/coverage.xml --cov-report=html:reports/htmlcov
       --junitxml=reports/junit.xml --req-report=reports/requirements-coverage.md
   coverage: '/^TOTAL\s+.*\s(\d+(?:\.\d+)?)%$/'
   artifacts:
