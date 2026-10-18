@@ -3,7 +3,7 @@ from time import time
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
-from test_pets_endpoints import PNG_BYTES, _auth, _create_pet, _object_key, _register, _upload_photo
+from conftest import PNG_BYTES, _auth, _create_pet, _object_key, _register, _upload_photo
 
 from app.application.ports.photos import MAX_PHOTO_BYTES
 from app.infra.metrics import DOMAIN_EVENTS_TOTAL

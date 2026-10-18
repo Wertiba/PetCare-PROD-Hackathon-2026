@@ -24,12 +24,12 @@ from app.domain.pets.entity import Pet
 from app.domain.states.entity import State
 from app.infra.database import mappings
 from app.infra.reports.pdf import render_pdf
-from test_pets_endpoints import PNG_BYTES
+from conftest import PNG_BYTES
 
 pytestmark = pytest.mark.req("P.REPORT")
 
 DAY = 86400.0
-_MIGRATION = Path(__file__).parents[1] / "alembic" / "versions" / "0009_jury_demo_data.py"
+_MIGRATION = Path(__file__).parents[2] / "alembic" / "versions" / "0009_jury_demo_data.py"
 
 
 def _seed_module():
@@ -229,7 +229,7 @@ def test_empty_history_still_renders():
 @pytest.mark.req("P.ARCH", "P.CHECK")
 def test_demo_data_migration_seeds_every_jury_account_in_place():
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.upgrade(config, "0008_states_category_id:0009_jury_demo_data", sql=True)
     sql = output.getvalue()
     assert sql.count("INSERT INTO pets") == sum(len(templates) for templates in seed._ASSIGNMENT.values())
@@ -237,7 +237,7 @@ def test_demo_data_migration_seeds_every_jury_account_in_place():
     for number in range(1, 11):
         assert f"00000000-0000-4000-b000-{number:012d}" in sql
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.downgrade(config, "0009_jury_demo_data:0008_states_category_id", sql=True)
     assert "DELETE FROM pets WHERE user_id IN" in output.getvalue()
 

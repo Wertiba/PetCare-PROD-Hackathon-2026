@@ -146,7 +146,7 @@ def test_pet_avatar_migration_converts_legacy_photo_url_and_reverts():
     from alembic.config import Config
 
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.upgrade(config, "0007_jury_users:0008_pet_avatars", sql=True)
     sql = output.getvalue()
     assert "RENAME photo_url TO photo_key" in sql
@@ -157,7 +157,7 @@ def test_pet_avatar_migration_converts_legacy_photo_url_and_reverts():
     assert "ck_pets_avatar_source" in sql
     assert "avatar_source IN ('photo', 'generated')" in sql
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.downgrade(config, "0008_pet_avatars:0007_jury_users", sql=True)
     sql = output.getvalue()
     assert "DROP CONSTRAINT ck_pets_avatar_source" in sql
@@ -177,7 +177,7 @@ def test_seed_admin_migration_creates_admin_and_owns_seeded_catalog(monkeypatch)
     monkeypatch.setenv("ADMIN_LOGIN", "seed-admin")
     monkeypatch.setenv("ADMIN_PASSWORD", "seed-admin-password")
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.upgrade(config, "0010_notification_delivery:0011_seed_admin", sql=True)
     sql = output.getvalue()
     assert "'seed-admin'" in sql
@@ -187,7 +187,7 @@ def test_seed_admin_migration_creates_admin_and_owns_seeded_catalog(monkeypatch)
     for table in ("animals", "breeds"):
         assert f"UPDATE {table} SET created_by = (SELECT id FROM users WHERE login = 'seed-admin')" in sql
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.downgrade(config, "0011_seed_admin:0010_notification_delivery", sql=True)
     sql = output.getvalue()
     assert "UPDATE animals SET created_by = NULL" in sql
@@ -207,7 +207,7 @@ def _migration_sql(revisions: str, *, downgrade: bool = False) -> str:
     from alembic.config import Config
 
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     (command.downgrade if downgrade else command.upgrade)(config, revisions, sql=True)
     return output.getvalue()
 
@@ -218,7 +218,7 @@ def test_alembic_revision_chain_has_a_single_head():
     from alembic.config import Config
     from alembic.script import ScriptDirectory
 
-    script = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
+    script = ScriptDirectory.from_config(Config(str(Path(__file__).parents[2] / "alembic.ini")))
     assert script.get_heads() == ["0011_seed_admin"]
 
 

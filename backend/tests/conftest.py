@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from urllib.parse import parse_qs, urlsplit
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -105,6 +106,43 @@ CAT_ID = "c0000000-0000-4000-a000-00000000000a"
 DOG_ID = "d0000000-0000-4000-a000-00000000000b"
 CAT_BREED_ID = "c0000000-0000-4000-8000-0000000000c1"
 DOG_BREED_ID = "d0000000-0000-4000-8000-0000000000d1"
+
+
+# HTTP helpers shared by the pet, photo, report and scenario tests.
+PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+
+
+def _register(client, login="user", password="password1", full_name="Test User"):
+    response = client.post("/api/v1/auth/register", json={"login": login, "password": password, "fullName": full_name})
+    assert response.status_code == 201, response.text
+    body = response.json()
+    return (body["user"]["id"], body["accessToken"])
+
+
+def _auth(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _create_pet(client, token, **overrides):
+    payload = {"name": "Барсик", "breedId": CAT_BREED_ID}
+    payload.update(overrides)
+    return client.post("/api/v1/pets", json=payload, headers=_auth(token))
+
+
+def _object_key(url: str) -> str:
+    signed = urlsplit(url)
+    assert signed.netloc == "testserver"
+    assert signed.path.startswith("/media/pets/")
+    assert "X-Amz-Signature" in parse_qs(signed.query)
+    return signed.path.removeprefix("/media/")
+
+
+def _upload_photo(client, pet_id, token, content=PNG_BYTES):
+    return client.put(
+        f"/api/v1/pets/{pet_id}/photo",
+        files={"file": ("pet.png", content, "image/png")},
+        headers=_auth(token),
+    )
 
 
 @pytest.fixture

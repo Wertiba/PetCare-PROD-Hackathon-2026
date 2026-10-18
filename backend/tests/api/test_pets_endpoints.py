@@ -2,28 +2,20 @@ import uuid
 from datetime import UTC, date, datetime
 from urllib.parse import parse_qs, urlsplit
 import pytest
-from conftest import CAT_BREED_ID, CAT_ID, DOG_BREED_ID, DOG_ID
+from conftest import (
+    CAT_BREED_ID,
+    CAT_ID,
+    DOG_BREED_ID,
+    DOG_ID,
+    PNG_BYTES,
+    _auth,
+    _create_pet,
+    _object_key,
+    _register,
+    _upload_photo,
+)
 
 pytestmark = pytest.mark.req("5.1.1")
-
-PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
-
-
-def _register(client, login="user", password="password1", full_name="Test User"):
-    response = client.post("/api/v1/auth/register", json={"login": login, "password": password, "fullName": full_name})
-    assert response.status_code == 201, response.text
-    body = response.json()
-    return (body["user"]["id"], body["accessToken"])
-
-
-def _auth(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
-
-
-def _create_pet(client, token, **overrides):
-    payload = {"name": "Барсик", "breedId": CAT_BREED_ID}
-    payload.update(overrides)
-    return client.post("/api/v1/pets", json=payload, headers=_auth(token))
 
 
 @pytest.mark.req("5.1.2")
@@ -162,22 +154,6 @@ def test_pet_keeps_living_after_its_breed_is_deleted(client, admin):
     body = client.get(f"/api/v1/pets/{pet_id}", headers=_auth(token)).json()
     assert body["breed"] is None
     assert body["animal"] is None
-
-
-def _object_key(url: str) -> str:
-    signed = urlsplit(url)
-    assert signed.netloc == "testserver"
-    assert signed.path.startswith("/media/pets/")
-    assert "X-Amz-Signature" in parse_qs(signed.query)
-    return signed.path.removeprefix("/media/")
-
-
-def _upload_photo(client, pet_id, token, content=PNG_BYTES):
-    return client.put(
-        f"/api/v1/pets/{pet_id}/photo",
-        files={"file": ("pet.png", content, "image/png")},
-        headers=_auth(token),
-    )
 
 
 @pytest.mark.req("5.1.3", "7.1")

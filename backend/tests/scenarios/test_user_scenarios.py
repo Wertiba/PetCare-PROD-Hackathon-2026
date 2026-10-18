@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from conftest import CAT_BREED_ID, CAT_ID
-from test_pets_endpoints import PNG_BYTES
+from conftest import PNG_BYTES
 
 pytestmark = pytest.mark.integration
 

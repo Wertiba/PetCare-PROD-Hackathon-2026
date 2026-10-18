@@ -48,7 +48,7 @@ def test_email_does_not_replace_login(client, endpoint):
 
 def test_login_migration_renames_identifier_and_unique_constraint():
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.upgrade(config, "0004_epoch_timestamps:0005_user_login", sql=True)
     sql = output.getvalue()
     assert "RENAME email TO login" in sql
@@ -56,7 +56,7 @@ def test_login_migration_renames_identifier_and_unique_constraint():
     assert "ADD CONSTRAINT uq_users_login UNIQUE (login)" in sql
     assert "DROP COLUMN" not in sql
     output = io.StringIO()
-    config = Config(str(Path(__file__).parents[1] / "alembic.ini"), output_buffer=output)
+    config = Config(str(Path(__file__).parents[2] / "alembic.ini"), output_buffer=output)
     command.downgrade(config, "0005_user_login:0004_epoch_timestamps", sql=True)
     sql = output.getvalue()
     assert "RENAME login TO email" in sql
