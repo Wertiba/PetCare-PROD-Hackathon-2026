@@ -7,7 +7,7 @@
 ## Запрос
 
 ```
-GET /api/v1/events/calendar.ics?petId=&alarmMinutes=1440
+GET /api/v1/events/calendar.ics?petId=&alarmMinutes=1440&until=
 Authorization: Bearer <accessToken>
 ```
 
@@ -15,8 +15,9 @@ Authorization: Bearer <accessToken>
 |---|---|
 | `petId` | необязательный UUID. Оставляет события одного питомца. Без него — все питомцы пользователя |
 | `alarmMinutes` | за сколько минут до события поставить напоминание. По умолчанию `1440` (сутки). От `0` до `10080` (неделя). `0` — без напоминания |
+| `until` | конец ряда повторов и верхняя граница `schedule`. Unix seconds в UTC; дробные секунды допустимы. Если не передан — момент запроса плюс 365 дней. Должен быть больше текущего времени и не дальше чем на 1826 дней (5 лет). Иначе `422` и `fieldErrors` по полю `until` |
 
-В файл попадают только события со статусом `planned`, включая просроченные. Выполненные, пропущенные и отменённые не попадают. Чужие события не попадают. Сортировка по `schedule` по возрастанию, не больше 1000 записей: если их больше, в файл идут самые поздние.
+В файл попадают только события со статусом `planned`, включая просроченные, у которых `schedule` не позже `until`. Событие с `schedule` позже `until` не попадает — ни разовое, ни повторяющееся. Выполненные, пропущенные и отменённые не попадают. Чужие события не попадают. Сортировка по `schedule` по возрастанию, не больше 1000 записей уже после этого отбора: если их больше, в файл идут самые поздние.
 
 Пустой список всё равно отвечает `200` и валидным календарём без событий.
 
@@ -39,7 +40,7 @@ Authorization: Bearer <accessToken>
 | `DTSTART` | `schedule` в UTC, доли секунды отбрасываются |
 | `DTEND` | час после начала |
 | `UID` | `{id события}@petcare` |
-| `RRULE` | правило повтора, см. таблицу. У `period=none` правила нет |
+| `RRULE` | правило повтора с концом `UNTIL`, см. таблицу. У `period=none` правила нет |
 | `VALARM` | `TRIGGER:-PT{alarmMinutes}M`. Нет, если `alarmMinutes=0` |
 
 Тип в файле:
@@ -57,13 +58,15 @@ Authorization: Bearer <accessToken>
 
 | `period` | `RRULE` |
 |---|---|
-| `daily` | `FREQ=DAILY` |
-| `weekly` | `FREQ=WEEKLY` |
-| `monthly` | `FREQ=MONTHLY` |
-| `quarterly` | `FREQ=MONTHLY;INTERVAL=3` |
-| `half_year` | `FREQ=MONTHLY;INTERVAL=6` |
-| `yearly` | `FREQ=YEARLY` |
+| `daily` | `FREQ=DAILY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `weekly` | `FREQ=WEEKLY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `monthly` | `FREQ=MONTHLY;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `quarterly` | `FREQ=MONTHLY;INTERVAL=3;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `half_year` | `FREQ=MONTHLY;INTERVAL=6;UNTIL=YYYYMMDDTHHMMSSZ` |
+| `yearly` | `FREQ=YEARLY;UNTIL=YYYYMMDDTHHMMSSZ` |
 | `none` | строки нет |
+
+`UNTIL` — это `until` запроса в UTC, доли секунды отбрасываются. `DTSTART` тоже в UTC, поэтому `UNTIL` пишется с `Z`. Ряд обрывается на этой дате: телефон не растягивает его дальше.
 
 Пример одного события (строки в файле заканчиваются `\r\n`):
 
@@ -76,7 +79,7 @@ DTEND:20261101T110000Z
 SUMMARY:Барсик: Прививка от бешенства
 DESCRIPTION:Прививка\n\nНобивак
 CATEGORIES:Прививка
-RRULE:FREQ=YEARLY
+RRULE:FREQ=YEARLY;UNTIL=20271101T100000Z
 BEGIN:VALARM
 ACTION:DISPLAY
 DESCRIPTION:Барсик: Прививка от бешенства
@@ -93,14 +96,17 @@ END:VEVENT
 |---|---|
 | `401 UNAUTHORIZED` | нет или плохой токен |
 | `404 NOT_FOUND` | `petId` не существует или принадлежит другому пользователю. Сообщение «Pet not found», как у карточки питомца. Это не `422 PET_NOT_FOUND`: тот код бывает у `petId` в теле запроса |
-| `422` | `alarmMinutes` вне `0…10080` или `petId` не UUID. В теле `fieldErrors` |
+| `422` | `alarmMinutes` вне `0…10080`, `until` не число, не больше текущего времени или дальше 1826 дней, или `petId` не UUID. В теле `fieldErrors` |
 
 ## Фронт
 
 Файл нельзя разобрать как JSON. Запрос с Bearer, тело сохранить как blob.
 
+Передайте `until` — конец периода, который выбрал пользователь, — как Unix seconds. Например, конец месяца или года на экране календаря. Без параметра повторы оборвутся через 365 дней от запроса.
+
 ```ts
-const response = await fetch("/api/v1/events/calendar.ics", {
+const until = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+const response = await fetch(`/api/v1/events/calendar.ics?until=${until}`, {
   headers: { Authorization: `Bearer ${accessToken}` },
 });
 const blob = await response.blob();
@@ -114,4 +120,4 @@ URL.revokeObjectURL(url);
 
 Имя файла можно взять из `Content-Disposition`, если передан `petId`.
 
-Повторный импорт после новых событий может задвоить повторы. Когда событие отмечают выполненным, сервер создаёт следующее отдельной записью, а старый файл календаря уже содержит `RRULE` на ту же серию. Перед повторным скачиванием лучше сказать пользователю удалить прежний импорт PetCare.
+Повторный импорт после новых событий может задвоить повторы. Когда событие отмечают выполненным, сервер создаёт следующее отдельной записью, а старый файл уже содержит `RRULE` до своего `UNTIL` на ту же серию. Перед повторным скачиванием лучше сказать пользователю удалить прежний импорт PetCare.

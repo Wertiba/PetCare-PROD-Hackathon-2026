@@ -152,7 +152,7 @@ class ListUpcomingEvents(_EventContext):
 
 
 class ExportEventsCalendar(_EventContext):
-    async def __call__(self, user_id: UserId, pet_id: PetId | None = None) -> EventCalendarExport:
+    async def __call__(self, user_id: UserId, pet_id: PetId | None = None, *, until: float) -> EventCalendarExport:
         if pet_id is not None and await self.pet_gateway.get_by_id(pet_id, user_id=user_id) is None:
             raise PetNotFoundError
         events = await self.event_gateway.get_by_user_id(
@@ -161,6 +161,7 @@ class ExportEventsCalendar(_EventContext):
             limit=CALENDAR_EVENT_LIMIT,
             pet_id=pet_id,
             status=EventStatus.PLANNED,
+            to=until,
         )
         events.sort(key=lambda event: event.schedule)
         pet_ids = list({event.pet_id for event in events})

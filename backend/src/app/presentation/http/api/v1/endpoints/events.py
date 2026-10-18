@@ -1,7 +1,9 @@
 from time import time
+from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
+from pydantic import AfterValidator
 
 from app.application.events.dto import EventCreateData, EventUpdateData
 from app.application.events.interactors import (
@@ -34,6 +36,19 @@ from app.presentation.http.schemas.responses import ErrorResponse
 router = APIRouter(prefix="/events", tags=["Events"], route_class=DishkaRoute)
 _NOT_FOUND = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Event not found"}}
 _PET_MISSING = {status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse, "description": "Pet not found"}}
+CALENDAR_UNTIL_DEFAULT_DAYS = 365
+CALENDAR_UNTIL_MAX_DAYS = 1826
+
+
+def _validate_calendar_until(value: float | None) -> float | None:
+    if value is None:
+        return None
+    now = time()
+    if value <= now:
+        raise ValueError("must be greater than the current time")
+    if value > now + CALENDAR_UNTIL_MAX_DAYS * 86400:
+        raise ValueError("must be at most 1826 days ahead")
+    return value
 
 
 @router.get("", response_model=Page[EventReadResponse], status_code=status.HTTP_200_OK)
@@ -101,13 +116,23 @@ async def export_events_calendar(
         le=10080,
         description="Reminder this many minutes before the event; 0 omits it",
     ),
+    until: Annotated[
+        float | None,
+        AfterValidator(_validate_calendar_until),
+        Query(
+            description="Unix seconds in UTC; fractional seconds are supported.",
+            allow_inf_nan=False,
+        ),
+    ] = None,
 ) -> Response:
     """Download planned events as one iCalendar file for the phone calendar."""
-    exported = await interactor(user.id, petId)
+    now = time()
+    horizon = now + CALENDAR_UNTIL_DEFAULT_DAYS * 86400 if until is None else until
+    exported = await interactor(user.id, petId, until=horizon)
     filename = f"petcare-{petId}.ics" if petId is not None else "petcare.ics"
     track("event", "calendar_exported")
     return Response(
-        content=render_calendar(exported.items, alarm_minutes=alarmMinutes, now=time()),
+        content=render_calendar(exported.items, alarm_minutes=alarmMinutes, now=now, until=horizon),
         media_type="text/calendar; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

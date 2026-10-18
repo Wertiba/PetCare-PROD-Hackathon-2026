@@ -134,7 +134,7 @@ uv run python -m app.run
 | GET / PATCH / DELETE | `/api/v1/states/{id}` | Замер |
 | GET / POST | `/api/v1/events?petId=&status=&type=&from=&to=` | События: прививки, обработки, визиты к ветеринару, лекарства |
 | GET | `/api/v1/events/upcoming?days=30&petId=` | Ближайшие запланированные, включая просроченные (`isOverdue`) |
-| GET | `/api/v1/events/calendar.ics?petId=&alarmMinutes=1440` | Файл `.ics` для календаря телефона: запланированные события |
+| GET | `/api/v1/events/calendar.ics?petId=&alarmMinutes=1440&until=` | Файл `.ics` для календаря телефона: запланированные события до `until` |
 | GET / PATCH / DELETE | `/api/v1/events/{id}` | Событие |
 | POST | `/api/v1/events/{id}/complete` | Отметить выполненным, тело `{doneAt?}`. Для повторяющегося создаёт следующее |
 | GET / POST | `/api/v1/notifications?eventId=&petId=&status=&due=` | Уведомления. `due=true` — pending, время которых наступило |

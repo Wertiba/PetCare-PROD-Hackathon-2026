@@ -1400,6 +1400,12 @@
                   "value": "",
                   "description": "Reminder this many minutes before the event; 0 omits it",
                   "disabled": true
+                },
+                {
+                  "key": "until",
+                  "value": "",
+                  "description": "Unix seconds in UTC; fractional seconds are supported.",
+                  "disabled": true
                 }
               ]
             },
