@@ -21,9 +21,9 @@ class SqlAlchemyAnimalGateway(AnimalGateway):
             raise ApplicationError("Database error") from exc
 
     async def get_all(self, offset: int, limit: int, *, name: str | None = None) -> list[Animal]:
-        # Seeded animals (created_by IS NULL) go first: they are the defaults offered on pet registration.
+        # Seeded animals go first (the oldest rows): they are the defaults offered on pet registration.
         stmt = self._apply_criteria(select(Animal), name=name)
-        stmt = stmt.order_by(Animal.created_by.is_not(None), Animal.name).offset(offset).limit(limit)
+        stmt = stmt.order_by(Animal.created_at, Animal.name).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())

@@ -70,7 +70,6 @@ export function AdminAnimals() {
                 key={animal.id}
                 id={animal.id}
                 name={animal.name}
-                isSeeded={animal.createdBy === null}
                 pending={
                   update.isPending &&
                   update.variables.id === animal.id

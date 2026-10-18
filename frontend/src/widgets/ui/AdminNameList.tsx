@@ -111,7 +111,6 @@ export function AdminAddForm({
 interface AdminNameRowProps {
   id: string;
   name: string;
-  isSeeded: boolean;
   pending: boolean;
   onRename: (name: string, done: () => void) => void;
   onDelete: () => void;
@@ -120,7 +119,6 @@ interface AdminNameRowProps {
 export function AdminNameRow({
   id,
   name,
-  isSeeded,
   pending,
   onRename,
   onDelete,
@@ -187,11 +185,6 @@ export function AdminNameRow({
       <span className="min-w-0 flex-1 truncate font-semibold text-[var(--forest)]">
         {name}
       </span>
-      {isSeeded ? (
-        <span className="hidden rounded-sm bg-[var(--cream)] px-2 py-1 text-xs font-bold text-[var(--ink)]/55 sm:inline">
-          базовый
-        </span>
-      ) : null}
       <button
         type="button"
         onClick={() => setDraft(name)}

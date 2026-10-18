@@ -24,9 +24,9 @@ class SqlAlchemyBreedGateway(BreedGateway):
     async def get_all(
         self, offset: int, limit: int, *, animal_id: AnimalId | None = None, name: str | None = None
     ) -> list[Breed]:
-        # Seeded breeds (created_by IS NULL) go first: they are the defaults offered on pet registration.
+        # Seeded breeds go first (the oldest rows): they are the defaults offered on pet registration.
         stmt = self._apply_criteria(select(Breed), animal_id=animal_id, name=name)
-        stmt = stmt.order_by(Breed.created_by.is_not(None), Breed.name).offset(offset).limit(limit)
+        stmt = stmt.order_by(Breed.created_at, Breed.name).offset(offset).limit(limit)
         try:
             result = await self.session.execute(stmt)
             return list(result.scalars().all())

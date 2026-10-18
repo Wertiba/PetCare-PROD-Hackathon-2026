@@ -32,6 +32,14 @@ class SecurityConfig(BaseModel):
     algorithm: str = Field(alias="APP_SECURITY_ALGORITHM", default="HS256")
 
 
+class SeedAdminConfig(BaseModel):
+    """Admin account created by migration 0011; the frontend quick-login button uses the same credentials."""
+
+    login: str = Field(alias="ADMIN_LOGIN")
+    password: str = Field(alias="ADMIN_PASSWORD", repr=False)
+    full_name: str = Field(alias="ADMIN_FULL_NAME", default="Администратор")
+
+
 class HttpConfig(BaseModel):
     cookie_secure: bool = Field(alias="APP_COOKIE_SECURE", default=True)
     cors_allowed_origins: str = Field(
