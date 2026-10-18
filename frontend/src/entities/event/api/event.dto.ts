@@ -34,6 +34,11 @@ export interface FetchUpcomingEventsReqDto {
   size: number;
 }
 
+export interface FetchEventsCalendarReqDto {
+  petId?: Uid;
+  until?: Timestamp;
+}
+
 export interface CreateEventReqDto {
   petId: Uid;
   name: string;

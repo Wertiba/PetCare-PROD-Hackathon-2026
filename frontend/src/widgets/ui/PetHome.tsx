@@ -11,6 +11,7 @@ import {
 import { useGetFoodsQuery } from '@src/entities/food';
 import type { Pet } from '@src/entities/pet';
 import { useGetStatesQuery } from '@src/entities/state';
+import { useDownloadReportMutation } from '@src/features/pet/download-report';
 import { PetPhotoDialog } from '@src/features/pet/upload-photo/ui/PetPhotoDialog';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
@@ -246,6 +247,7 @@ export function PetHome({
 }: PetHomeProps) {
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] =
     useState(false);
+  const downloadReport = useDownloadReportMutation();
   const events = useGetUpcomingEventsQuery({
     days: 30,
     page: 0,
@@ -316,6 +318,19 @@ export function PetHome({
           ) : null}
           <button
             type="button"
+            onClick={() => downloadReport.mutate(pet.id)}
+            disabled={downloadReport.isPending}
+            className="absolute top-4 right-4 inline-flex items-center gap-2 border-2 border-[var(--forest)] bg-white px-4 py-3 text-sm font-black text-[var(--forest)] shadow-[4px_4px_0_var(--lime)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0_var(--lime)] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ActionIcon>
+              <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+            </ActionIcon>
+            {downloadReport.isPending
+              ? 'Скачиваем…'
+              : 'Скачать отчёт'}
+          </button>
+          <button
+            type="button"
             onClick={() => setIsPhotoDialogOpen(true)}
             className="absolute right-4 bottom-4 inline-flex items-center gap-2 border-2 border-[var(--forest)] bg-white px-4 py-3 text-sm font-black text-[var(--forest)] shadow-[4px_4px_0_var(--lime)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0_var(--lime)] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
@@ -378,6 +393,15 @@ export function PetHome({
               </div>
             ))}
           </dl>
+
+          {downloadReport.isError ? (
+            <p
+              role="alert"
+              className="mt-5 border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800"
+            >
+              Не удалось скачать отчёт. Попробуйте ещё раз.
+            </p>
+          ) : null}
 
           <div className="mt-auto grid gap-2 pt-7 sm:grid-cols-2">
             <button

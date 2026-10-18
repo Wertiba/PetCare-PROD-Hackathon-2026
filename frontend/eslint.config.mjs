@@ -8,7 +8,12 @@ import nextTs from "eslint-config-next/typescript";
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'mock-backend.cjs', 'public/sw.js'],
+    ignores: [
+      'eslint.config.mjs',
+      'mock-backend.cjs',
+      'public/sw.js',
+      'desktop-app/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
