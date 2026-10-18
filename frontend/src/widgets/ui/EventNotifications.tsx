@@ -141,14 +141,14 @@ export function EventNotificationsDialog({
       onClose={onClose}
     >
       <div className="mx-auto w-xl max-w-full p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
-          <div>
-            <p className="text-sm font-semibold text-[var(--ink)]/55">
+        <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div className="min-w-0">
+            <p className="break-words text-sm font-semibold text-[var(--ink)]/55">
               {event.name}
             </p>
             <h2
               id="event-notifications-title"
-              className="mt-1 text-2xl font-black text-[var(--forest)]"
+              className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
             >
               Напоминания
             </h2>
@@ -157,7 +157,7 @@ export function EventNotificationsDialog({
             type="button"
             onClick={onClose}
             aria-label="Закрыть"
-            className="grid size-9 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--forest)]/25 text-lg hover:bg-[var(--lime)]"
           >
             ×
           </button>
@@ -234,7 +234,7 @@ export function EventNotificationsDialog({
                         <p className="text-sm font-semibold text-red-800">
                           Удалить это напоминание?
                         </p>
-                        <div className="mt-2 flex gap-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
                           <button
                             type="button"
                             disabled={deletion.isPending}
@@ -262,7 +262,7 @@ export function EventNotificationsDialog({
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => {

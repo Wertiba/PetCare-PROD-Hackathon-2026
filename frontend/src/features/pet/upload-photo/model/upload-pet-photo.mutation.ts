@@ -31,7 +31,13 @@ export const useGeneratePetAvatarMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: generatePetAvatar,
+    mutationFn: ({
+      petId,
+      prompt,
+    }: {
+      petId: string;
+      prompt: string;
+    }) => generatePetAvatar(petId, prompt),
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: queryKeys.pets.all,

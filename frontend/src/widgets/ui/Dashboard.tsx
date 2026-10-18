@@ -83,14 +83,14 @@ function PetModal({
   return (
     <Dialog labelledBy="pet-modal-title" onClose={close}>
       <div className="mx-auto w-2xl max-w-full p-5 sm:p-6">
-        <div className="mb-5 flex justify-between border-b border-[var(--forest)]/15 pb-4">
-          <div>
+        <div className="mb-5 flex min-w-0 justify-between gap-4 border-b border-[var(--forest)]/15 pb-4">
+          <div className="min-w-0">
             <p className="text-xs font-bold tracking-[.12em] text-[var(--forest)]/60 uppercase">
               Профиль питомца
             </p>
             <h2
               id="pet-modal-title"
-              className="mt-1 text-2xl font-black text-[var(--forest)]"
+              className="mt-1 break-words text-2xl font-black text-[var(--forest)]"
             >
               {title}
             </h2>
@@ -99,7 +99,7 @@ function PetModal({
             onClick={close}
             type="button"
             aria-label="Закрыть"
-            className="size-9 rounded-sm border border-[var(--forest)]"
+            className="size-9 shrink-0 rounded-sm border border-[var(--forest)]"
           >
             ×
           </button>
@@ -328,7 +328,11 @@ export function Dashboard() {
   return (
     <div className="min-h-dvh bg-[var(--cream)] text-[var(--ink)] lg:grid lg:grid-cols-[16rem_1fr] lg:grid-rows-[auto_1fr]">
       <header className="grid min-h-18 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-[var(--forest)]/15 px-5 py-3 sm:px-8 lg:col-span-2 lg:px-10">
-        <div className="group flex items-center gap-3 text-[var(--forest)]">
+        <Link
+          href="/dashboard"
+          aria-label="PetCare — к питомцам"
+          className="group flex items-center gap-3 text-[var(--forest)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--forest)]"
+        >
           <span className="grid size-12 place-items-center rounded-2xl bg-[var(--forest)] transition-transform group-hover:-rotate-6">
             <Image
               src="/images/petcare-mark.svg"
@@ -341,7 +345,7 @@ export function Dashboard() {
           <span className="hidden text-lg font-black tracking-tight sm:inline">
             PetCare
           </span>
-        </div>
+        </Link>
         <div
           ref={petsMenuRef}
           className="relative flex min-w-0 justify-center"
@@ -744,7 +748,7 @@ export function Dashboard() {
               раз.
             </p>
           ) : null}
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
             <button
               onClick={() => setDialog(null)}
               className="rounded-sm border border-[var(--forest)] px-4 py-2"

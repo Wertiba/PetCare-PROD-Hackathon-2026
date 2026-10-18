@@ -49,7 +49,7 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-[var(--forest)]/45 p-4"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-[var(--forest)]/45 p-3 sm:p-5"
       onPointerDown={(event) => {
         if (
           isDismissable &&
@@ -64,7 +64,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="max-h-[calc(100dvh-2rem)] w-fit max-w-full overflow-y-auto rounded-md border-2 border-[var(--forest)] bg-[var(--cream)] shadow-[6px_6px_0_var(--forest)]"
+        className="max-h-[calc(100dvh-1.5rem)] w-fit min-w-0 max-w-[calc(100dvw-2.25rem)] overflow-x-auto overflow-y-auto overscroll-contain rounded-md border-2 border-[var(--forest)] bg-[var(--cream)] shadow-[6px_6px_0_var(--forest)] sm:max-h-[calc(100dvh-2.5rem)] sm:max-w-[calc(100dvw-3.25rem)]"
       >
         {children}
       </div>

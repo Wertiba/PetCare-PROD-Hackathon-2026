@@ -53,9 +53,15 @@ export const uploadPetPhoto = async (
   ).data;
 };
 
-export const generatePetAvatar = async (petId: Uid) =>
-  (await api.post<Pet>(`/pets/${petId}/avatar/generate`))
-    .data;
+export const generatePetAvatar = async (
+  petId: Uid,
+  prompt: string,
+) =>
+  (
+    await api.post<Pet>(`/pets/${petId}/avatar/generate`, {
+      prompt,
+    })
+  ).data;
 
 export const selectPetAvatar = async (
   petId: Uid,
